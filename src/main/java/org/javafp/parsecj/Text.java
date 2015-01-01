@@ -104,7 +104,9 @@ public abstract class Text {
      * A parser which parses a signed double.
      */
     public static Parser<Character, Double> dble =
-        regex("-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?").bind(dblStr -> retn(Double.valueOf(dblStr)));
+        regex("-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?")
+            .label("double")
+            .bind(dblStr -> retn(Double.valueOf(dblStr)));
 
     /**
      * A parser which parses the specified string.
@@ -202,7 +204,9 @@ public abstract class Text {
 
             final Matcher matcher = pattern.matcher(cs);
 
-            final Message.Ref<Character> msg = Message.Ref.of(() -> Message.of(state, List.of("Regex '" + regex + "'")));
+            final Message.Ref<Character> msg = Message.Ref.of(
+                () -> Message.of(state, List.of("Regex '" + regex + "'"))
+            );
 
             if (matcher.lookingAt()) {
                 final int end = matcher.end();

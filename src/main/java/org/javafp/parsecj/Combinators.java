@@ -404,10 +404,7 @@ public abstract class Combinators {
             Parser<S, BinaryOperator<A>> op,
             A x) {
         return or(
-            bind(op, f ->
-                bind(p, y ->
-                    rest(p, op, f.apply(x, y)))
-            ), retn(x)
+            bind(op, f -> bind(p, y -> rest(p, op, f.apply(x, y)))), retn(x)
         );
     }
 

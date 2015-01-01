@@ -1,8 +1,6 @@
 ParsecJ
 ============
 
-(Translating Haskell into Java)
-
 # Introduction
 
 **ParsecJ** is a Java monadic parser combinator framework for constructing LL(1) parsers.
@@ -14,13 +12,14 @@ which describes a monadic parsing framework implemented in Haskell.
 
 The standard approach to implementing parsers for special-purpose languages
 is to use a parser generation tool,
-such as Yacc/Bison or ANTLR.
+such as Yacc/Bison and ANTLR.
 With these tools the language is defined using a grammar language specific to the tool.
 The parsing code is then generated from the language grammar.
+
 An alternative approach is to implement a
 [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser),
 whereby the production rules comprising your language grammar
-are translated into parse functions.
+are translated by hand into parse functions.
 One limitation of this approach
 is that the extra plumbing required to implement error-handling and backtracking
 obscures the correspondence between the parsing functions and the language rules.
@@ -38,10 +37,12 @@ whereby each grammar instance implements an executable parser.
 
 As a quick illustration of how this looks using ParsecJ, consider the following example.
 
+```java
     intr.bind(x ->
         satisfy('+')
             .then(intr.bind(y ->
                 retn(x+y))))
+```
 
 Here a parser is defined, which will parse and evaluate expressions of the form *a+b* where *a* and *b* are integers.
 The parser is constructed by taking the `intr` parser for integers, the `satisfy` parser for single symbols,
@@ -49,6 +50,7 @@ and combining them using the `bind`, `then` and `retn` combinators.
 
 This parser can be used as follows:
 
+```java
     int i =
         intr.bind(x ->
             satisfy('+')
@@ -57,6 +59,7 @@ This parser can be used as follows:
                 )
             )
         ).parse(State.of("1+2")).reply().getResult();
+```
 
 # Usage
 
