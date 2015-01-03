@@ -18,7 +18,7 @@ public abstract class Combinators {
     /**
      * Construct an error Reply indicating the end of the input has been reached.
      */
-    public static <S, A> Reply<S, A> endOfInput(State<S> state) {
+    static <S, A> Reply<S, A> endOfInput(State<S> state) {
         return Reply.<S, A>error(
             Message.Ref.of(() ->
                 Message.of(state.position(), null, List.empty())
@@ -225,15 +225,17 @@ public abstract class Combinators {
 
     /**
      * A parser which succeeds if the next input symbol equals the supplied value.
+     * The parser replies with the argument result.
+     * Equivalent to satisfy(value).then(retn(result))
      */
-    public static <S, A> Parser<S, A> satisfy(S value, A t) {
+    public static <S, A> Parser<S, A> satisfy(S value, A result) {
         return state -> {
             if (!state.end()) {
                 if (state.current().equals(value)) {
                     final State<S> newState = state.inc();
                     return ConsumedT.consumed(() ->
                         Reply.ok(
-                            t,
+                            result,
                             newState,
                             Message.Ref.of(() -> Message.of(state, List.empty()))
                         )
@@ -264,7 +266,7 @@ public abstract class Combinators {
             } else {
                 return cons1.getReply().match(
                     ok1 -> {
-                        final ConsumedT<S, A> cons2 = q .parse(state);
+                        final ConsumedT<S, A> cons2 = q.parse(state);
                         if (cons2.isConsumed()) {
                             return cons2;
                         } else {
@@ -306,7 +308,7 @@ public abstract class Combinators {
 
     /**
      * A parser which turns a parser which consumes input into one which doesn't (if it fails).
-     * This  allows the implementation of LL(∞) grammars.
+     * This allows the implementation of LL(∞) grammars.
      */
     public static <S, A> Parser<S, A> tryP(Parser<S, A> p) {
         return state -> {

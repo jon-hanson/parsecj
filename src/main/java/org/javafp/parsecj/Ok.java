@@ -5,7 +5,7 @@ import java.util.function.Function;
 /**
  * A successful parse result.
  */
-public class Ok<S, A> extends Reply<S, A> {
+public final class Ok<S, A> extends Reply<S, A> {
 
     /**
      * The parsed result.
@@ -29,7 +29,7 @@ public class Ok<S, A> extends Reply<S, A> {
     }
 
     @Override
-    public A getResult() throws Exception {
+    public A getResult() {
         return result;
     }
 
@@ -42,9 +42,8 @@ public class Ok<S, A> extends Reply<S, A> {
 
         if (!msg.equals(ok.msg)) return false;
         if (!rest.equals(ok.rest)) return false;
-        if (result != null ? !result.equals(ok.result) : ok.result != null) return false;
 
-        return true;
+        return result == null ? ok.result == null : result.equals(ok.result);
     }
 
     @Override

@@ -3,6 +3,7 @@ package org.javafp.parsecj;
 import org.javafp.parsecj.utils.CharSequences;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -46,7 +47,7 @@ class StringState implements CharState {
 
     protected final String symbols;
 
-    protected int pos;
+    protected final int pos;
 
     StringState(String symbols, int pos) {
         this.symbols = symbols;
@@ -106,7 +107,7 @@ class ArrayState<S> implements State<S> {
 
     protected final S[] symbols;
 
-    protected int pos;
+    protected final int pos;
 
     ArrayState(S[] symbols, int pos) {
         this.symbols = symbols;
@@ -134,11 +135,7 @@ class ArrayState<S> implements State<S> {
 
     @Override
     public List<S> current(int n) {
-        final List<S> list = new ArrayList<>(n);
-        for (int i = pos; i < pos + n; ++i) {
-            list.add(symbols[i]);
-        }
-        return list;
+        return Arrays.asList(symbols).subList(pos, pos + n);
     }
 
     @Override

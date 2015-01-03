@@ -1,7 +1,6 @@
 package org.javafp.parsecj;
 
 import org.javafp.data.List;
-import org.javafp.parsecj.utils.CharSequences;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,7 +44,7 @@ public abstract class Text {
     /**
      * A parser which parses a signed integer.
      */
-    public static Parser<Character, Integer> intr =
+    public static final Parser<Character, Integer> intr =
         state -> {
             if (state.end()) {
                 return ConsumedT.empty(endOfInput(state));
@@ -103,7 +102,7 @@ public abstract class Text {
     /**
      * A parser which parses a signed double.
      */
-    public static Parser<Character, Double> dble =
+    public static final Parser<Character, Double> dble =
         regex("-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?")
             .label("double")
             .bind(dblStr -> retn(Double.valueOf(dblStr)));
@@ -128,11 +127,11 @@ public abstract class Text {
                 if (i == value.length()) {
                     final State<Character> tail = state;
                     return ConsumedT.consumed(
-                            () -> Reply.ok(
-                                    value,
-                                    tail,
-                                    Message.Ref.of(() -> Message.of(tail, List.empty()))
-                            )
+                        () -> Reply.ok(
+                            value,
+                            tail,
+                            Message.Ref.of(() -> Message.of(tail, List.empty()))
+                        )
                     );
                 } else if (state.end()) {
                     return endOfInputError(consumed, state);
@@ -146,7 +145,7 @@ public abstract class Text {
     /**
      * A parser which parses an alphanumeric string.
      */
-    public static Parser<Character, String> alphaNum =
+    public static final Parser<Character, String> alphaNum =
         state -> {
             if (state.end()) {
                 return ConsumedT.empty(endOfInput(state));
@@ -194,12 +193,7 @@ public abstract class Text {
                 final CharState charState = (CharState) state;
                 cs = charState.getCharSequence();
             } else {
-                int i = 0;
-                State<Character> state2 = state;
-                for(; !state2.end() && "0123456789+-.eE".indexOf(state2.current()) != -1; ++i) {
-                    state2 = state2.inc();
-                }
-                cs = CharSequences.of(state.current(i));
+                throw new RuntimeException("regex only supported on CharState");
             }
 
             final Matcher matcher = pattern.matcher(cs);

@@ -91,7 +91,7 @@ public abstract class List<T> implements Iterable<T> {
     public abstract Iterator<T> iterator();
 
     public static class Empty<T> extends List<T> {
-        protected static final Empty EMPTY = new Empty();
+        static final Empty EMPTY = new Empty();
 
         private Empty() {
         }

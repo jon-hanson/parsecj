@@ -19,7 +19,7 @@ public class GrammarTest {
         Assert.assertEquals(expected, Grammar.parse(result).getResult().toString());
     }
 
-    private static void assertFailure(String input, String errorMsg) throws Exception {
+    private static void assertFailure(String input, String errorMsg) {
         Grammar.parse(input).match(
             ok -> {
                 throw new RuntimeException("Expected parse to fail");

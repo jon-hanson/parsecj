@@ -4,8 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import static org.javafp.parsecj.Combinators.*;
-import static org.javafp.parsecj.Text.dble;
-import static org.javafp.parsecj.Text.intr;
+import static org.javafp.parsecj.Text.*;
 
 public class ParserTest {
 
@@ -22,12 +21,14 @@ public class ParserTest {
         return dbl_eof.parse(State.of(s)).getReply().getResult();
     }
 
-    private Reply<Character, Double> parseErrorDbl(String s) throws Exception {
+    private Reply<Character, Double> parseErrorDbl(String s) {
         return dbl_eof.parse(State.of(s)).getReply();
     }
 
     @Test
     public void testDouble() throws Exception {
+
+
         Assert.assertEquals(0.0, parseDbl("0"), THRESHOLD);
         Assert.assertEquals(0.0, parseDbl("0.0"), THRESHOLD);
         Assert.assertEquals(.1, parseDbl(".1"), THRESHOLD);
@@ -41,6 +42,9 @@ public class ParserTest {
         Assert.assertEquals(-12345.6789e12, parseDbl("-12345.6789e12"), THRESHOLD);
         Assert.assertEquals(12345.6789e-12, parseDbl("12345.6789e-12"), THRESHOLD);
         Assert.assertEquals(-12345.6789e-12, parseDbl("-12345.6789e-12"), THRESHOLD);
+
+        Assert.assertTrue("9e99999999", Double.isInfinite(parseDbl("9e99999999")));
+        Assert.assertTrue("-9e99999999", Double.isInfinite(parseDbl("-9e99999999")));
 
         Assert.assertTrue("", isError(parseErrorDbl("")));
         Assert.assertTrue("", isError(parseErrorDbl("+")));
@@ -57,7 +61,6 @@ public class ParserTest {
 
     @Test
     public void testBind1() throws Exception {
-        int i = intr.bind(x -> satisfy('+').then(intr.bind(y -> retn(x+y)))).parse(State.of("1+2")).getReply().getResult();
         final Parser<Character, String> p =
             satisfy('a').bind(a ->
                 satisfy('b').bind(b ->

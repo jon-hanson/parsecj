@@ -31,7 +31,7 @@ public interface ConsumedT<S, A> {
 /**
  * A parse result that indicates the parser did consume some input.
  */
-class Consumed<S, A> implements ConsumedT<S, A> {
+final class Consumed<S, A> implements ConsumedT<S, A> {
 
     // Lazy Reply supplier.
     private Supplier<Reply<S, A>> supplier;
@@ -62,7 +62,7 @@ class Consumed<S, A> implements ConsumedT<S, A> {
 /**
  * A parse result that indicates the parser did not consume any input.
  */
-class Empty<S, A> implements ConsumedT<S, A> {
+final class Empty<S, A> implements ConsumedT<S, A> {
 
     private final Reply<S, A> reply;
 

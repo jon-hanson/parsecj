@@ -72,7 +72,7 @@ public abstract class Grammar {
             ))
         ).label("args");
 
-    private static final Parser<Character, Expr> var(String name) {
+    private static Parser<Character, Expr> var(String name) {
         return retn(varExpr(name));
     }
 
@@ -102,7 +102,7 @@ public abstract class Grammar {
         term.chainl1(multDiv);
 
     // expr = prod chainl1 addSub
-    private static final Parser<Character, Expr> expr() {
+    private static Parser<Character, Expr> expr() {
         return prod.chainl1(addSub);
     }
 
@@ -110,7 +110,7 @@ public abstract class Grammar {
     private static final Parser<Character, Expr> end = eof();
 
     // parser = expr eof
-    private static final Parser<Character, Expr> parser() {
+    private static Parser<Character, Expr> parser() {
         expr.set(() -> expr());
         return expr.bind(x -> end.then(retn(x)));
     }

@@ -7,9 +7,9 @@ import java.util.function.Function;
  * @param <S> Input stream symbol type.
  * @param <A> Parse result type
  */
-public class Error<S, A> extends Reply<S, A> {
+public final class Error<S, A> extends Reply<S, A> {
 
-    protected Error(Message.Ref<S> msg) {
+    Error(Message.Ref<S> msg) {
         super(msg);
     }
 
@@ -34,9 +34,7 @@ public class Error<S, A> extends Reply<S, A> {
 
         Error error = (Error) o;
 
-        if (!msg.equals(error.msg)) return false;
-
-        return true;
+        return msg.equals(error.msg);
     }
 
     @Override

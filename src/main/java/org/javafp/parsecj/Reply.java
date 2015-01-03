@@ -19,7 +19,7 @@ public abstract class Reply<S, A> {
 
     public final Message.Ref<S> msg;
 
-    protected Reply(Message.Ref<S> msg) {
+    Reply(Message.Ref<S> msg) {
         this.msg = msg;
     }
 

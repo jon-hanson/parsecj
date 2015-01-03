@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 public interface Parser<S, A> {
 
     public static <S, A> Parser<S, A> of(Function<State<S>, ConsumedT<S, A>> parser) {
-        return state -> parser.apply(state);
+        return parser::apply;
     }
 
     public static <S, A> Reply<S, A> parse(Parser<S, A> parser, State<S> state) {
@@ -74,7 +74,6 @@ public interface Parser<S, A> {
 
     /**
      * Parse the input state
-     * @param state
      * @return a ConsumedT result parse result
      */
     ConsumedT<S, A> parse(State<S> state);

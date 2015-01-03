@@ -97,9 +97,8 @@ public class Message<S> {
 
         if (pos != message.pos) return false;
         if (!expected.equals(message.expected)) return false;
-        if (!sym.equals(message.sym)) return false;
 
-        return true;
+        return sym.equals(message.sym);
     }
 
     @Override
