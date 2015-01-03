@@ -89,19 +89,18 @@ where `S` is the symbol type (typically `Character`).
  * @param <A> Parse result type
  */
 public abstract class Reply<S, A> {
-
     public abstract <B> B match(Function<Ok<S, A>, B> ok, Function<Error<S, A>, B> error);
-
-    public abstract A getResult() throws Exception;
 }
 ```
 
-Since the Reply can be either a successful parse result (represented by the `Ok` type)
+Since a `Reply` can be either a successful parse result (represented by the `Ok` type)
 or an error (represented by the `Error` type),
 use the `match` method to handle both cases:
 
 ```java
-String msg = parser.parse("abcd").getReply().match(
+String msg =
+    parser.parse("abcd")
+        .getReply().match(
             ok -> "Result : " + ok.getResult(),
             error -> "Error : " + error.getMsg()
         );
@@ -113,36 +112,29 @@ The `org.javafp.parsecj.Combinators` package provides the following basic parser
 
 Name | Description
 -----|------------
-`Combinators.satisfy(test)` | A parser which applies a test to the next input symbol. |
-`Combinators.satisfy(value)` | A parser which succeeds if the next input symbol equals `value`. |
-`Combinators.eof()` | A parser which succeeds if the end of the input is reached. |
-`Combinators.fail()` | A parser which always fails. |
-`Text.alpha` | A parser which succeeds if the next character is alphabetic. |
-`Text.digit` | A parser which succeeds if the next character is a digit. |
-`Text.intr` | A parser which parses an integer. |
-`Text.dble` | A parser which parses an double. |
-`Text.satisfy(s)` | A parser which parses the supplied string. |
-`Text.alphaNum` | A parser which parses an alphanumeric string. |
-`Text.regex(regex)` | A parser which parses a string matching the supplied regex. |
+`satisfy(test)` | A parser which applies a test to the next input symbol. |
+`satisfy(value)` | A parser which succeeds if the next input symbol equals `value`. |
+`eof()` | A parser which succeeds if the end of the input is reached. |
+`fail()` | A parser which always fails. |
 
 and the following combinator parsers:
 
 Name | Description
 -----|------------
-`Combinators.retn(value)` | A parser which simply returns the supplied value
-`Combinators.bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser which is then applied.
-`Combinators.then(p, q)` | A parser which first applies the parser `p`. If it succeeds it then applies parser `q`.
-`Combinators.or(p, q)` | A parser which first applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`.
-...
+`retn(value)` | A parser which simply returns the supplied value
+`bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser which is then applied.
+`then(p, q)` | A parser which first applies the parser `p`. If it succeeds it then applies parser `q`.
+`or(p, q)` | A parser which first applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`.
+... |
 
 The `org.javafp.parsecj.Text` package provides in addition to the above, the following parsers specialised for parsing text input:
 
 Name | Description
 -----|------------
-`Text.alpha` | A parser which succeeds if the next character is alphabetic. |
-`Text.digit` | A parser which succeeds if the next character is a digit. |
-`Text.intr` | A parser which parses an integer. |
-`Text.dble` | A parser which parses an double. |
-`Text.satisfy(s)` | A parser which parses the supplied string. |
-`Text.alphaNum` | A parser which parses an alphanumeric string. |
-`Text.regex(regex)` | A parser which parses a string matching the supplied regex. |
+`alpha` | A parser which succeeds if the next character is alphabetic. |
+`digit` | A parser which succeeds if the next character is a digit. |
+`intr` | A parser which parses an integer. |
+`dble` | A parser which parses an double. |
+`satisfy(s)` | A parser which parses the supplied string. |
+`alphaNum` | A parser which parses an alphanumeric string. |
+`regex(regex)` | A parser which parses a string matching the supplied regex. |
