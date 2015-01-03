@@ -112,7 +112,7 @@ String msg = parser.parse("abcd").getReply().match(
 The `org.javafp.parsecj.Combinators` package provides the following basic parsers:
 
 Name | Description
-------------------
+-----|------------
 `Combinators.satisfy(test)` | A parser which applies a test to the next input symbol. |
 `Combinators.satisfy(value)` | A parser which succeeds if the next input symbol equals `value`. |
 `Combinators.eof()` | A parser which succeeds if the end of the input is reached. |
@@ -128,7 +128,7 @@ Name | Description
 and the following combinator parsers:
 
 Name | Description
-------------------
+-----|------------
 `Combinators.retn(value)` | A parser which simply returns the supplied value
 `Combinators.bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser which is then applied.
 `Combinators.then(p, q)` | A parser which first applies the parser `p`. If it succeeds it then applies parser `q`.
@@ -138,7 +138,7 @@ Name | Description
 The `org.javafp.parsecj.Text` package provides in addition to the above, the following parsers specialised for parsing text input:
 
 Name | Description
-------------------
+-----|------------
 `Text.alpha` | A parser which succeeds if the next character is alphabetic. |
 `Text.digit` | A parser which succeeds if the next character is a digit. |
 `Text.intr` | A parser which parses an integer. |
