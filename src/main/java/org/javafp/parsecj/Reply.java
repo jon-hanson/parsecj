@@ -13,6 +13,10 @@ public abstract class Reply<S, A> {
         return new Ok<S, A>(result, tail, msg);
     }
 
+    static <S> Ok<S, Void> ok(State<S> tail, Message.Ref<S> msg) {
+        return new Ok<S, Void>(null, tail, msg);
+    }
+
     static <S, A> Error<S, A> error(Message.Ref<S> msg) {
         return new Error<S, A>(msg);
     }

@@ -17,6 +17,10 @@ public class Message<S> {
         return new Message<S>(pos, sym, expected);
     }
 
+    public static <S> Message<S> of(int pos, List<String> expected) {
+        return new Message<S>(pos, null, expected);
+    }
+
     /**
      * A lazily-constructed error message.
      */

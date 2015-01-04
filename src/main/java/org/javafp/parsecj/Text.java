@@ -34,12 +34,27 @@ public abstract class Text {
     /**
      * A parser which parses an alphabetic character.
      */
-    public static Parser<Character, Character> alpha = satisfy(c -> Character.isAlphabetic(c));
+    public static Parser<Character, Character> alpha = satisfy((Character c) -> Character.isAlphabetic(c)).label("alpha");
 
     /**
      * A parser which parses a numeric character, i.e. a digit.
      */
-    public static Parser<Character, Character> digit = satisfy(c -> Character.isDigit(c));
+    public static Parser<Character, Character> digit = satisfy((Character c) -> Character.isDigit(c)).label("digit");
+
+    /**
+     * A parser which parses space.
+     */
+    public static Parser<Character, Character> space = satisfy((Character c) -> Character.isSpaceChar(c)).label("space");
+
+    /**
+     * A parser which parses whitespace.
+     */
+    public static Parser<Character, Character> wspace = satisfy((Character c) -> Character.isWhitespace(c)).label("wspace");
+
+    /**
+     * A parser which parses whitespace.
+     */
+    public static Parser<Character, Void> wspaces = skipMany(satisfy(c -> Character.isWhitespace(c)));
 
     /**
      * A parser which parses a signed integer.
@@ -110,7 +125,7 @@ public abstract class Text {
     /**
      * A parser which parses the specified string.
      */
-    public static Parser<Character, String> satisfyS(String value) {
+    public static Parser<Character, String> string(String value) {
         return state -> {
             if (state.end()) {
                 return ConsumedT.empty(endOfInput(state));

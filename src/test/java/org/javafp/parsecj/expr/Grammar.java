@@ -27,8 +27,8 @@ public abstract class Grammar {
     private static final Parser<Character, BinOp> mult = satisfy('*', BinOp.MULTIPLY);
     private static final Parser<Character, BinOp> div = satisfy('/', BinOp.DIVIDE);
 
-    private static final Parser<Character, NumExpr.Units> pct = satisfyS("%").then(retn(NumExpr.Units.PCT));
-    private static final Parser<Character, NumExpr.Units> bps = satisfyS("bp").then(retn(NumExpr.Units.BPS));
+    private static final Parser<Character, NumExpr.Units> pct = string("%").then(retn(NumExpr.Units.PCT));
+    private static final Parser<Character, NumExpr.Units> bps = string("bp").then(retn(NumExpr.Units.BPS));
 
     // addSub = add | sub
     private static final Parser<Character, BinaryOperator<Expr>> addSub =
@@ -107,7 +107,7 @@ public abstract class Grammar {
     }
 
     // Use a variable to help the type inference.
-    private static final Parser<Character, Expr> end = eof();
+    private static final Parser<Character, Void> end = eof();
 
     // parser = expr eof
     private static Parser<Character, Expr> parser() {

@@ -10,25 +10,23 @@ public class ParserTest {
 
     private static final double THRESHOLD = 1e-8;
 
-    private static final Parser<Character, Double> eof = eof();
-    private static final Parser<Character, Double> dbl_eof = dble.bind(d -> eof.then(retn(d)));
+    private static final Parser<Character, Void> eof = eof();
+    private static final Parser<Character, Double> dble_eof = dble.bind(d -> eof.then(retn(d)));
 
     private static <S, A> boolean isError(Reply<S, A> reply) {
         return reply.match(ok -> false, error -> true);
     }
 
     private double parseDbl(String s) throws Exception {
-        return dbl_eof.parse(State.of(s)).getReply().getResult();
+        return dble_eof.parse(State.of(s)).getReply().getResult();
     }
 
     private Reply<Character, Double> parseErrorDbl(String s) {
-        return dbl_eof.parse(State.of(s)).getReply();
+        return dble_eof.parse(State.of(s)).getReply();
     }
 
     @Test
     public void testDouble() throws Exception {
-
-
         Assert.assertEquals(0.0, parseDbl("0"), THRESHOLD);
         Assert.assertEquals(0.0, parseDbl("0.0"), THRESHOLD);
         Assert.assertEquals(.1, parseDbl(".1"), THRESHOLD);

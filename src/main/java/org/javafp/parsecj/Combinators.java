@@ -15,13 +15,15 @@ import java.util.function.Predicate;
  */
 public abstract class Combinators {
 
+    public static final Void UNIT = null;
+
     /**
      * Construct an error Reply indicating the end of the input has been reached.
      */
     static <S, A> Reply<S, A> endOfInput(State<S> state) {
         return Reply.<S, A>error(
             Message.Ref.of(() ->
-                Message.of(state.position(), null, List.empty())
+                Message.of(state.position(), List.empty())
             )
         );
     }
@@ -39,7 +41,6 @@ public abstract class Combinators {
                     Message.Ref.of(() ->
                         Message.of(
                             state.position(),
-                            null,
                             List.empty()
                         )
                     )
@@ -141,19 +142,18 @@ public abstract class Combinators {
     /**
      * A parser which succeeds if the end of the input is reached.
      */
-    public static <S, A> Parser<S, A> eof() {
+    public static <S> Parser<S, Void> eof() {
         return state -> {
             if (state.end()) {
                 return ConsumedT.empty(
-                    Reply.<S, A>ok(
-                        null,
+                    Reply.ok(
                         state,
                         Message.Ref.of(() -> Message.of(state, List.of()))
                     )
                 );
             } else {
                 return ConsumedT.empty(
-                    Reply.<S, A>error(
+                    Reply.<S, Void>error(
                         Message.Ref.of(() -> Message.of(state, List.of("EOF")))
                     )
                 );
@@ -176,7 +176,6 @@ public abstract class Combinators {
                             Message.Ref.of(() ->
                                 Message.of(
                                     state.position(),
-                                    null,
                                     List.empty()
                                 )
                             )
@@ -346,8 +345,8 @@ public abstract class Combinators {
      */
     public static <S, A> Parser<S, Void> optional(Parser<S, A> p) {
         return or(
-            bind(p, x -> retn((Void) null)),
-            retn(null)
+            bind(p, x -> retn(UNIT)),
+            retn(UNIT)
         );
     }
 
@@ -389,6 +388,13 @@ public abstract class Combinators {
 
     private static <S, A> Parser<S, List<A>> manyAcc(Parser<S, A> p, List<A> acc) {
         return or(bind(p, x -> manyAcc(p, acc.add(x))), retn(acc));
+    }
+
+    /**
+     * A parser which applies the parser p zero or more times, skipping its result.
+     */
+    public static <S, A> Parser<S, Void> skipMany(Parser<S, A> p) {
+        return or(bind(p, x -> skipMany(p)), retn(UNIT));
     }
 
     /**

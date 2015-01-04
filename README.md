@@ -74,12 +74,38 @@ int i =
 @FunctionalInterface
 public interface Parser<S, A> {
     ConsumedT<S, A> parse(State<S> state);
+    // ...
 }
 ```
 
 I.e. a `Parser<S, A>` is essentially a function from a `State<S>` to a `ConsumedT<T, A>`.
-The `State<S>` interface is an abstraction representing an immutable input state,
-where `S` is the symbol type (typically `Character`).
+The `State<S>` interface is an abstraction representing an immutable input state:
+
+```java
+/**
+ * An interface for parseable symbol streams.
+ * @param <S> Input stream symbol type.
+ */
+public interface State<S> {
+    static <S> State<S> of(S[] symbols) {
+        return new ArrayState<S>(symbols);
+    }
+
+    static State<Character> of(Character[] symbols) {
+        return new CharArrayState(symbols);
+    }
+
+    static State<Character> of(String symbols) {
+        return new StringState(symbols);
+    }
+
+    // ...
+}
+```
+
+It provides several static `of` methods for constructing `State` instances from sequences of symbols.
+In typical usage
+
 `ConsumedT<T, A>` is an intermediate result wrapper which has a `getReply()` method to obtain the parse result:
 
 ```java
@@ -90,6 +116,7 @@ where `S` is the symbol type (typically `Character`).
  */
 public abstract class Reply<S, A> {
     public abstract <B> B match(Function<Ok<S, A>, B> ok, Function<Error<S, A>, B> error);
+    // ...
 }
 ```
 
@@ -106,35 +133,44 @@ String msg =
         );
 ```
 
-## Defining a Parser
+## Defining Parsers
+
+### Combinators
 
 The `org.javafp.parsecj.Combinators` package provides the following basic parsers:
 
-Name | Description
------|------------
-`satisfy(test)` | A parser which applies a test to the next input symbol. |
-`satisfy(value)` | A parser which succeeds if the next input symbol equals `value`. |
-`eof()` | A parser which succeeds if the end of the input is reached. |
-`fail()` | A parser which always fails. |
+Name | Description | Returns
+-----|-------------|--------
+`satisfy(test)` | Applies a test to the next input symbol. | The symbol.
+`satisfy(value)` | A parser which succeeds if the next input symbol equals `value`. | The symbol
+`eof()` | A parser which succeeds if the end of the input is reached. | UNIT.
+`fail()` | A parser which always fails. | An Error
 
 and the following combinator parsers:
 
-Name | Description
------|------------
-`retn(value)` | A parser which simply returns the supplied value
-`bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser which is then applied.
-`then(p, q)` | A parser which first applies the parser `p`. If it succeeds it then applies parser `q`.
-`or(p, q)` | A parser which first applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`.
+Name | Description | Returns
+-----|-------------|--------
+`retn(value)` | A parser which always succeeds | The supplied value.
+`bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser which is then applied. | Result of `q`
+`then(p, q)` | A parser which first applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
+`or(p, q)` | A parser which first applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
 ... |
 
-The `org.javafp.parsecj.Text` package provides in addition to the above, the following parsers specialised for parsing text input:
+Combinators which take a `Parser` as a first parameter, such as `bind`,
+have been added as methods to the `Parser` interface, to allow parsers to be constructed in a fluent style.
+E.g. `p.bind(f)` is equivalent to `bind(p, f)`.
 
-Name | Description
------|------------
-`alpha` | A parser which succeeds if the next character is alphabetic. |
-`digit` | A parser which succeeds if the next character is a digit. |
-`intr` | A parser which parses an integer. |
-`dble` | A parser which parses an double. |
-`satisfy(s)` | A parser which parses the supplied string. |
-`alphaNum` | A parser which parses an alphanumeric string. |
-`regex(regex)` | A parser which parses a string matching the supplied regex. |
+### Text
+
+The `org.javafp.parsecj.Text` package provides in addition to the parsers in `Combinators`,
+the following parsers specialised for parsing text input:
+
+Name | Description | Returns
+-----|-------------|--------
+`alpha` | A parser which succeeds if the next character is alphabetic. | The character.
+`digit` | A parser which succeeds if the next character is a digit. | The character.
+`intr` | A parser which parses an integer. | The integer.
+`dble` | A parser which parses an double. | The double.
+`string(s)` | A parser which parses the supplied string. | The string.
+`alphaNum` | A parser which parses an alphanumeric string. | The string.
+`regex(regex)` | A parser which parses a string matching the supplied regex. | The string matching the regex.
