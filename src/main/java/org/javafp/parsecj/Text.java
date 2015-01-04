@@ -6,21 +6,26 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.javafp.parsecj.Combinators.*;
+import static org.javafp.parsecj.Combinators.satisfy;
 
 /**
  * Parser combinators to be used with Character streams.
  */
 public abstract class Text {
 
-    private static <S, A> ConsumedT<S, A> error(boolean consumed, State<S> state) {
+    /**
+     * Helper method to create a ConsumedT response.
+     */
+    public static <S, A> ConsumedT<S, A> createConsError(boolean consumed, State<S> state, String expected) {
+        final List<String> expList = List.of(expected);
         return consumed ?
             ConsumedT.consumed(() ->
                 Reply.error(
-                    Message.Ref.of(() -> Message.of(state, List.empty()))
+                    Message.Ref.of(() -> Message.of(state, expList))
                 )
             ) : ConsumedT.empty(
                 Reply.error(
-                    Message.Ref.of(() -> Message.of(state, List.empty()))
+                    Message.Ref.of(() -> Message.of(state, expList))
                 )
         );
     }
@@ -57,6 +62,13 @@ public abstract class Text {
     public static Parser<Character, Void> wspaces = skipMany(satisfy(c -> Character.isWhitespace(c)));
 
     /**
+     * A parser which parses the specified char.
+     */
+    public static Parser<Character, Character> chr(char c) {
+        return satisfy(ic -> ic == c);
+    }
+
+    /**
      * A parser which parses a signed integer.
      */
     public static final Parser<Character, Integer> intr =
@@ -88,7 +100,7 @@ public abstract class Text {
             int acc = 0;
             c = state.current();
             if (!Character.isDigit(c)) {
-                return error(consumed, state);
+                return createConsError(consumed, state, "integer");
             }
 
             consumed = true;
@@ -153,7 +165,7 @@ public abstract class Text {
                 }
             }
 
-            return error(consumed, state);
+            return createConsError(consumed, state, "string");
         };
     }
 

@@ -20,7 +20,7 @@ public abstract class Combinators {
     /**
      * Construct an error Reply indicating the end of the input has been reached.
      */
-    static <S, A> Reply<S, A> endOfInput(State<S> state) {
+    public static <S, A> Reply<S, A> endOfInput(State<S> state) {
         return Reply.<S, A>error(
             Message.Ref.of(() ->
                 Message.of(state.position(), List.empty())
@@ -439,5 +439,16 @@ public abstract class Combinators {
                 xs -> retn(xs.add(x))
             )
         );
+    }
+
+    /**
+     * A parser which parses an OPEN symbol, then applies parser p, then parses a CLOSE symbol,
+     * and returns the result of p.
+     */
+    public static <S, A, OPEN, CLOSE> Parser<S, A> between(
+            Parser<S, OPEN> open,
+            Parser<S, CLOSE> close,
+            Parser<S, A> p) {
+        return then(open, bind(p, a -> then(close, retn(a))));
     }
 }
