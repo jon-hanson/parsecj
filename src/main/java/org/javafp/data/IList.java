@@ -1,9 +1,6 @@
 package org.javafp.data;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -13,29 +10,53 @@ import java.util.stream.StreamSupport;
 /**
  * Simple recursive, immutable linked list.
  */
-public abstract class List<T> implements Iterable<T> {
+public abstract class IList<T> implements Iterable<T> {
 
-    public static <T> List<T> empty() {
+    public static <T> IList<T> empty() {
         return Empty.EMPTY;
     }
 
-    public static <T> List<T> of(T elem) {
+    public static <T> IList<T> of(T elem) {
         return Empty.EMPTY.add(elem);
     }
 
-    public static <T> List<T> of(T... elems) {
-        List<T> list = Empty.EMPTY;
+    public static <T> IList<T> of(T... elems) {
+        IList<T> list = Empty.EMPTY;
         for (int i = elems.length - 1; i >= 0; --i) {
             list = list.add(elems[i]);
         }
         return list;
     }
 
-    public static <T> List<T> add(T head, List<T> tail) {
+    public static <T> IList<T> add(T head, IList<T> tail) {
         return new Node<T>(head, tail);
     }
 
-    public List<T> add(T head) {
+    public static <T> List<T> toJList(IList<T> list) {
+        final List<T> result = new LinkedList<T>();
+        for (; !list.isEmpty(); list = list.tail()) {
+            result.add(list.head());
+        }
+        return result;
+    }
+
+    public static String listToString(IList<Character> list) {
+        final StringBuilder sb = new StringBuilder();
+        for (; !list.isEmpty(); list = list.tail()) {
+            sb.append(list.head());
+        }
+        return sb.toString();
+    }
+
+    public static IList<Character> listToString(String s) {
+        IList<Character> list = Empty.EMPTY;
+        for (int i = s.length() - 1; i >= 0; --i) {
+            list = list.add(s.charAt(i));
+        }
+        return list;
+    }
+
+    public IList<T> add(T head) {
         return new Node<T>(head, this);
     }
 
@@ -43,7 +64,7 @@ public abstract class List<T> implements Iterable<T> {
 
     public abstract T head();
 
-    public abstract List<T> tail();
+    public abstract IList<T> tail();
 
     protected abstract StringBuilder asString(StringBuilder sb);
 
@@ -51,26 +72,24 @@ public abstract class List<T> implements Iterable<T> {
     public boolean equals(Object rhs) {
         if (this == rhs) return true;
         if (rhs == null || getClass() != rhs.getClass()) return false;
-
-
-        return equals((List<T>)rhs);
+        return equals((IList<T>)rhs);
     }
 
-    public abstract boolean equals(List<T> rhs);
+    public abstract boolean equals(IList<T> rhs);
 
     public abstract <S> S match(Function<Node<T>, S> node, Function<Empty<T>, S> empty);
 
-    public abstract List<T> add(List<T> l);
+    public abstract IList<T> add(IList<T> l);
 
     public abstract int length();
 
-    public List<T> reverse() {
+    public IList<T> reverse() {
         return reverse(empty());
     }
 
-    protected abstract List<T> reverse(List<T> acc);
+    protected abstract IList<T> reverse(IList<T> acc);
 
-    public abstract <U> List<U> map(Function<T, U> f);
+    public abstract <U> IList<U> map(Function<T, U> f);
 
     public abstract T foldr(BinaryOperator<T> f, T z);
     public abstract T foldl(BinaryOperator<T> f, T z);
@@ -90,7 +109,7 @@ public abstract class List<T> implements Iterable<T> {
 
     public abstract Iterator<T> iterator();
 
-    public static class Empty<T> extends List<T> {
+    public static class Empty<T> extends IList<T> {
         static final Empty EMPTY = new Empty();
 
         private Empty() {
@@ -107,7 +126,7 @@ public abstract class List<T> implements Iterable<T> {
         }
 
         @Override
-        public List<T> tail() {
+        public IList<T> tail() {
             throw new UnsupportedOperationException("Cannot take the tail of an empty list");
         }
 
@@ -117,7 +136,7 @@ public abstract class List<T> implements Iterable<T> {
         }
 
         @Override
-        public boolean equals(List<T> rhs) {
+        public boolean equals(IList<T> rhs) {
             return rhs.isEmpty();
         }
 
@@ -132,7 +151,7 @@ public abstract class List<T> implements Iterable<T> {
         }
 
         @Override
-        public List<T> add(List<T> l) {
+        public IList<T> add(IList<T> l) {
             return l;
         }
 
@@ -143,12 +162,12 @@ public abstract class List<T> implements Iterable<T> {
         }
 
         @Override
-        protected List<T> reverse(List<T> acc) {
+        protected IList<T> reverse(IList<T> acc) {
             return acc;
         }
 
         @Override
-        public <U> List<U> map(Function<T, U> f) {
+        public <U> IList<U> map(Function<T, U> f) {
             return EMPTY;
         }
 
@@ -215,12 +234,12 @@ public abstract class List<T> implements Iterable<T> {
         }
     }
 
-    public static class Node<T> extends List<T> {
+    public static class Node<T> extends IList<T> {
 
         public final T head;
-        public final List<T> tail;
+        public final IList<T> tail;
 
-        Node(T head, List<T> tail) {
+        Node(T head, IList<T> tail) {
             this.head = head;
             this.tail = tail;
         }
@@ -236,7 +255,7 @@ public abstract class List<T> implements Iterable<T> {
         }
 
         @Override
-        public List<T> tail() {
+        public IList<T> tail() {
             return tail;
         }
 
@@ -253,7 +272,7 @@ public abstract class List<T> implements Iterable<T> {
         }
 
         @Override
-        public boolean equals(List<T> rhs) {
+        public boolean equals(IList<T> rhs) {
             if (rhs.isEmpty()) {
                 return false;
             } else {
@@ -267,13 +286,13 @@ public abstract class List<T> implements Iterable<T> {
         }
 
         @Override
-        public List<T> add(List<T> l) {
+        public IList<T> add(IList<T> l) {
             return new Node<T>(head, tail.add(l));
         }
 
         @Override
         public int length() {
-            List<T> pos = this;
+            IList<T> pos = this;
             int length = 0;
             while (!pos.isEmpty()) {
                 ++length;
@@ -284,12 +303,12 @@ public abstract class List<T> implements Iterable<T> {
         }
 
         @Override
-        protected List<T> reverse(List<T> acc) {
+        protected IList<T> reverse(IList<T> acc) {
             return tail.reverse(acc.add(head));
         }
 
         @Override
-        public <U> List<U> map(Function<T, U> f) {
+        public <U> IList<U> map(Function<T, U> f) {
             return new Node<U>(f.apply(head), tail.map(f));
         }
 
@@ -326,7 +345,7 @@ public abstract class List<T> implements Iterable<T> {
         public Iterator<T> iterator() {
             return new Iterator<T>(){
 
-                List<T> pos = Node.this;
+                IList<T> pos = Node.this;
 
                 @Override
                 public boolean hasNext() {

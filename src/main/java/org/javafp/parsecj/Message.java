@@ -1,6 +1,6 @@
 package org.javafp.parsecj;
 
-import org.javafp.data.List;
+import org.javafp.data.IList;
 
 import java.util.function.Supplier;
 
@@ -9,15 +9,15 @@ import java.util.function.Supplier;
  */
 public class Message<S> {
 
-    public static <S> Message<S> of(State<S> state, List<String> expected) {
+    public static <S> Message<S> of(State<S> state, IList<String> expected) {
         return new Message<S>(state.position(), state.current(), expected);
     }
 
-    public static <S> Message<S> of(int pos, S sym, List<String> expected) {
+    public static <S> Message<S> of(int pos, S sym, IList<String> expected) {
         return new Message<S>(pos, sym, expected);
     }
 
-    public static <S> Message<S> of(int pos, List<String> expected) {
+    public static <S> Message<S> of(int pos, IList<String> expected) {
         return new Message<S>(pos, null, expected);
     }
 
@@ -58,7 +58,7 @@ public class Message<S> {
 
         public Ref<S> expect(String name) {
             return Ref.of(() ->
-                Message.of(this.get().pos, this.get().sym, List.of(name))
+                Message.of(this.get().pos, this.get().sym, IList.of(name))
             );
         }
 
@@ -75,9 +75,9 @@ public class Message<S> {
     public final S sym;
 
     // The names of the productions that were expected.
-    public final List<String> expected;
+    public final IList<String> expected;
 
-    public Message(int pos, S sym, List<String> expected) {
+    public Message(int pos, S sym, IList<String> expected) {
         this.pos = pos;
         this.sym = sym;
         this.expected = expected;
@@ -117,8 +117,8 @@ public class Message<S> {
     public String toString() {
         return "Message{" +
             "position=" + pos +
-            ", sym=" + sym +
-            ", expected=" + expected +
+            ", sym=<" + sym +
+            ">, expected=" + expected +
             '}';
     }
 }

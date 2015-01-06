@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * An interface for parseable symbol streams.
+ * An interface for parseable, immutable symbol streams.
  * @param <S> Input stream symbol type.
  */
 public interface State<S> {
@@ -31,11 +31,11 @@ public interface State<S> {
 
     List<S> current(int n);
 
-    default State<S> inc() {
-        return inc(1);
+    default State<S> next() {
+        return next(1);
     }
 
-    State<S> inc(int n);
+    State<S> next(int n);
 }
 
 interface CharState extends State<Character> {
@@ -83,12 +83,12 @@ class StringState implements CharState {
     }
 
     @Override
-    public StringState inc() {
+    public StringState next() {
         return new StringState(symbols, pos + 1);
     }
 
     @Override
-    public StringState inc(int n) {
+    public StringState next(int n) {
         return new StringState(symbols, pos + n);
     }
 
@@ -139,12 +139,12 @@ class ArrayState<S> implements State<S> {
     }
 
     @Override
-    public State<S> inc() {
+    public State<S> next() {
         return new ArrayState<S>(symbols, pos + 1);
     }
 
     @Override
-    public State<S> inc(int n) {
+    public State<S> next(int n) {
         return new ArrayState<S>(symbols, pos + n);
     }
 }

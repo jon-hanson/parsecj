@@ -106,12 +106,15 @@ public abstract class Grammar {
         return prod.chainl1(addSub);
     }
 
+    static {
+        expr.set(() -> expr());
+    }
+
     // Use a variable to help the type inference.
     private static final Parser<Character, Void> end = eof();
 
     // parser = expr eof
     private static Parser<Character, Expr> parser() {
-        expr.set(() -> expr());
         return expr.bind(x -> end.then(retn(x)));
     }
 

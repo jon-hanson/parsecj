@@ -5,7 +5,36 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public interface Node {
+    public static Node nul() {
+        return NullNode.instance;
+    }
+
+    public static Node bool(boolean value) {
+        return new BooleanNode(value);
+    }
+
+    public static Node number(double value) {
+        return new NumberNode(value);
+    }
+
+    public static Node text(String value) {
+        return new TextNode(value);
+    }
+
+    public static Node array(List<Node> value) {
+        return new ArrayNode(value);
+    }
+
+    public static Node object(LinkedHashMap<String, Node> value) {
+        return new ObjectNode(value);
+    }
+
     public static final class NullNode implements Node {
+        public static final NullNode instance = new NullNode();
+
+        private NullNode() {
+        }
+
         @Override
         public String toString() {
             return "null";

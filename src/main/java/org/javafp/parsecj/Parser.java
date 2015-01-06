@@ -1,6 +1,6 @@
 package org.javafp.parsecj;
 
-import org.javafp.data.List;
+import org.javafp.data.IList;
 
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -104,19 +104,19 @@ public interface Parser<S, A> {
         return Combinators.chainl1(this, op);
     }
 
-    default Parser<S, List<A>> many() {
+    default Parser<S, IList<A>> many() {
         return Combinators.many(this);
     }
 
-    default Parser<S, List<A>> many1() {
+    default Parser<S, IList<A>> many1() {
         return Combinators.many1(this);
     }
 
-    default <SEP> Parser<S, List<A>> sepBy(Parser<S, SEP> sep) {
+    default <SEP> Parser<S, IList<A>> sepBy(Parser<S, SEP> sep) {
         return Combinators.sepBy(this, sep);
     }
 
-    default <SEP> Parser<S, List<A>> sepBy1 (Parser<S, SEP> sep) {
+    default <SEP> Parser<S, IList<A>> sepBy1 (Parser<S, SEP> sep) {
         return Combinators.sepBy1(this, sep);
     }
 }

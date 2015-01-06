@@ -1,6 +1,6 @@
 package org.javafp.parsecj;
 
-import org.javafp.data.List;
+import org.javafp.data.IList;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,7 +17,7 @@ public abstract class Text {
      * Helper method to create a ConsumedT response.
      */
     public static <S, A> ConsumedT<S, A> createConsError(boolean consumed, State<S> state, String expected) {
-        final List<String> expList = List.of(expected);
+        final IList<String> expList = IList.of(expected);
         return consumed ?
             ConsumedT.consumed(() ->
                 Reply.error(
@@ -59,13 +59,17 @@ public abstract class Text {
     /**
      * A parser which parses whitespace.
      */
-    public static Parser<Character, Void> wspaces = skipMany(satisfy(c -> Character.isWhitespace(c)));
+    public static Parser<Character, Void> wspaces = skipMany(
+        satisfy(
+            c -> Character.isWhitespace(c)
+        )
+    );
 
     /**
      * A parser which parses the specified char.
      */
     public static Parser<Character, Character> chr(char c) {
-        return satisfy(ic -> ic == c);
+        return label(satisfy(ic -> ic == c), "'" + c + "'");
     }
 
     /**
@@ -84,11 +88,11 @@ public abstract class Text {
             switch (c) {
                 case '-':
                     signPos = false;
-                    state = state.inc();
+                    state = state.next();
                     consumed = true;
                     break;
                 case '+':
-                    state = state.inc();
+                    state = state.next();
                     consumed = true;
                     break;
             }
@@ -107,7 +111,7 @@ public abstract class Text {
 
             do {
                 acc = acc * 10 + (c - '0');
-                state = state.inc();
+                state = state.next();
                 if (state.end()) {
                     break;
                 }
@@ -121,7 +125,7 @@ public abstract class Text {
                 () -> Reply.ok(
                     res,
                     tail,
-                    Message.Ref.of(() -> Message.of(tail, List.empty()))
+                    Message.Ref.of(() -> Message.of(tail, IList.empty()))
                 )
             );
         };
@@ -148,7 +152,7 @@ public abstract class Text {
             int i = 0;
             while (c == value.charAt(i)) {
                 consumed = true;
-                state = state.inc();
+                state = state.next();
                 c = state.current();
                 ++i;
                 if (i == value.length()) {
@@ -157,7 +161,7 @@ public abstract class Text {
                         () -> Reply.ok(
                             value,
                             tail,
-                            Message.Ref.of(() -> Message.of(tail, List.empty()))
+                            Message.Ref.of(() -> Message.of(tail, IList.empty()))
                         )
                     );
                 } else if (state.end()) {
@@ -183,7 +187,7 @@ public abstract class Text {
                 final State<Character> tail = state;
                 return ConsumedT.empty(
                     Reply.error(
-                        Message.Ref.of(() -> Message.of(tail, List.empty()))
+                        Message.Ref.of(() -> Message.of(tail, IList.empty()))
                     )
                 );
             }
@@ -191,7 +195,7 @@ public abstract class Text {
             final StringBuilder sb = new StringBuilder();
             do {
                 sb.append(c);
-                state = state.inc();
+                state = state.next();
                 if (state.end()) {
                     break;
                 }
@@ -204,7 +208,7 @@ public abstract class Text {
                 () -> Reply.ok(
                     sb.toString(),
                     tail,
-                    Message.Ref.of(() -> Message.of(tail, List.empty()))
+                    Message.Ref.of(() -> Message.of(tail, IList.empty()))
                 )
             );
         };
@@ -226,13 +230,13 @@ public abstract class Text {
             final Matcher matcher = pattern.matcher(cs);
 
             final Message.Ref<Character> msg = Message.Ref.of(
-                () -> Message.of(state, List.of("Regex '" + regex + "'"))
+                () -> Message.of(state, IList.of("Regex '" + regex + "'"))
             );
 
             if (matcher.lookingAt()) {
                 final int end = matcher.end();
                 final String str = cs.subSequence(0, end).toString();
-                return ConsumedT.consumed(() -> Reply.ok(str, state.inc(end), msg));
+                return ConsumedT.consumed(() -> Reply.ok(str, state.next(end), msg));
             } else {
                 return ConsumedT.empty(Reply.error(msg));
             }

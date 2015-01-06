@@ -9,15 +9,15 @@ import java.util.function.Function;
  */
 public abstract class Reply<S, A> {
 
-    static <S, A> Ok<S, A> ok(A result, State<S> tail, Message.Ref<S> msg) {
+    public static <S, A> Ok<S, A> ok(A result, State<S> tail, Message.Ref<S> msg) {
         return new Ok<S, A>(result, tail, msg);
     }
 
-    static <S> Ok<S, Void> ok(State<S> tail, Message.Ref<S> msg) {
+    public static <S> Ok<S, Void> ok(State<S> tail, Message.Ref<S> msg) {
         return new Ok<S, Void>(null, tail, msg);
     }
 
-    static <S, A> Error<S, A> error(Message.Ref<S> msg) {
+    public static <S, A> Error<S, A> error(Message.Ref<S> msg) {
         return new Error<S, A>(msg);
     }
 

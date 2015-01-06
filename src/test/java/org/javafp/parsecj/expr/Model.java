@@ -144,7 +144,7 @@ public class Model {
         public final BinOp op;
         public final Expr rhs;
 
-        protected BinOpExpr(Expr lhs, BinOp op, Expr rhs) {
+            protected BinOpExpr(Expr lhs, BinOp op, Expr rhs) {
             this.lhs = lhs;
             this. op = op;
             this.rhs = rhs;
