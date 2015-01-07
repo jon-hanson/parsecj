@@ -157,7 +157,7 @@ Name | Description | Returns
 ... |
 
 Combinators which take a `Parser` as a first parameter, such as `bind`,
-have been added as methods to the `Parser` interface, to allow parsers to be constructed in a fluent style.
+also exist as methods on the `Parser` interface, to allow parsers to be constructed in a fluent style.
 E.g. `p.bind(f)` is equivalent to `bind(p, f)`.
 
 ### Text

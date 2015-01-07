@@ -4,6 +4,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * A model for JSON nodes.
+ */
 public interface Node {
     public static Node nul() {
         return NullNode.instance;

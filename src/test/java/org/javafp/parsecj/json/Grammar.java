@@ -8,6 +8,9 @@ import java.util.LinkedHashMap;
 import static org.javafp.parsecj.Combinators.*;
 import static org.javafp.parsecj.Text.*;
 
+/**
+ * A grammar for JSON.
+ */
 public class Grammar {
     private static <T> Parser<Character, T> tok(Parser<Character, T> p) {
         return p.bind(x -> wspaces.then(retn(x)));
@@ -75,10 +78,10 @@ public class Grammar {
                 tok(chr(','))
             )
         ).bind(l -> retn(Node.array(IList.toJList(l))))
-        .label("array");
+            .label("array");
 
     private static class Field {
-        static Field of (String name, Node value) {
+        static Field of(String name, Node value) {
             return new Field(name, value);
         }
 

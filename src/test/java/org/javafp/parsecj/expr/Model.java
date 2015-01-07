@@ -2,6 +2,9 @@ package org.javafp.parsecj.expr;
 
 import java.util.function.BinaryOperator;
 
+/**
+ * A model for simple mathematical expressions.
+ */
 public class Model {
 
     public static Expr numExpr(double val, NumExpr.Units units) {

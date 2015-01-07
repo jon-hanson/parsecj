@@ -157,7 +157,6 @@ public abstract class IList<T> implements Iterable<T> {
 
         @Override
         public int length() {
-            // TODO:
             return 0;
         }
 
