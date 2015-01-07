@@ -387,7 +387,7 @@ public abstract class Combinators {
     }
 
     private static <S, A> Parser<S, IList<A>> manyAcc(Parser<S, A> p, IList<A> acc) {
-        return or(bind(p, x -> manyAcc(p, acc.add(x))), retn(acc));
+        return or(bind(p, x -> manyAcc(p, acc.add(x))), retn(acc.reverse()));
     }
 
     /**

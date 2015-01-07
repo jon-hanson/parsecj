@@ -107,8 +107,8 @@ public interface Node {
         public String toString() {
             return
                 value.entrySet().stream()
-                    .map(entry -> entry.getKey() + ':' + entry.getValue())
-                    .collect(Collectors.joining(";", "{", "}"));
+                    .map(entry -> "\"" + entry.getKey() + "\":" + entry.getValue())
+                    .collect(Collectors.joining(",", "{", "}"));
         }
     }
 }

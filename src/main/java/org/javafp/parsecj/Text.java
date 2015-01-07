@@ -169,7 +169,7 @@ public abstract class Text {
                 }
             }
 
-            return createConsError(consumed, state, "string");
+            return createConsError(consumed, state, "\"" + value + '"');
         };
     }
 

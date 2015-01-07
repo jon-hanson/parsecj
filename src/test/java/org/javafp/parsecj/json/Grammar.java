@@ -15,7 +15,7 @@ public class Grammar {
 
     private static Parser.Ref<Character, Node> jvalue = Parser.Ref.of();
 
-    private static Parser<Character, Node> jnull = tok(string("null").then(retn(Node.nul()))).label("null");
+    private static Parser<Character, Node> jnull = tok(string("null")).then(retn(Node.nul())).label("null");
 
     private static Parser<Character, Boolean> jtrue = tok(string("true").then(retn(Boolean.TRUE)));
     private static Parser<Character, Boolean> jfalse = tok(string("false").then(retn(Boolean.FALSE)));
@@ -57,11 +57,11 @@ public class Grammar {
         );
 
     private static Parser<Character, String> jstring =
-        between(
-            tok(chr('"')),
+        tok(between(
+            chr('"'),
             chr('"'),
             many(stringChar).bind(l -> retn(IList.listToString(l)))
-        );
+        ));
 
     private static Parser<Character, Node> jtext =
         jstring.bind(s -> retn(Node.text(s))).label("text");
@@ -107,10 +107,10 @@ public class Grammar {
     private static Parser<Character, Node> jobject =
         between(
             tok(chr('{')),
-            chr('}'),
+            tok(chr('}')),
             sepBy(
                 jfield,
-                tok(chr(';'))
+                tok(chr(','))
             ).bind(lf -> retn(Node.object(Field.toMap(lf))))
         ).label("object");
 
@@ -128,6 +128,6 @@ public class Grammar {
     }
 
     public static Reply<Character, Node> parse(String str) {
-        return jvalue.parse(State.of(str)).getReply();
+        return wspaces.then(jvalue).parse(State.of(str)).getReply();
     }
 }
