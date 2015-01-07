@@ -32,38 +32,31 @@ public interface Parser<S, A> {
             return new Ref();
         }
 
-        public static <S, A> Ref<S, A> of(Supplier<Parser<S, A>> supplier) {
-            return new Ref(supplier);
+        public static <S, A> Ref<S, A> of(Parser<S, A> parser) {
+            return new Ref(parser);
         }
 
-        private Supplier<Parser<S, A>> supplier;
+        private Parser<S, A> parser;
 
-        private Parser<S, A> value;
-
-        private Ref(Supplier<Parser<S, A>> supplier) {
-            this.supplier = supplier;
+        private Ref(Parser<S, A> parser) {
+            this.parser = parser;
         }
 
         private Ref() {
-            this.supplier = null;
+            this.parser = null;
         }
 
-        public Parser<S, A> set(Supplier<Parser<S, A>> supplier) {
-            this.supplier = supplier;
+        public Parser<S, A> set(Parser<S, A> parser) {
+            this.parser = parser;
             return this;
         }
 
         @Override
         public synchronized Parser<S, A> get() {
-            if (supplier != null) {
-                value = supplier.get();
-                supplier = null;
-            } else {
-                if (value == null) {
-                    throw new RuntimeException("Null Parser Reference");
-                }
+            if (parser == null) {
+                throw new RuntimeException("Null Parser Reference");
             }
-            return value;
+            return parser;
         }
 
         @Override

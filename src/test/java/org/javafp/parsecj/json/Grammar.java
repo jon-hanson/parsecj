@@ -75,7 +75,7 @@ public class Grammar {
                 tok(chr(','))
             )
         ).bind(l -> retn(Node.array(IList.toJList(l))))
-            .label("array");
+        .label("array");
 
     private static class Field {
         static Field of (String name, Node value) {
@@ -115,7 +115,7 @@ public class Grammar {
         ).label("object");
 
     static {
-        jvalue.set(() ->
+        jvalue.set(
             choice(
                 jnull,
                 jbool,

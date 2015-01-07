@@ -107,7 +107,7 @@ public abstract class Grammar {
     }
 
     static {
-        expr.set(() -> expr());
+        expr.set(expr());
     }
 
     // Use a variable to help the type inference.
