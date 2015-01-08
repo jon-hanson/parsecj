@@ -64,7 +64,7 @@ int i =
 
 # Usage
 
-`org.javafp.parsecj.Parser` is the primary interface. In essence it is as follows:
+`org.javafp.parsecj.Parser` is the primary interface, and the key method is `parse`:
 
 ```java
 /**
@@ -78,8 +78,9 @@ public interface Parser<S, A> {
 }
 ```
 
-I.e. a `Parser<S, A>` is essentially a function from a `State<S>` to a `ConsumedT<T, A>`.
-The `State<S>` interface is an abstraction representing an immutable input state:
+I.e. a `Parser<S, A>` is essentially a function from a `State<S>` to a `ConsumedT<S, A>`.
+The `State<S>` interface is an abstraction representing an immutable input state.
+It provides several static `of` methods for constructing `State` instances from sequences of symbols:
 
 ```java
 /**
@@ -103,10 +104,8 @@ public interface State<S> {
 }
 ```
 
-It provides several static `of` methods for constructing `State` instances from sequences of symbols.
-In typical usage
-
-`ConsumedT<T, A>` is an intermediate result wrapper which has a `getReply()` method to obtain the parse result:
+The `ConsumedT<S, A>` object returned by `Parser.parse` is an intermediate result wrapper, typically only of interest to combinator implementations.
+It has a `getReply()` method to obtain the actual parse result, which has type `Reply<S, A>`:
 
 ```java
 /**
@@ -137,7 +136,7 @@ String msg =
 
 ### Combinators
 
-The `org.javafp.parsecj.Combinators` package provides the following basic parsers:
+The `org.javafp.parsecj.Combinators` package provides the following *basic* parsers:
 
 Name | Description | Returns
 -----|-------------|--------
@@ -146,7 +145,7 @@ Name | Description | Returns
 `eof()` | A parser which succeeds if the end of the input is reached. | UNIT.
 `fail()` | A parser which always fails. | An Error
 
-and the following combinator parsers:
+and the following *combinator* parsers:
 
 Name | Description | Returns
 -----|-------------|--------
