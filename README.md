@@ -36,7 +36,8 @@ whereby each grammar instance implements an executable parser.
 
 ## Example
 
-As a quick illustration of how this looks using ParsecJ, consider the following example.
+As a quick illustration of how a simple parser looks when implemented using ParsecJ,
+consider the following example.
 
 ```java
 intr.bind(x ->
@@ -59,34 +60,46 @@ int i =
                 retn(x+y)
             )
         )
-    ).parse(State.of("1+2")).reply().getResult();
+    ).parse(State.of("1+2")).getResult();
 ```
 
 # Usage
 
-`org.javafp.parsecj.Parser` is the primary interface, and the key method is `parse`:
+Typically parsers are defined by composing the predefined combinators provided by the library.
+In rare cases a parser combinator may need to be implemented by operating directly on the input state.
+
+## Types
+
+### Parser<S, A>
+
+All parsers implement the `org.javafp.parsecj.Parser` interface, which has following method is `parse`:
 
 ```java
-/**
- * @param <S> Input stream symbol type.
- * @param <A> Parse result type
- */
 @FunctionalInterface
 public interface Parser<S, A> {
-    ConsumedT<S, A> parse(State<S> state);
+    ConsumedT<S, A> apply(State<S> state);
+
+    default Reply<S, A> parse(State<S> state) {
+        return apply(state).getReply();
+    }
     // ...
 }
 ```
 
-I.e. a `Parser<S, A>` is essentially a function from a `State<S>` to a `ConsumedT<S, A>`.
+I.e. a `Parser<S, A>` is essentially a function from a `State<S>` to a `ConsumedT<S, A>`,
+where `S` is the input stream symbol type (usually `Character`),
+and `A` is the type of the value being parsed.
+
+The `apply` method contains the actual implementation of the parser.
+Since the `ConsumedT` type is an internediate type,
+the `parse` method is provided to apply and the parser and extract the `Reply` parse result.
+
+### State<S>
+
 The `State<S>` interface is an abstraction representing an immutable input state.
 It provides several static `of` methods for constructing `State` instances from sequences of symbols:
 
 ```java
-/**
- * An interface for parseable symbol streams.
- * @param <S> Input stream symbol type.
- */
 public interface State<S> {
     static <S> State<S> of(S[] symbols) {
         return new ArrayState<S>(symbols);
@@ -104,29 +117,30 @@ public interface State<S> {
 }
 ```
 
-The `ConsumedT<S, A>` object returned by `Parser.parse` is an intermediate result wrapper, typically only of interest to combinator implementations.
-It has a `getReply()` method to obtain the actual parse result, which has type `Reply<S, A>`:
+### Reply<S, A>
+
+The `ConsumedT<S, A>` object returned by `Parser.apply` is an intermediate result wrapper,
+typically only of interest to combinator implementations.
+Use the `ConsumedT.getReply` method to obtain the parser result wrapper,
+or use the `Parser.parse` method to bypass `ConsumedT` entirely.
+
+A `Reply` can be either a successful parse result (represented by the `Ok` type)
+or an error (represented by the `Error` type).
+Use the `match` method to handle both cases:
 
 ```java
-/**
- * A Parser result, essentially a discriminated union between a Success and an Error.
- * @param <S> Input stream symbol type.
- * @param <A> Parse result type
- */
 public abstract class Reply<S, A> {
     public abstract <B> B match(Function<Ok<S, A>, B> ok, Function<Error<S, A>, B> error);
     // ...
 }
 ```
 
-Since a `Reply` can be either a successful parse result (represented by the `Ok` type)
-or an error (represented by the `Error` type),
-use the `match` method to handle both cases:
+E.g.:
 
 ```java
 String msg =
     parser.parse("abcd")
-        .getReply().match(
+        .match(
             ok -> "Result : " + ok.getResult(),
             error -> "Error : " + error.getMsg()
         );
@@ -134,23 +148,21 @@ String msg =
 
 ## Defining Parsers
 
+A parser for a language is constructed with the library by translating the production rules comprising the language grammar into parsers,
+by using the combinators provided by the library.
+
 ### Combinators
 
-The `org.javafp.parsecj.Combinators` package provides the following *basic* parsers:
-
-Name | Description | Returns
------|-------------|--------
-`satisfy(test)` | Applies a test to the next input symbol. | The symbol.
-`satisfy(value)` | A parser which succeeds if the next input symbol equals `value`. | The symbol
-`eof()` | A parser which succeeds if the end of the input is reached. | UNIT.
-`fail()` | A parser which always fails. | An Error
-
-and the following *combinator* parsers:
+The `org.javafp.parsecj.Combinators` package provides the following basic combinator parsers:
 
 Name | Description | Returns
 -----|-------------|--------
 `retn(value)` | A parser which always succeeds | The supplied value.
-`bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser which is then applied. | Result of `q`
+`bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to `fail()` | A parser which always fails. | An Error
+`satisfy(test)` | Applies a test to the next input symbol. | The symbol.
+`satisfy(value)` | A parser which succeeds if the next input symbol equals `value`. | The symbol
+`eof()` | A parser which succeeds if the end of the input is reached. | UNIT.
+yield another parser which is then applied. | Result of `q`
 `then(p, q)` | A parser which first applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
 `or(p, q)` | A parser which first applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
 ... |
@@ -174,7 +186,7 @@ Name | Description | Returns
 `alphaNum` | A parser which parses an alphanumeric string. | The string.
 `regex(regex)` | A parser which parses a string matching the supplied regex. | The string matching the regex.
 
-### Monad
+### Parser Monad
 
 The `retn` and `bind` combinators are slightly special as they are what make `Parser` a monad.
 The key point is that they observe the [3 monad laws](https://www.haskell.org/haskellwiki/Monad_laws):
@@ -182,6 +194,13 @@ The key point is that they observe the [3 monad laws](https://www.haskell.org/ha
 1. **Left Identity** : `retn(a).bind(f)` = `f.apply(a)`
 1. **Right Identity** : `p.bind(x -> retn(x)` = `p`
 1. **Associativity** : `p.bind(f).bind(g)` = `p.bind(x -> f.apply(x).bind(g))`
+
+where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
+
+The first two laws tell us that `retn` is the identity the `bind` operation.
+The third law tells us the when we have two parser expressions being combined with the `bind` method and function `f`, then the order in which the parsers are constructed has no effect on the result.
+This becomes relevant for the fluent chaining usage,
+as it means we do not to worry too much about bracketing when chaining parsers.
 
 Meanwhile the `fail` parser is a monadic zero,
 since if combined with any other parser the result is always a parser that fails.
