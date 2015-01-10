@@ -60,10 +60,13 @@ int i =
                 retn(x+y)
             )
         )
-    ).parse(State.of("1+2")).reply().getResult();
+    ).parse(State.of("1+2")).getResult();
 ```
 
 # Usage
+
+Typically parsers are defined by composing the predefined combinators provided by the library.
+In rare cases a parser combinator may need to be implemented by operating directly on the input state.
 
 ## Types
 
@@ -74,7 +77,11 @@ All parsers implement the `org.javafp.parsecj.Parser` interface, which has follo
 ```java
 @FunctionalInterface
 public interface Parser<S, A> {
-    ConsumedT<S, A> parse(State<S> state);
+    ConsumedT<S, A> apply(State<S> state);
+
+    default Reply<S, A> parse(State<S> state) {
+        return apply(state).getReply();
+    }
     // ...
 }
 ```
@@ -82,6 +89,10 @@ public interface Parser<S, A> {
 I.e. a `Parser<S, A>` is essentially a function from a `State<S>` to a `ConsumedT<S, A>`,
 where `S` is the input stream symbol type (usually `Character`),
 and `A` is the type of the value being parsed.
+
+The `apply` method contains the actual implementation of the parser.
+Since the `ConsumedT` type is an internediate type,
+the `parse` method is provided to apply and the parser and extract the `Reply` parse result.
 
 ### State<S>
 
@@ -108,9 +119,14 @@ public interface State<S> {
 
 ### Reply<S, A>
 
-The `ConsumedT<S, A>` object returned by `Parser.parse` is an intermediate result wrapper,
+The `ConsumedT<S, A>` object returned by `Parser.apply` is an intermediate result wrapper,
 typically only of interest to combinator implementations.
-It has a `getReply()` method to obtain the parser result wrapper, which has type `Reply<S, A>`:
+Use the `ConsumedT.getReply` method to obtain the parser result wrapper,
+or use the `Parser.parse` method to bypass `ConsumedT` entirely.
+
+A `Reply` can be either a successful parse result (represented by the `Ok` type)
+or an error (represented by the `Error` type).
+Use the `match` method to handle both cases:
 
 ```java
 public abstract class Reply<S, A> {
@@ -119,14 +135,12 @@ public abstract class Reply<S, A> {
 }
 ```
 
-Since a `Reply` can be either a successful parse result (represented by the `Ok` type)
-or an error (represented by the `Error` type),
-use the `match` method to handle both cases, e.g.:
+E.g.:
 
 ```java
 String msg =
     parser.parse("abcd")
-        .getReply().match(
+        .match(
             ok -> "Result : " + ok.getResult(),
             error -> "Error : " + error.getMsg()
         );
@@ -134,10 +148,10 @@ String msg =
 
 ## Defining Parsers
 
-### Combinators
+A parser for a language is constructed with the library by translating the production rules comprising the language grammar into parsers,
+by using the combinators provided by the library.
 
-Typically parsers are defined by composing the predefined combinators provided by the library.
-In rare cases a parser combinator may need to be implemented by operating directly on the input state.
+### Combinators
 
 The `org.javafp.parsecj.Combinators` package provides the following basic combinator parsers:
 
@@ -181,4 +195,11 @@ The key point is that they observe the [3 monad laws](https://www.haskell.org/ha
 1. **Right Identity** : `p.bind(x -> retn(x)` = `p`
 1. **Associativity** : `p.bind(f).bind(g)` = `p.bind(x -> f.apply(x).bind(g))`
 
-The first two laws tell us that `retn` is the identity value of `bind`.
+where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
+
+The first two laws tell us that `retn` is the identity the `bind` operation.
+The third law tells us the when we have two parser expressions being combined with the `bind` method and function `f`, then the order in which the parsers are constructed has no effect on the result.
+This becomes relevant for the fluent chaining usage,
+as it means we do not to worry too much about bracketing when chaining parsers.
+
+#
