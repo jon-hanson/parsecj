@@ -14,7 +14,7 @@ public class Grammar {
     // Forward declare expr to allow for circular references.
     private static final Parser.Ref<Character, Double> expr = Parser.Ref.of();
 
-    // bin
+    // bin-op ::= '+' | '-' | '*' | '/'
     private static final Parser<Character, BinaryOperator<Double>> binOp =
         choice(
             chr('+').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l + r)),
@@ -23,6 +23,7 @@ public class Grammar {
             chr('/').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l / r))
         );
 
+    // bin-expr ::= '(' expr bin-op expr ')'
     private static final Parser<Character, Double> binOpExpr =
         chr('(')
             .then(expr.bind(
@@ -31,12 +32,11 @@ public class Grammar {
                         r -> chr(')')
                             .then(retn(op.apply(l, r)))))));
 
-    private static final Parser<Character, Void> end = eof();
-
     static {
         expr.set(choice(dble, binOpExpr));
     }
 
+    private static final Parser<Character, Void> end = eof();
     private static final Parser<Character, Double> parser = expr.bind(d -> end.then(retn(d)));
 
     private static void evaluate(String s) throws Exception {
