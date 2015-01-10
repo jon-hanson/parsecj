@@ -216,7 +216,7 @@ The grammar for this language is as follows:
 ```
 expr     ::= number | bin-expr
 bin-expr ::= '(' expr op expr ')'
-op       ::= '+' | '-' | '*' | '/'
+bin-op   ::= '+' | '-' | '*' | '/'
 ```
 
 Valid expressions conforming to this language include:
@@ -227,5 +227,39 @@ Valid expressions conforming to this language include:
 ((1.2*2.3)+4.5)
 ```
 
-Typically parsers will construct values from a model for the language,
-in this case we will simply construct the evaluated result of each expression.
+Typically parsers will construct values using aset of model classes for the language.
+In this case we will simply construct the evaluated result of each expression.
+The operators will be parsed into binary functions which implement the operator.
+
+The above grammar can be translated into the following Java implementation:
+
+```java
+// Forward declare expr to allow for circular references.
+private static final Parser.Ref<Character, Double> expr = Parser.Ref.of();
+
+// bin-op ::= '+' | '-' | '*' | '/'
+private static final Parser<Character, BinaryOperator<Double>> binOp =
+    choice(
+        chr('+').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l + r)),
+        chr('-').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l - r)),
+        chr('*').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l * r)),
+        chr('/').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l / r))
+    );
+
+// bin-expr ::= '(' expr bin-op expr ')'
+private static final Parser<Character, Double> binOpExpr =
+    chr('(')
+        .then(expr.bind(
+            l -> binOp.bind(
+                op -> expr.bind(
+                    r -> chr(')')
+                        .then(retn(op.apply(l, r)))))));
+
+static {
+    // expr ::= dble | bin-expr
+    expr.set(choice(dble, binOpExpr));
+}
+
+private static final Parser<Character, Void> end = eof();
+private static final Parser<Character, Double> parser = expr.bind(d -> end.then(retn(d)));
+```
