@@ -69,7 +69,7 @@ public abstract class Text {
      * A parser which parses the specified char.
      */
     public static Parser<Character, Character> chr(char c) {
-        return label(satisfy(ic -> ic == c), "'" + c + "'");
+        return satisfy(c);
     }
 
     /**

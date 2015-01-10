@@ -18,11 +18,11 @@ public class ParserTest {
     }
 
     private double parseDbl(String s) throws Exception {
-        return dble_eof.parse(State.of(s)).getReply().getResult();
+        return dble_eof.apply(State.of(s)).getReply().getResult();
     }
 
     private Reply<Character, Double> parseErrorDbl(String s) {
-        return dble_eof.parse(State.of(s)).getReply();
+        return dble_eof.apply(State.of(s)).getReply();
     }
 
     @Test
@@ -64,9 +64,9 @@ public class ParserTest {
                 satisfy('b').bind(b ->
                     retn("" + a + b)));
 
-        Assert.assertTrue("'a' should fail to parse", isError(p.parse(State.of("a")).getReply()));
-        Assert.assertTrue("'b' should fail to parse", isError(p.parse(State.of("b")).getReply()));
-        Assert.assertEquals("'ab' should parse", "ab", p.parse(State.of("ab")).getReply().getResult());
+        Assert.assertTrue("'a' should fail to parse", isError(p.apply(State.of("a")).getReply()));
+        Assert.assertTrue("'b' should fail to parse", isError(p.apply(State.of("b")).getReply()));
+        Assert.assertEquals("'ab' should parse", "ab", p.apply(State.of("ab")).getReply().getResult());
     }
 
     @Test
@@ -76,9 +76,9 @@ public class ParserTest {
                 satisfy('b').then(
                     retn("" + "ab")));
 
-        Assert.assertTrue("'a' should fail to parse", isError(p.parse(State.of("a")).getReply()));
-        Assert.assertTrue("'b' should fail to parse", isError(p.parse(State.of("b")).getReply()));
-        Assert.assertEquals("'ab' should parse", "ab", p.parse(State.of("ab")).getReply().getResult());
+        Assert.assertTrue("'a' should fail to parse", isError(p.apply(State.of("a")).getReply()));
+        Assert.assertTrue("'b' should fail to parse", isError(p.apply(State.of("b")).getReply()));
+        Assert.assertEquals("'ab' should parse", "ab", p.apply(State.of("ab")).getReply().getResult());
     }
 
 
@@ -86,8 +86,8 @@ public class ParserTest {
     public void testOr() throws Exception {
         final Parser<Character, Character> p = satisfy('a').or(satisfy('b'));
 
-        Assert.assertEquals("'a' should parse", 'a', p.parse(State.of("a")).getReply().getResult().charValue());
-        Assert.assertEquals("'b' should parse", 'b', p.parse(State.of("b")).getReply().getResult().charValue());
-        Assert.assertTrue("'c' should fail to parse", isError(p.parse(State.of("c")).getReply()));
+        Assert.assertEquals("'a' should parse", 'a', p.apply(State.of("a")).getReply().getResult().charValue());
+        Assert.assertEquals("'b' should parse", 'b', p.apply(State.of("b")).getReply().getResult().charValue());
+        Assert.assertTrue("'c' should fail to parse", isError(p.apply(State.of("c")).getReply()));
     }
 }

@@ -182,3 +182,31 @@ The key point is that they observe the [3 monad laws](https://www.haskell.org/ha
 1. **Left Identity** : `retn(a).bind(f)` = `f.apply(a)`
 1. **Right Identity** : `p.bind(x -> retn(x)` = `p`
 1. **Associativity** : `p.bind(f).bind(g)` = `p.bind(x -> f.apply(x).bind(g))`
+
+Meanwhile the `fail` parser is a monadic zero,
+since if combined with any other parser the result is always a parser that fails.
+
+# Example
+
+The `test/org.javafp.parsecj.expr.Grammar` class provides a simple illustration of how this library can be used.
+It implements a parser for simple mathematical expressions.
+The parser result is the evaluated result of the expression.
+
+The grammar for this language is as follows:
+
+```
+expr     ::= number | bin-expr
+bin-expr ::= '(' expr op expr ')'
+op       ::= '+' | '-' | '*' | '/'
+```
+
+Valid expressions conforming to this language include:
+
+```
+1
+(1.2+2.3)
+((1.2*2.3)+4.5)
+```
+
+Typically parsers will construct values from a model for the language,
+in this case we will simply construct the evaluated result of each expression.

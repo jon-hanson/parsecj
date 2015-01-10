@@ -20,7 +20,7 @@ public interface Parser<S, A> {
     }
 
     public static <S, A> Reply<S, A> parse(Parser<S, A> parser, State<S> state) {
-        return parser.parse(state).getReply();
+        return parser.apply(state).getReply();
     }
 
     /**
@@ -60,18 +60,26 @@ public interface Parser<S, A> {
         }
 
         @Override
-        public ConsumedT<S, A> parse(State<S> input) {
-            return get().parse(input);
+        public ConsumedT<S, A> apply(State<S> input) {
+            return get().apply(input);
         }
     }
 
     /**
      * Parse the input state
-     * @return a ConsumedT result parse result
+     * @return a ConsumedT result
      */
-    ConsumedT<S, A> parse(State<S> state);
+    ConsumedT<S, A> apply(State<S> state);
 
-    // Helper functions to call combinators in a fluent style.
+    /**
+     * Parse the input state, extract the result and apply one of the supplied functions.
+     * @return a parse result
+     */
+    default Reply<S, A> parse(State<S> state) {
+        return apply(state).getReply();
+    }
+
+    // Helper functions to chain combinators in a fluent style.
 
     default <B> Parser<S, B> bind(Function<A, Parser<S, B>> f) {
         return Combinators.bind(this, f);

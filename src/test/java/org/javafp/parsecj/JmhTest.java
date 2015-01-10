@@ -1,6 +1,6 @@
 package org.javafp.parsecj;
 
-import org.javafp.parsecj.expr.GrammarTest;
+import org.javafp.parsecj.expr2.GrammarTest;
 import org.junit.Test;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.runner.Runner;

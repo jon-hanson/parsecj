@@ -2,8 +2,10 @@ package org.javafp.parsecj.json;
 
 import org.javafp.data.IList;
 import org.javafp.parsecj.*;
+import org.javafp.parsecj.Error;
 
 import java.util.LinkedHashMap;
+import java.util.function.Function;
 
 import static org.javafp.parsecj.Combinators.*;
 import static org.javafp.parsecj.Text.*;
@@ -130,7 +132,9 @@ public class Grammar {
         );
     }
 
+    public static final Parser<Character, Node> parser = wspaces.then(jvalue);
+
     public static Reply<Character, Node> parse(String str) {
-        return wspaces.then(jvalue).parse(State.of(str)).getReply();
+        return parser.parse(State.of(str));
     }
 }

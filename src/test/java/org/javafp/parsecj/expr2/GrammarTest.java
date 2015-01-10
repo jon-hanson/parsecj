@@ -1,4 +1,4 @@
-package org.javafp.parsecj.expr;
+package org.javafp.parsecj.expr2;
 
 import org.javafp.parsecj.JmhTest;
 import org.javafp.parsecj.Reply;
