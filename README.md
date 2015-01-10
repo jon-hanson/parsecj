@@ -173,3 +173,12 @@ Name | Description | Returns
 `string(s)` | A parser which parses the supplied string. | The string.
 `alphaNum` | A parser which parses an alphanumeric string. | The string.
 `regex(regex)` | A parser which parses a string matching the supplied regex. | The string matching the regex.
+
+### Monad
+
+The `retn` and `bind` combinators are slightly special as they are what make `Parser` a monad.
+The key point is that they observe the [3 monad laws](https://www.haskell.org/haskellwiki/Monad_laws):
+
+1. **Left Identity** : `retn(a).bind(f)` = `f.apply(a)`
+1. **Right Identity** : `p.bind(x -> retn(x)` = `p`
+1. **Associativity** : `p.bind(f).bind(g)` = `p.bind(x -> f.apply(x).bind(g))`

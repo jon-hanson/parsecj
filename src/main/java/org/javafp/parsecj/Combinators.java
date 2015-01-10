@@ -93,6 +93,7 @@ public abstract class Combinators {
     }
 
     /**
+     * Apply the first parser, then apply the second parser and return the result.
      * Optimisation for bind(p, x -> q) - i.e. discard x, the result of the first parser, p.
      */
     public static <S, A, B> Parser<S, B> then(Parser<S, ? extends A> p, Parser<S, B> q) {
