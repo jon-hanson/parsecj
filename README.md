@@ -7,7 +7,6 @@ ParsecJ
 It is based on the
 [Parsec paper](http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf),
 which describes a monadic parsing framework implemented in Haskell.
-Note, the implementation of the Haskell Parsec library has changed considerably since the paper.
 
 ## Parser Combinators
 
@@ -121,11 +120,11 @@ public interface State<S> {
 
 The `ConsumedT<S, A>` object returned by `Parser.apply` is an intermediate result wrapper,
 typically only of interest to combinator implementations.
-Use the `ConsumedT.getReply` method to obtain the parser result wrapper,
+The `ConsumedT.getReply` method returns the parser result wrapper,
 or use the `Parser.parse` method to bypass `ConsumedT` entirely.
 
-A `Reply` can be either a successful parse result (represented by the `Ok` type)
-or an error (represented by the `Error` type).
+A `Reply` can be either a successful parse result (represented by the `Ok` subtype)
+or an error (represented by the `Error` subtype).
 Use the `match` method to handle both cases:
 
 ```java
@@ -148,7 +147,7 @@ String msg =
 
 ## Defining Parsers
 
-A parser for a language is constructed with the library by translating the production rules comprising the language grammar into parsers,
+A parser for a language is constructed by translating the production rules comprising the language grammar into parsers,
 by using the combinators provided by the library.
 
 ### Combinators
@@ -198,47 +197,49 @@ The key point is that they observe the [3 monad laws](https://www.haskell.org/ha
 where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
 
 The first two laws tell us that `retn` is the identity the `bind` operation.
-The third law tells us the when we have two parser expressions being combined with the `bind` method and function `f`, then the order in which the parsers are constructed has no effect on the result.
-This becomes relevant for the fluent chaining usage,
+The third law tells us the when we have two parser expressions being combined with the `bind` method and function `f`,
+then the order in which the parsers are constructed has no effect on the result.
+This becomes relevant when using the fluent chaining,
 as it means we do not to worry too much about bracketing when chaining parsers.
+I.e. it is analgous to say, associativity of addition over numbers,
+where *a+b+c* yields the same result regardless of whether we evaluate it as *(a+c)+c* or *(a+(b+c)*.
 
-Meanwhile the `fail` parser is a monadic zero,
+Meanwhile, the `fail` parser is a monadic zero,
 since if combined with any other parser the result is always a parser that fails.
 
 # Example
 
 The `test/org.javafp.parsecj.expr.Grammar` class provides a simple illustration of how this library can be used.
 It implements a parser for simple mathematical expressions.
-The parser result is the evaluated result of the expression.
 
 The grammar for this language is as follows:
 
 ```
-expr     ::= number | bin-expr
-bin-expr ::= '(' expr op expr ')'
-bin-op   ::= '+' | '-' | '*' | '/'
+expr      ::= number | binOpExpr
+binOpExpr ::= '(' expr binOp expr ')'
+binOp     ::= '+' | '-' | '*' | '/'
 ```
 
 Valid expressions conforming to this language include:
 
 ```
 1
-(1.2+2.3)
-((1.2*2.3)+4.5)
+(1.2+3.4)
+((1.2*3.4)+5.6)
 ```
 
-Typically parsers will construct values using aset of model classes for the language.
-In this case we will simply construct the evaluated result of each expression.
-The operators will be parsed into binary functions which implement the operator.
+Typically parsers will construct values using a set of model classes corresponding to the language elements.
+In this case the parsers will simply compute the evaluated result of each expression.
+The operators will be parsed into binary functions corresponding to the operator in question.
 
 The above grammar can be translated into the following Java implementation:
 
 ```java
 // Forward declare expr to allow for circular references.
-private static final Parser.Ref<Character, Double> expr = Parser.Ref.of();
+final Parser.Ref<Character, Double> expr = Parser.Ref.of();
 
-// bin-op ::= '+' | '-' | '*' | '/'
-private static final Parser<Character, BinaryOperator<Double>> binOp =
+// binOp ::= '+' | '-' | '*' | '/'
+final Parser<Character, BinaryOperator<Double>> binOp =
     choice(
         chr('+').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l + r)),
         chr('-').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l - r)),
@@ -246,8 +247,8 @@ private static final Parser<Character, BinaryOperator<Double>> binOp =
         chr('/').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l / r))
     );
 
-// bin-expr ::= '(' expr bin-op expr ')'
-private static final Parser<Character, Double> binOpExpr =
+// binOpExpr ::= '(' expr binOp expr ')'
+final Parser<Character, Double> binOpExpr =
     chr('(')
         .then(expr.bind(
             l -> binOp.bind(
@@ -255,11 +256,14 @@ private static final Parser<Character, Double> binOpExpr =
                     r -> chr(')')
                         .then(retn(op.apply(l, r)))))));
 
-static {
-    // expr ::= dble | bin-expr
-    expr.set(choice(dble, binOpExpr));
-}
+// expr ::= dble | binOpExpr
+expr.set(choice(dble, binOpExpr));
 
-private static final Parser<Character, Void> end = eof();
-private static final Parser<Character, Double> parser = expr.bind(d -> end.then(retn(d)));
+final Parser<Character, Void> end = eof();
+final Parser<Character, Double> parser = expr.bind(d -> end.then(retn(d)));
 ```
+
+**Notes**
+* The expression language is recursive. Since Java doesn't allow us to define a mutually recursive set of variables, we have to break the circularity by making the `expr` a `Parser.Ref`, which gets declared at the beginning and initalised at the end. `Ref` implements the `Parser` interface, hence it can be used as a parser.
+* In some cases Java's type inference isn't clever enough to infer the types of expressions - the four operator parsers comprising `binOp` for instance. Here we have to provide the compiler with a type hint to allow the expression to compile - `Combinators.<Character, BinaryOperator<Double>>retn`).
+* We add the `eof` parser, which succeeds if it encounters the end of the input, to bookend the `expr` parser. This ensures the parser does not incorrectly parse malformed inputs which begin with a valid expression, such as `(1+2)Z`.
