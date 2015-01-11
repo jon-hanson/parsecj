@@ -13,19 +13,19 @@ which describes a monadic parsing framework implemented in Haskell.
 The standard approach to implementing parsers for special-purpose languages
 is to use a parser generation tool,
 such as Yacc/Bison and ANTLR.
-With these tools the language is defined using a grammar language specific to the tool.
+With these tools the language is described using a grammar language specific to the tool.
 The parsing code is then generated from the language grammar.
 
 An alternative approach is to implement a
 [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser),
-whereby the production rules comprising your language grammar
+whereby the production rules comprising the grammar
 are translated by hand into parse functions.
 One limitation of this approach
 is that the extra plumbing required to implement error-handling and backtracking
 obscures the correspondence between the parsing functions and the language rules.
 
 [Monadic parser combinators](http://www.artima.com/pins1ed/combinator-parsing.html)
-are a extension of recursive descent parsing,
+are an extension of recursive descent parsing,
 which use a monad to encapsulate the plumbing.
 The framework provides the basic building blocks -
 parsers for constituent language elements such as characters, words and numbers.
@@ -45,7 +45,7 @@ intr.bind(x ->
             retn(x+y))))
 ```
 
-Here a parser is defined, which will parse and evaluate expressions of the form *a+b* where *a* and *b* are integers.
+Here a parser is defined which will parse and evaluate expressions of the form *a+b* where *a* and *b* are integers.
 The parser is constructed by taking the `intr` parser for integers, the `satisfy` parser for single symbols,
 and combining them using the `bind`, `then` and `retn` combinators.
 
@@ -71,7 +71,8 @@ In rare cases a parser combinator may need to be implemented by operating direct
 
 ### Parser<S, A>
 
-All parsers implement the `org.javafp.parsecj.Parser` interface, which has following method is `parse`:
+All parsers implement the `org.javafp.parsecj.Parser` interface,
+which has an `apply` method :
 
 ```java
 @FunctionalInterface
@@ -88,9 +89,11 @@ public interface Parser<S, A> {
 I.e. a `Parser<S, A>` is essentially a function from a `State<S>` to a `ConsumedT<S, A>`,
 where `S` is the input stream symbol type (usually `Character`),
 and `A` is the type of the value being parsed.
+For example, a parser which operates on character input and parses an integer would have type `Parser<Character, Integer>`.
 
-The `apply` method contains the actual implementation of the parser.
-Since the `ConsumedT` type is an internediate type,
+The `apply` method contains the main machinery of the parser,
+and combinators use this method to compose parsers.
+However, since the `ConsumedT` type returned by `apply` is an intermediate type,
 the `parse` method is provided to apply and the parser and extract the `Reply` parse result.
 
 ### State<S>
@@ -119,9 +122,9 @@ public interface State<S> {
 ### Reply<S, A>
 
 The `ConsumedT<S, A>` object returned by `Parser.apply` is an intermediate result wrapper,
-typically only of interest to combinator implementations.
+which is typically only of interest to combinator implementations.
 The `ConsumedT.getReply` method returns the parser result wrapper,
-or use the `Parser.parse` method to bypass `ConsumedT` entirely.
+or the `Parser.parse` method can be used to bypass `ConsumedT` entirely.
 
 A `Reply` can be either a successful parse result (represented by the `Ok` subtype)
 or an error (represented by the `Error` subtype).
@@ -148,7 +151,7 @@ String msg =
 ## Defining Parsers
 
 A parser for a language is constructed by translating the production rules comprising the language grammar into parsers,
-by using the combinators provided by the library.
+using the combinators provided by the library.
 
 ### Combinators
 
@@ -166,7 +169,7 @@ yield another parser which is then applied. | Result of `q`
 `or(p, q)` | A parser which first applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
 ... |
 
-Combinators which take a `Parser` as a first parameter, such as `bind`,
+Combinators which take a `Parser` as a first parameter, such as `bind` and `or`,
 also exist as methods on the `Parser` interface, to allow parsers to be constructed in a fluent style.
 E.g. `p.bind(f)` is equivalent to `bind(p, f)`.
 
@@ -197,20 +200,20 @@ The key point is that they observe the [3 monad laws](https://www.haskell.org/ha
 where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
 
 The first two laws tell us that `retn` is the identity the `bind` operation.
-The third law tells us the when we have two parser expressions being combined with the `bind` method and function `f`,
-then the order in which the parsers are constructed has no effect on the result.
+The third law tells us that when we have two parser expressions being combined with `bind`,
+the order in which the parsers are constructed has no effect on the result.
 This becomes relevant when using the fluent chaining,
 as it means we do not to worry too much about bracketing when chaining parsers.
-I.e. it is analgous to say, associativity of addition over numbers,
-where *a+b+c* yields the same result regardless of whether we evaluate it as *(a+c)+c* or *(a+(b+c)*.
+It is analgous to say, associativity of addition over numbers,
+where *a+b+c* yields the same result regardless of whether we evaluate it as *(a+b)+c* or *a+(b+c)*.
 
-Meanwhile, the `fail` parser is a monadic zero,
+Also of note is the `fail` parser, which is a monadic zero,
 since if combined with any other parser the result is always a parser that fails.
 
 # Example
 
-The `test/org.javafp.parsecj.expr.Grammar` class provides a simple illustration of how this library can be used.
-It implements a parser for simple mathematical expressions.
+The `test/org.javafp.parsecj.expr.Grammar` class provides a simple illustration of how this library can be used,
+by implementing a parser for simple mathematical expressions.
 
 The grammar for this language is as follows:
 
@@ -229,8 +232,10 @@ Valid expressions conforming to this language include:
 ```
 
 Typically parsers will construct values using a set of model classes corresponding to the language elements.
-In this case the parsers will simply compute the evaluated result of each expression.
-The operators will be parsed into binary functions corresponding to the operator in question.
+To jeek the example simple the parsers for this language will simply compute the evaluated result of each expression.
+I.e. numbers will be parsed into their values,
+operators will be parsed into binary functions,
+and binary operator expressions will be parsed into the evaluated rresult of the expression.
 
 The above grammar can be translated into the following Java implementation:
 
@@ -264,6 +269,6 @@ final Parser<Character, Double> parser = expr.bind(d -> end.then(retn(d)));
 ```
 
 **Notes**
-* The expression language is recursive. Since Java doesn't allow us to define a mutually recursive set of variables, we have to break the circularity by making the `expr` a `Parser.Ref`, which gets declared at the beginning and initalised at the end. `Ref` implements the `Parser` interface, hence it can be used as a parser.
-* In some cases Java's type inference isn't clever enough to infer the types of expressions - the four operator parsers comprising `binOp` for instance. Here we have to provide the compiler with a type hint to allow the expression to compile - `Combinators.<Character, BinaryOperator<Double>>retn`).
+* The expression language is recursive - `expr` refers to `binOpExpr` which refers to `expr`. Since Java doesn't allow us to define a mutually recursive set of variables, we have to break the circularity by making the `expr` a `Parser.Ref`, which gets declared at the beginning and initalised at the end. `Ref` implements the `Parser` interface, hence it can be used as a parser.
+* In some cases Java's type inference can't infer the types of expressions - the four operator parsers comprising `binOp` for instance. Here we have to provide the compiler with a type hint to allow the expression to compile - `Combinators.<Character, BinaryOperator<Double>>retn`).
 * We add the `eof` parser, which succeeds if it encounters the end of the input, to bookend the `expr` parser. This ensures the parser does not incorrectly parse malformed inputs which begin with a valid expression, such as `(1+2)Z`.
