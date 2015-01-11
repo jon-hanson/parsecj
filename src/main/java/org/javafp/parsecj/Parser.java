@@ -2,9 +2,7 @@ package org.javafp.parsecj;
 
 import org.javafp.data.IList;
 
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 /**
  * A parser is essentially a function taking the input stream and returning a ConsumedT.

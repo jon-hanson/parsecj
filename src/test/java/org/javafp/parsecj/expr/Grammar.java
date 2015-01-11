@@ -1,8 +1,6 @@
 package org.javafp.parsecj.expr;
 
-import org.javafp.parsecj.Combinators;
-import org.javafp.parsecj.Parser;
-import org.javafp.parsecj.State;
+import org.javafp.parsecj.*;
 import org.junit.Test;
 
 import java.util.function.BinaryOperator;
@@ -14,7 +12,7 @@ public class Grammar {
     // Forward declare expr to allow for circular references.
     private static final Parser.Ref<Character, Double> expr = Parser.Ref.of();
 
-    // bin-op ::= '+' | '-' | '*' | '/'
+    // binOp ::= '+' | '-' | '*' | '/'
     private static final Parser<Character, BinaryOperator<Double>> binOp =
         choice(
             chr('+').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l + r)),
@@ -23,7 +21,7 @@ public class Grammar {
             chr('/').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l / r))
         );
 
-    // bin-expr ::= '(' expr bin-op expr ')'
+    // binOpExpr ::= '(' expr binOp expr ')'
     private static final Parser<Character, Double> binOpExpr =
         chr('(')
             .then(expr.bind(
@@ -33,6 +31,7 @@ public class Grammar {
                             .then(retn(op.apply(l, r)))))));
 
     static {
+        // expr ::= dble | binOpExpr
         expr.set(choice(dble, binOpExpr));
     }
 

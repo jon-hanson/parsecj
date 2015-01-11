@@ -1,7 +1,6 @@
 package org.javafp.parsecj.json;
 
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**

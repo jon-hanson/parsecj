@@ -2,9 +2,7 @@ package org.javafp.parsecj;
 
 import org.javafp.parsecj.utils.CharSequences;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * An interface for parseable, immutable symbol streams.

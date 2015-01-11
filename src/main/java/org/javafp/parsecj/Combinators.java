@@ -3,9 +3,7 @@ package org.javafp.parsecj;
 import org.javafp.data.IList;
 
 import java.util.Optional;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 /**
  * A set of parser combinator functions.
