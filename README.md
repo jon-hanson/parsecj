@@ -201,11 +201,15 @@ The key point is that they observe the [3 monad laws](https://www.haskell.org/ha
 where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
 
 The first two laws tell us that `retn` is the identity the `bind` operation.
-The third law tells us that when we have two parser expressions being combined with `bind`,
-the order in which the parsers are constructed has no effect on the result.
+The third law tells us that when we have three parser expressions being combined with `bind`,
+the order in which the expressions are evaluated has no effect on the result.
 This becomes relevant when using the fluent chaining,
 as it means we do not to worry too much about bracketing when chaining parsers.
-It is analgous to say, associativity of addition over numbers,
+The intent becomes clearer if we add some redundant brackets to the law:
+
+`(p.bind(f)).bind(g)` = `p.bind(x -> (f.apply(x).bind(g)))`
+
+It is analgous to associativity of addition over numbers,
 where *a+b+c* yields the same result regardless of whether we evaluate it as *(a+b)+c* or *a+(b+c)*.
 
 Also of note is the `fail` parser, which is a monadic zero,
@@ -275,5 +279,6 @@ final Parser<Character, Double> parser = expr.bind(d -> end.then(retn(d)));
 * We add the `eof` parser, which succeeds if it encounters the end of the input, to bookend the `expr` parser. This ensures the parser does not incorrectly parse malformed inputs which begin with a valid expression, such as `(1+2)Z`.
 
 # Translating Haskell into Java
+
 
 # Related Work
