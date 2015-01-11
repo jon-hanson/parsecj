@@ -237,10 +237,10 @@ Valid expressions conforming to this language include:
 ```
 
 Typically parsers will construct values using a set of model classes corresponding to the language elements.
-To jeek the example simple the parsers for this language will simply compute the evaluated result of each expression.
+To keep the example simple the parsers for this language will simply compute the evaluated result of each expression.
 I.e. numbers will be parsed into their values,
 operators will be parsed into binary functions,
-and binary operator expressions will be parsed into the evaluated rresult of the expression.
+and binary operator expressions will be parsed into the evaluated result of the expression.
 
 The above grammar can be translated into the following Java implementation:
 
