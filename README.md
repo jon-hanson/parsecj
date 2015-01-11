@@ -60,6 +60,7 @@ int i =
             )
         )
     ).parse(State.of("1+2")).getResult();
+// i is now 3.
 ```
 
 # Usage
@@ -272,3 +273,7 @@ final Parser<Character, Double> parser = expr.bind(d -> end.then(retn(d)));
 * The expression language is recursive - `expr` refers to `binOpExpr` which refers to `expr`. Since Java doesn't allow us to define a mutually recursive set of variables, we have to break the circularity by making the `expr` a `Parser.Ref`, which gets declared at the beginning and initalised at the end. `Ref` implements the `Parser` interface, hence it can be used as a parser.
 * In some cases Java's type inference can't infer the types of expressions - the four operator parsers comprising `binOp` for instance. Here we have to provide the compiler with a type hint to allow the expression to compile - `Combinators.<Character, BinaryOperator<Double>>retn`).
 * We add the `eof` parser, which succeeds if it encounters the end of the input, to bookend the `expr` parser. This ensures the parser does not incorrectly parse malformed inputs which begin with a valid expression, such as `(1+2)Z`.
+
+# Translating Haskell into Java
+
+# Related Work
