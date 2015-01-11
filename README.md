@@ -280,5 +280,188 @@ final Parser<Character, Double> parser = expr.bind(d -> end.then(retn(d)));
 
 # Translating Haskell into Java
 
+This section describes how the Haskell code from the [Parsec paper](http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf)
+paper has been translated into Java.
 
+## Section 3
+
+Section 3 of the paper begins to describe the implementation of Parsec, with these three types:
+
+```Haskell
+type Parser a = String -> Consumed a
+data Consumed a = Consumed (Reply a)
+                | Empty (Reply a)
+data Reply a = Ok a String | Error
+```
+
+Start with `Reply`, this is a discriminated union between an `Ok` and an `Error`.
+We can model this in Java with a `Reply` base class (or interface),
+with two sub-classes:
+
+```Java
+public abstract class Reply<A> {
+    public static <A> Ok<A> ok(A result, String rest) {
+        return new Ok<A>(result, rest);
+    }
+        
+    public static <A> Error<A> error() {
+        return new Error<A>();
+    }
+    public abstract <B> B match(Function<Ok<A>, B> ok, Function<Error<A>, B> error);
+
+    public static final class Ok<A> extends Reply<A> {
+
+        public final A result;
+
+        public final String rest;
+
+        Ok(A result, String rest) {
+            this.result = result;
+            this.rest = rest;
+        }
+
+        @Override
+        public <U> U match(Function<Ok<A>, U> ok, Function<Error<A>, U> error) {
+            return ok.apply(this);
+        }
+        
+        // Usual toString, equals etc.
+    }
+
+    public static final class Error<A> extends Reply<A> {
+
+        Error() {}
+
+        @Override
+        public <B> B match(Function<Ok<A>, B> ok, Function<Error<A>, B> error) {
+            return error.apply(this);
+        }
+        
+        // Usual toString, equals etc.
+    }
+}
+```
+
+The `match` method provides a means to simulate Haskell's pattern-matching.
+We can use it here to extract the result from a `Reply`:
+
+```Java
+<A> A getResult(Reply<A> reply) {
+    return reply.match(
+        ok -> ok.result,
+        error -> {throw new RuntimeException("Error");}
+    );
+}
+```
+
+The `Consumed` type could in theory be handled in a similar fashion,
+however there are two subtleties to be dealt with.
+1. The Haskell code uses the name `Consumed` for both the type and the type constructor -
+in Java we chose to call the former `ConsumedT` to distinguish it from the latter.
+1. We learn further on in the document that Parsec relies on the `Consumed` type constructor being lazy (as is standard in Haskell). In order to simulate this in Java we need to make the `Consumed` class lazily constructed, using a `Supplier` instance:
+
+```Java
+public interface ConsumedT<S, A> {
+
+    public static <S, A> ConsumedT<S, A> consumed(Supplier<Reply<S, A>> supplier) {
+        return new Consumed<S, A>(supplier);
+    }
+
+    public static <S, A> ConsumedT<S, A> empty(Reply<S, A> reply) {
+        return new Empty<S, A>(reply);
+    }
+
+    public boolean isConsumed();
+
+    public Reply<S, A> getReply();
+
+    public default <B> ConsumedT<S, B> cast() {
+        return (ConsumedT<S, B>)this;
+    }
+}
+
+final class Consumed<S, A> implements ConsumedT<S, A> {
+
+    // Lazy Reply supplier.
+    private Supplier<Reply<S, A>> supplier;
+
+    // Lazy-initialised Reply.
+    private Reply<S, A> reply;
+
+    Consumed(Supplier<Reply<S, A>> supplier) {
+        this.supplier = supplier;
+    }
+
+    @Override
+    public boolean isConsumed() {
+        return true;
+    }
+
+    @Override
+    public Reply<S, A> getReply() {
+        if (supplier != null) {
+            reply = supplier.get();
+            supplier = null;
+        }
+
+        return reply;
+    }
+}
+
+final class Empty<S, A> implements ConsumedT<S, A> {
+
+    private final Reply<S, A> reply;
+
+    Empty(Reply<S, A> reply) {
+        this.reply = reply;
+    }
+
+    @Override
+    public boolean isConsumed() {
+        return false;
+    }
+
+    @Override
+    public Reply<S, A> getReply() {
+        return reply;
+    }
+}
+```
+The final of the three Haskell types is `Parser a`,
+which is a function from `String` to `Consumed a`.
+We can model this as a functional interface in Java (Java 8 that is):
+
+```Java
+@FunctionalInterface
+public interface Parser<A> {
+    ConsumedT<A> apply(String state);
+}
+```
+
+Since `Parser` is a functional interface we can construct `Parser` instances using the concise lambda syntax:
+
+```Java
+    Parser<Integer> p = s -> { ... };
+```
+
+## Section 3.1 - Basic combinators
+
+Section 3.1 of the paper outlines the implementation of some basic combinators.
+
+The `return` combinator:
+
+```Haskell
+return x
+= \input -> Empty (Ok x input)
+```
+
+has to be renamed in Java as `return` is a reserved word, however the definition otherwise maps fairly easily:
+
+```Java
+public static <A> Parser<A> retn(A x) {
+    return s -> ConsumedT.empty(Reply.ok(x, s));
+}
+
+
+```
 # Related Work
