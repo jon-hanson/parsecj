@@ -161,11 +161,10 @@ The `org.javafp.parsecj.Combinators` package provides the following basic combin
 Name | Description | Returns
 -----|-------------|--------
 `retn(value)` | A parser which always succeeds | The supplied value.
-`bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to `fail()` | A parser which always fails. | An Error
+`bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser which is then applied. | Result of `q` `fail()` | A parser which always fails. | An Error
 `satisfy(test)` | Applies a test to the next input symbol. | The symbol.
 `satisfy(value)` | A parser which succeeds if the next input symbol equals `value`. | The symbol
 `eof()` | A parser which succeeds if the end of the input is reached. | UNIT.
-yield another parser which is then applied. | Result of `q`
 `then(p, q)` | A parser which first applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
 `or(p, q)` | A parser which first applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
 ... |
@@ -356,6 +355,7 @@ We can use it here to extract the result from a `Reply`:
 
 The `Consumed` type could in theory be handled in a similar fashion,
 however there are two subtleties to be dealt with.
+
 1. The Haskell code uses the name `Consumed` for both the type and the type constructor -
 in Java we chose to call the former `ConsumedT` to distinguish it from the latter.
 1. We learn further on in the document that Parsec relies on the `Consumed` type constructor being lazy (as is standard in Haskell). In order to simulate this in Java we need to make the `Consumed` class lazily constructed, using a `Supplier` instance:
@@ -461,7 +461,8 @@ has to be renamed in Java as `return` is a reserved word, however the definition
 public static <A> Parser<A> retn(A x) {
     return s -> ConsumedT.empty(Reply.ok(x, s));
 }
-
-
 ```
+
+TBD...
+
 # Related Work
