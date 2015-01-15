@@ -8,13 +8,19 @@ It is based on the
 [Parsec paper](http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf),
 which describes a monadic parsing framework implemented in Haskell.
 
+The parser features include:
+* Composable parser combinators allow parsers to be constructed directly from grammars.
+* Informative error messages in the event of parse failures.
+* Thread-safe due to immutable parsers and inout states.
+* The combinator approach closely with Parsec, itsHaskell counterpart, allowing grammars written for Parsec to be translated into equivalent grammars for ParsecJ.
+
 ## Parser Combinators
 
-The standard approach to implementing parsers for special-purpose languages
+The typical approach to implementing parsers for special-purpose languages
 is to use a parser generation tool,
 such as Yacc/Bison and ANTLR.
-With these tools the language is described using a grammar language specific to the tool.
-The parsing code is then generated from the language grammar.
+With these tools the language is described using a grammar language specific to the tool,
+and the parsing code is then generated from the language grammar.
 
 An alternative approach is to implement a
 [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser),
