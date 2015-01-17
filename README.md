@@ -19,8 +19,9 @@ The parser features include:
 The typical approach to implementing parsers for special-purpose languages
 is to use a parser generation tool,
 such as Yacc/Bison and ANTLR.
-With these tools the language is described using a grammar language specific to the tool,
-and the parsing code is then generated from the language grammar.
+With these tools the language is expressed as a series of production rules,
+described using a grammar language specific to the tool.
+The parsing code for the language is then generated from the grammar definition.
 
 An alternative approach is to implement a
 [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser),
@@ -55,6 +56,7 @@ Here a parser is defined which will parse and evaluate expressions of the form *
 The parser is constructed by taking the `intr` parser for integers, the `satisfy` parser for single symbols,
 and combining them using the `bind`, `then` and `retn` combinators.
 
+
 This parser can be used as follows:
 
 ```java
@@ -78,7 +80,7 @@ In rare cases a parser combinator may need to be implemented by operating direct
 
 ### Parser<S, A>
 
-All parsers implement the `org.javafp.parsecj.Parser` interface,
+All parsers implement the `org.javafp.parsecj.Parser` (functional) interface,
 which has an `apply` method :
 
 ```java
@@ -368,69 +370,56 @@ in Java we chose to call the former `ConsumedT` to distinguish it from the latte
 1. We learn further on in the document that Parsec relies on the `Consumed` type constructor being lazy (as is standard in Haskell). In order to simulate this in Java we need to make the `Consumed` class lazily constructed, using a `Supplier` instance:
 
 ```Java
-public interface ConsumedT<S, A> {
 
-    public static <S, A> ConsumedT<S, A> consumed(Supplier<Reply<S, A>> supplier) {
-        return new Consumed<S, A>(supplier);
+public abstract static class ConsumedT<A> {
+    public static <A> ConsumedT<A> consumed(Supplier<Reply<A>> supplier) {
+        return new Consumed<A>(supplier);
     }
 
-    public static <S, A> ConsumedT<S, A> empty(Reply<S, A> reply) {
-        return new Empty<S, A>(reply);
+    public static <A> ConsumedT<A> empty(Reply<A> reply) {
+        return new Empty<A>(reply);
     }
 
-    public boolean isConsumed();
+    public abstract <B> B match(Function<Consumed<A>, B> consumed, Function<Empty<A>, B> empty);
 
-    public Reply<S, A> getReply();
+    public static class Consumed<A> extends ConsumedT<A> {
 
-    public default <B> ConsumedT<S, B> cast() {
-        return (ConsumedT<S, B>)this;
-    }
-}
+        // Lazy Reply supplier.
+        private Supplier<Reply<A>> supplier;
 
-final class Consumed<S, A> implements ConsumedT<S, A> {
+        // Lazy-initialised Reply.
+        private Reply<A> reply;
 
-    // Lazy Reply supplier.
-    private Supplier<Reply<S, A>> supplier;
-
-    // Lazy-initialised Reply.
-    private Reply<S, A> reply;
-
-    Consumed(Supplier<Reply<S, A>> supplier) {
-        this.supplier = supplier;
-    }
-
-    @Override
-    public boolean isConsumed() {
-        return true;
-    }
-
-    @Override
-    public Reply<S, A> getReply() {
-        if (supplier != null) {
-            reply = supplier.get();
-            supplier = null;
+        Consumed(Supplier<Reply<A>> supplier) {
+            this.supplier = supplier;
         }
 
-        return reply;
-    }
-}
+        public Reply<A> getReply() {
+            if (supplier != null) {
+                reply = supplier.get();
+                supplier = null;
+            }
 
-final class Empty<S, A> implements ConsumedT<S, A> {
+            return reply;
+        }
 
-    private final Reply<S, A> reply;
-
-    Empty(Reply<S, A> reply) {
-        this.reply = reply;
-    }
-
-    @Override
-    public boolean isConsumed() {
-        return false;
+        @Override
+        public <B> B match(Function<Consumed<A>, B> consumed, Function<Empty<A>, B> empty) {
+            return consumed.apply(this);
+        }
     }
 
-    @Override
-    public Reply<S, A> getReply() {
-        return reply;
+    public static class Empty<A> extends ConsumedT<A> {
+        public final Reply<A> reply;
+
+        public Empty(Reply<A> reply) {
+            this.reply = reply;
+        }
+
+        @Override
+        public <B> B match(Function<Consumed<A>, B> consumed, Function<Empty<A>, B> empty) {
+            return empty.apply(this);
+        }
     }
 }
 ```
