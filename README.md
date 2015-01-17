@@ -251,7 +251,7 @@ I.e. numbers will be parsed into their values,
 operators will be parsed into binary functions,
 and binary operator expressions will be parsed into the evaluated result of the expression.
 
-The above grammar, then, can be translated into the following Java implementation:
+The above grammar then, can be translated into the following Java implementation:
 
 ```java
 // Forward declare expr to allow for circular references.
