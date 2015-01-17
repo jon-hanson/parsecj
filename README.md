@@ -131,9 +131,9 @@ public interface State<S> {
 ### Reply<S, A>
 
 The `ConsumedT<S, A>` object returned by `Parser.apply` is an intermediate result wrapper,
-which is typically only of interest to combinator implementations.
+typically only of interest to combinator implementations.
 The `ConsumedT.getReply` method returns the parser result wrapper,
-or the `Parser.parse` method can be used to bypass `ConsumedT` entirely.
+alternatively the `Parser.parse` method can be used to bypass `ConsumedT` entirely.
 
 A `Reply` can be either a successful parse result (represented by the `Ok` subtype)
 or an error (represented by the `Error` subtype).
