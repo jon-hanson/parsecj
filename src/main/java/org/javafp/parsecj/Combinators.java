@@ -3,9 +3,7 @@ package org.javafp.parsecj;
 import org.javafp.data.IList;
 
 import java.util.Optional;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 /**
  * A set of parser combinator functions.
@@ -225,7 +223,7 @@ public abstract class Combinators {
 
     /**
      * A parser which succeeds if the next input symbol equals the supplied value.
-     * The parser replies with the argument result.
+     * The parser replies with the second argument, result.
      * Equivalent to satisfy(value).then(retn(result))
      */
     public static <S, A> Parser<S, A> satisfy(S value, A result) {

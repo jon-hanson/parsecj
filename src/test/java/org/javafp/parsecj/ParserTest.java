@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import static org.javafp.parsecj.Combinators.*;
-import static org.javafp.parsecj.Text.*;
+import static org.javafp.parsecj.Text.dble;
 
 public class ParserTest {
 

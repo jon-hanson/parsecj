@@ -1,17 +1,18 @@
 package org.javafp.parsecj.json;
 
 import org.javafp.data.IList;
+import org.javafp.data.Tuple2;
 import org.javafp.parsecj.*;
-import org.javafp.parsecj.Error;
 
 import java.util.LinkedHashMap;
-import java.util.function.Function;
 
 import static org.javafp.parsecj.Combinators.*;
 import static org.javafp.parsecj.Text.*;
 
 /**
  * A grammar for JSON.
+ * Adapted from the Haskell Parsec-vased JSON parser:
+ * https://hackage.haskell.org/package/json
  */
 public class Grammar {
     private static <T> Parser<Character, T> tok(Parser<Character, T> p) {
@@ -55,10 +56,8 @@ public class Grammar {
             ).label("escape character");
 
     private static Parser<Character, Character> stringChar =
-        (
-            chr('\\').then(esc)
-        ).or(
-            satisfy(c -> c != '"' && c != '\\')
+        (chr('\\').then(esc)
+        ).or(satisfy(c -> c != '"' && c != '\\')
         );
 
     private static Parser<Character, String> jstring =
@@ -82,31 +81,17 @@ public class Grammar {
         ).bind(l -> retn(Node.array(IList.toJList(l))))
             .label("array");
 
-    private static class Field {
-        static Field of(String name, Node value) {
-            return new Field(name, value);
-        }
-
-        static LinkedHashMap<String, Node> toMap(IList<Field> fields) {
-            final LinkedHashMap<String, Node> map = new LinkedHashMap<String, Node>();
-            fields.forEach(field -> map.put(field.name, field.value));
-            return map;
-        }
-
-        final String name;
-        final Node value;
-
-        private Field(String name, Node value) {
-            this.name = name;
-            this.value = value;
-        }
+    static LinkedHashMap<String, Node> toMap(IList<Tuple2<String, Node>> fields) {
+        final LinkedHashMap<String, Node> map = new LinkedHashMap<String, Node>();
+        fields.forEach(field -> map.put(field.first, field.second));
+        return map;
     }
 
-    private static Parser<Character, Field> jfield =
+    private static Parser<Character, Tuple2<String, Node>> jfield =
         jstring.bind(
             name -> tok(chr(':'))
                 .then(jvalue)
-                .bind(value -> retn(Field.of(name, value)))
+                .bind(value -> retn(Tuple2.of(name, value)))
         );
 
     private static Parser<Character, Node> jobject =
@@ -116,7 +101,7 @@ public class Grammar {
             sepBy(
                 jfield,
                 tok(chr(','))
-            ).bind(lf -> retn(Node.object(Field.toMap(lf))))
+            ).bind(lf -> retn(Node.object(toMap(lf))))
         ).label("object");
 
     static {

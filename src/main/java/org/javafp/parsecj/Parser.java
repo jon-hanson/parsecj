@@ -2,9 +2,7 @@ package org.javafp.parsecj;
 
 import org.javafp.data.IList;
 
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 /**
  * A parser is essentially a function taking the input stream and returning a ConsumedT.
@@ -17,10 +15,6 @@ public interface Parser<S, A> {
 
     public static <S, A> Parser<S, A> of(Function<State<S>, ConsumedT<S, A>> parser) {
         return parser::apply;
-    }
-
-    public static <S, A> Reply<S, A> parse(Parser<S, A> parser, State<S> state) {
-        return parser.apply(state).getReply();
     }
 
     /**

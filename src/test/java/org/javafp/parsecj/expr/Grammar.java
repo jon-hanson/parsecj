@@ -1,14 +1,13 @@
 package org.javafp.parsecj.expr;
 
-import org.javafp.parsecj.Combinators;
-import org.javafp.parsecj.Parser;
-import org.javafp.parsecj.State;
+import org.javafp.parsecj.*;
 import org.junit.Test;
 
 import java.util.function.BinaryOperator;
 
 import static org.javafp.parsecj.Combinators.*;
-import static org.javafp.parsecj.Text.*;
+import static org.javafp.parsecj.Text.chr;
+import static org.javafp.parsecj.Text.dble;
 
 public class Grammar {
     // Forward declare expr to allow for circular references.
@@ -33,6 +32,7 @@ public class Grammar {
                             .then(retn(op.apply(l, r)))))));
 
     static {
+        // expr ::= dble | binOpExpr
         expr.set(choice(dble, binOpExpr));
     }
 

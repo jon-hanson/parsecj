@@ -6,7 +6,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.javafp.parsecj.Combinators.*;
-import static org.javafp.parsecj.Combinators.satisfy;
 
 /**
  * Parser combinators to be used with Character streams.
