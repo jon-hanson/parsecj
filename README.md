@@ -169,9 +169,10 @@ The `org.javafp.parsecj.Combinators` package provides the following core combina
 Name | Description | Returns
 -----|-------------|--------
 `retn(value)` | A parser which always succeeds | The supplied value.
-`bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser which is then applied. | Result of `q` `fail()` | A parser which always fails. | An Error
+`bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser which is then applied. | Result of `q` 
+`fail()` | A parser which always fails. | An Error
 `satisfy(test)` | Applies a test to the next input symbol. | The symbol.
-`satisfy(value)` | A parser which succeeds if the next input symbol equals `value`. | The symbol
+`satisfy(value)` | A parser which succeeds if the next input symbol equals `value`. | The symbol.
 `eof()` | A parser which succeeds if the end of the input is reached. | UNIT.
 `then(p, q)` | A parser which first applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
 `or(p, q)` | A parser which first applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
@@ -505,4 +506,4 @@ however it still essentially follows the same monadic combinator approach.
 
 [JParsec](https://github.com/jparsec/jparsec) is an existing Java port of Parsec.
 While it folllows a similar combinator approach,
-the implementation of the parsers themselves follows a much more object-oriented style as opposed to the more functional style of ParsecJ.
+the implementation of the parsers themselves follow a much more object-oriented style as opposed to the more functional style of ParsecJ.
