@@ -9,10 +9,10 @@ It is based on the
 which describes a monadic parsing framework implemented in Haskell.
 
 The parser features include:
-* Composable parser combinators allow parsers to be constructed directly from grammars.
+* Composable parser combinators which allow parsers to be constructed directly from grammars.
 * Informative error messages in the event of parse failures.
-* Thread-safe due to immutable parsers and inout states.
-* The combinator approach closely with Parsec, itsHaskell counterpart, allowing grammars written for Parsec to be translated into equivalent grammars for ParsecJ.
+* Thread-safe due to immutable parsers and input states.
+* A combinator approach which mirrors that of Parsec, its Haskell counterpart, allowing grammars written for Parsec to be translated into equivalent grammars for ParsecJ.
 
 ## Parser Combinators
 
@@ -101,7 +101,7 @@ For example, a parser which operates on character input and parses an integer wo
 The `apply` method contains the main machinery of the parser,
 and combinators use this method to compose parsers.
 However, since the `ConsumedT` type returned by `apply` is an intermediate type,
-the `parse` method is provided to apply and the parser and extract the `Reply` parse result.
+the `parse` method is also provided to apply the parser and extract the `Reply` parse result.
 
 ### State<S>
 
@@ -148,7 +148,7 @@ E.g.:
 
 ```java
 String msg =
-    parser.parse("abcd")
+    parser.parse(State.of("abcd"))
         .match(
             ok -> "Result : " + ok.getResult(),
             error -> "Error : " + error.getMsg()
@@ -157,12 +157,12 @@ String msg =
 
 ## Defining Parsers
 
-A parser for a language is constructed by translating the production rules comprising the language grammar into parsers,
+A parser for a language is defined by translating the production rules comprising the language grammar into parsers,
 using the combinators provided by the library.
 
 ### Combinators
 
-The `org.javafp.parsecj.Combinators` package provides the following basic combinator parsers:
+The `org.javafp.parsecj.Combinators` package provides the following core combinator parsers:
 
 Name | Description | Returns
 -----|-------------|--------
@@ -205,7 +205,7 @@ The key point is that they observe the [3 monad laws](https://www.haskell.org/ha
 
 where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
 
-The first two laws tell us that `retn` is the identity the `bind` operation.
+The first two laws tell us that `retn` is the identity of the `bind` operation.
 The third law tells us that when we have three parser expressions being combined with `bind`,
 the order in which the expressions are evaluated has no effect on the result.
 This becomes relevant when using the fluent chaining,
@@ -242,12 +242,13 @@ Valid expressions conforming to this language include:
 ```
 
 Typically parsers will construct values using a set of model classes corresponding to the language elements.
+For the above example that would mean defining `Expr`, `NumberExpr`, and `BinOpExpr` classes.
 To keep the example simple the parsers for this language will simply compute the evaluated result of each expression.
 I.e. numbers will be parsed into their values,
 operators will be parsed into binary functions,
 and binary operator expressions will be parsed into the evaluated result of the expression.
 
-The above grammar can be translated into the following Java implementation:
+The above grammar, then, can be translated into the following Java implementation:
 
 ```java
 // Forward declare expr to allow for circular references.
@@ -272,7 +273,7 @@ final Parser<Character, Double> binOpExpr =
                         .then(retn(op.apply(l, r)))))));
 
 // expr ::= dble | binOpExpr
-expr.set(choice(dble, binOpExpr));
+expr.set(dble.or(binOpExpr));
 
 final Parser<Character, Void> end = eof();
 final Parser<Character, Double> parser = expr.bind(d -> end.then(retn(d)));
@@ -290,7 +291,7 @@ paper has been translated into Java.
 
 ## Section 3
 
-Section 3 of the paper begins to describe the implementation of Parsec, with these three types:
+Section 3 of the paper begins to describe the implementation of Parsec, starting with these three types:
 
 ```Haskell
 type Parser a = String -> Consumed a
@@ -299,7 +300,7 @@ data Consumed a = Consumed (Reply a)
 data Reply a = Ok a String | Error
 ```
 
-Start with `Reply`, this is a discriminated union between an `Ok` and an `Error`.
+The `Reply` type is a discriminated union between an `Ok` and an `Error`.
 We can model this in Java with a `Reply` base class (or interface),
 with two sub-classes:
 
@@ -347,7 +348,7 @@ public abstract class Reply<A> {
 }
 ```
 
-The `match` method provides a means to simulate Haskell's pattern-matching.
+The `match` method provides a poor-man's equivalent to Haskell's pattern-matching.
 We can use it here to extract the result from a `Reply`:
 
 ```Java
@@ -360,7 +361,7 @@ We can use it here to extract the result from a `Reply`:
 ```
 
 The `Consumed` type could in theory be handled in a similar fashion,
-however there are two subtleties to be dealt with.
+however there are two subtleties to take into account:
 
 1. The Haskell code uses the name `Consumed` for both the type and the type constructor -
 in Java we chose to call the former `ConsumedT` to distinguish it from the latter.
@@ -433,8 +434,15 @@ final class Empty<S, A> implements ConsumedT<S, A> {
     }
 }
 ```
+
+We can then construct `ConsumedT` instances using a lambda:
+
+```Java
+ConsumedT<S, A> cons = ConsumedT.of(() -> Reply.of(...));
+```
+
 The final of the three Haskell types is `Parser a`,
-which is a function from `String` to `Consumed a`.
+which is a type synonym for a function from `String` to `Consumed a`.
 We can model this as a functional interface in Java (Java 8 that is):
 
 ```Java
@@ -447,10 +455,10 @@ public interface Parser<A> {
 Since `Parser` is a functional interface we can construct `Parser` instances using the concise lambda syntax:
 
 ```Java
-    Parser<Integer> p = s -> { ... };
+Parser<Integer> p = s -> { ... };
 ```
 
-## Section 3.1 - Basic combinators
+## Section 3.1 - Basic Combinators
 
 Section 3.1 of the paper outlines the implementation of some basic combinators.
 
@@ -465,10 +473,47 @@ has to be renamed in Java as `return` is a reserved word, however the definition
 
 ```Java
 public static <A> Parser<A> retn(A x) {
-    return s -> ConsumedT.empty(Reply.ok(x, s));
+    return s -> empty(ok(x, s));
 }
 ```
 
-TBD...
+The `satisfy` combinator applies a predicate `test` to the next symbol on the input:
+
+```Haskell
+satisfy :: (Char → Bool) → Parser Char
+satisfy test
+  = \input -> case (input) of
+      [] -> Empty Error
+      (c:cs) | test c -> Consumed (Ok c cs)
+             | otherwise -> Empty Error
+```
+
+Here the combinator is returning a function which is a `Parser`.
+Using Java 8 lambda functions we can define `satisfy` in a similar fashion:
+
+```Java
+public static Parser<Character> satisfy(Predicate<Character> test) {
+    return state -> {
+        if (!state.isEmpty()) {
+            final char c = state.charAt(0);
+            if (test.test(c)) {
+                return ConsumedT.consumed(() -> Reply.ok(c, state.substring(1)));
+            } else {
+                return ConsumedT.empty(Reply.error());
+            }
+        } else {
+            return ConsumedT.empty(Reply.error());
+        }
+    };
+}
+```
 
 # Related Work
+
+As mentioned at the outset, ParsecJ is based on the [Parsec paper](http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf).
+The current incarnation of the [Haskell Parsec](https://hackage.haskell.org/package/parsec) library has evolved considerably since the paper,
+however it still essentially follows the same monadic combinator approach.
+
+[JParsec](https://github.com/jparsec/jparsec) is an existing Java port of Parsec.
+While it folllows a similar combinator approach,
+the implementation of the parsers themselves follows a much more object-oriented style as opposed to the more functional style of ParsecJ.
