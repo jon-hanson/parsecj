@@ -200,7 +200,7 @@ Name | Description | Returns
 ### Parser Monad
 
 The `retn` and `bind` combinators are slightly special as they are what make `Parser` a monad.
-The key point is that they observe the [3 monad laws](https://www.haskell.org/haskellwiki/Monad_laws):
+The key point is that they observe the three [monad laws](https://www.haskell.org/haskellwiki/Monad_laws):
 
 1. **Left Identity** : `retn(a).bind(f)` = `f.apply(a)`
 1. **Right Identity** : `p.bind(x -> retn(x)` = `p`
@@ -213,7 +213,7 @@ The third law tells us that when we have three parser expressions being combined
 the order in which the expressions are evaluated has no effect on the result.
 This becomes relevant when using the fluent chaining,
 as it means we do not to worry too much about bracketing when chaining parsers.
-The intent becomes clearer if we add some redundant brackets to the law:
+The intent becomes clearer if we add some redundant brackets to the equality:
 
 `(p.bind(f)).bind(g)` = `p.bind(x -> (f.apply(x).bind(g)))`
 
