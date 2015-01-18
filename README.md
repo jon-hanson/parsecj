@@ -324,11 +324,11 @@ with two sub-classes:
 
 ```Java
 public abstract class Reply<A> {
-    public static <A> Ok<A> ok(A result, String rest) {
+    public static <A> Ok<A> Ok(A result, String rest) {
         return new Ok<A>(result, rest);
     }
         
-    public static <A> Error<A> error() {
+    public static <A> Error<A> Error() {
         return new Error<A>();
     }
     public abstract <B> B match(Function<Ok<A>, B> ok, Function<Error<A>, B> error);
@@ -387,11 +387,11 @@ in Java we chose to call the former `ConsumedT` to distinguish it from the latte
 
 ```Java
 public abstract static class ConsumedT<A> {
-    public static <A> ConsumedT<A> consumed(Supplier<Reply<A>> supplier) {
+    public static <A> ConsumedT<A> Consumed(Supplier<Reply<A>> supplier) {
         return new Consumed<A>(supplier);
     }
 
-    public static <A> ConsumedT<A> empty(Reply<A> reply) {
+    public static <A> ConsumedT<A> Empty(Reply<A> reply) {
         return new Empty<A>(reply);
     }
 
@@ -497,7 +497,7 @@ has to be renamed in Java as `return` is a reserved word, however the definition
 
 ```Java
 public static <A> Parser<A> retn(A x) {
-    return s -> empty(ok(x, s));
+    return s -> Empty(Ok(x, s));
 }
 ```
 
@@ -519,16 +519,16 @@ Using Java 8 lambda functions we can define `satisfy` in a similar fashion:
 
 ```Java
 public static Parser<Character> satisfy(Predicate<Character> test) {
-    return state -> {
-        if (!state.isEmpty()) {
-            final char c = state.charAt(0);
+    return input -> {
+        if (!input.isEmpty()) {
+            final char c = input.charAt(0);
             if (test.test(c)) {
-                return consumed(() -> ok(c, state.substring(1)));
+                return consumed(() -> Ok(c, input.substring(1)));
             } else {
-                return empty(error());
+                return Empty(Error());
             }
         } else {
-            return empty(error());
+            return Empty(Error());
         }
     };
 }
@@ -563,17 +563,17 @@ Java doesn't support custom operators so we have to implement this as a `bind` f
 public static <A, B> Parser<B> bind(
         Parser<? extends A> p,
         Function<A, Parser<B>> f) {
-    return state ->
-        p.apply(state).match(
+    return input ->
+        p.apply(input).match(
             cons -> consumed(() ->
-                cons.getReply().<Reply<B>>match(
-                    ok -> f.apply(ok.result).apply(ok.rest).getReply(),
-                    error -> error()
+                cons.getReply().match(
+                    ok -> f.apply(ok.result).parse(ok.rest).getReply(),
+                    error -> Error()
                 )
             ),
-            empty -> empty.getReply().<ConsumedT<B>>match(
-                ok -> f.apply(ok.result).apply(ok.rest),
-                error -> empty(error())
+            empty -> empty.getReply().match(
+                ok -> f.apply(ok.result).parse(ok.rest),
+                error -> Empty(Error())
             )
         );
 }
@@ -581,60 +581,63 @@ public static <A, B> Parser<B> bind(
 
 ## Proving the Monad Laws
 
-Given the above definitions we can now prove the three monad laws.
+Given the above definitions we can now attempt prove the three monad laws.
+Since our `retn` and `bind` combinators have been defined as pure functions,
+they observe referential tranparency,
+which means we can substitute the function body in place of calls to the function.
 
-### 1. Left Identity
+### Left Identity
 
 This law requires that `retn(a).bind(f)` = `f.apply(a)`
 
 Taking the LHS, we can reduce this as follows:
 
 `retn(a).bind(f)`
-&#8594; `(s -> empty(ok(a, s))).bind(f)` (from the definition of `retn`)
+&#8594; `(s -> Empty(Ok(a, s))).bind(f)` (from the definition of `retn`)
 
 &#8594; (from the definition of `bind`)
 ```Java
-s -> empty(ok(a, s)).match(
-    cons -> ConsumedT.consumed(() ->
-        cons.getReply().<Reply<B>>match(
+s -> Empty(ok(a, s)).match(
+    cons -> Consumed(() ->
+        cons.getReply().match(
             ok -> f.apply(ok.result).parse(ok.rest).getReply(),
-            error -> Reply.error()
+            error -> Error()
         )
     ),
-    empty -> empty.getReply().<ConsumedT<B>>match(
+    empty -> empty.getReply().match(
         ok -> f.apply(ok.result).parse(ok.rest),
-        error -> ConsumedT.empty(Reply.error())
+        error -> Empty(Error())
     )
-);
+)
 ```
 
-&#8594; (from definition of `match`)
+&#8594; (from definition of `ConsumedT.match`)
 ```Java
-s -> empty(ok(a, s)).getReply().<ConsumedT<B>>match(
+s -> Empty(Ok(a, s)).getReply().match(
     ok -> f.apply(ok.result).parse(ok.rest),
-    error -> ConsumedT.empty(Reply.error())
-);
+    error -> Empty(Error())
+)
 ```
 
-&#8594; (from definition of `match`)
+&#8594; (from definition of `Empty.getReply`)
 ```Java
-s -> ok(a, s).<ConsumedT<B>>match(
+s -> Ok(a, s).match(
     ok -> f.apply(ok.result).parse(ok.rest),
-    error -> ConsumedT.empty(Reply.error())
-);
+    error -> Empty(Error())
+)
 ```
 
-&#8594; (from definition of `match`)
+&#8594; (from definition of `Reply.match`)
 ```Java
-s -> f.apply(ok(a, s).result).parse(ok(a, s).rest);
+s -> f.apply(Ok(a, s).result).parse(Ok(a, s).rest)
 ```
 
-&#8594; (from definition of `result`)
+&#8594; (from definition of `Ok.result`)
 ```Java
-s -> f.apply(a).parse(ok(a, s).rest);
+s -> f.apply(a).parse(Ok(a, s).rest)
 ```
 
-&#8594; (from definition of `rest`)
+&#8594; (from definition of `Ok.rest`)
 ```Java
 s -> f.apply(a).parse(s);
 ```
@@ -643,6 +646,113 @@ s -> f.apply(a).parse(s);
 ```Java
 f.apply(a);
 ```
+&#8718;
+
+### Right Identity
+
+This law requires that `p.bind(x -> retn(x))` = `p`
+
+Again taking the LHS, we can reduce this as follows:
+
+`p.bind(x -> retn(x))`
+&#8594; `p.bind(x -> s -> `empty(ok(x, s))` (from the definition of `retn`)
+
+&#8594; (from the definition of `bind`)
+```Java
+input ->
+    p.apply(input).match(
+        cons -> consumed(() ->
+            cons.getReply().match(
+                ok -> (x -> s -> Empty(Ok(x, s))).apply(ok.result).parse(ok.rest).getReply(),
+                error -> Error()
+            )
+        ),
+        empty -> empty.getReply().match(
+            ok -> (x -> s -> Empty(Ok(x, s))).apply(ok.result).parse(ok.rest),
+            error -> Empty(Error())
+        )
+    )
+```
+
+&#8594; (function application)
+```Java
+input ->
+    p.apply(input).match(
+        cons -> consumed(() ->
+            cons.getReply().match(
+                ok -> (s -> Empty(Ok(ok.result, s))).parse(ok.rest).getReply(),
+                error -> Error()
+            )
+        ),
+        empty -> empty.getReply().match(
+            ok -> (s -> Empty(Ok(ok.result, s))).parse(ok.rest),
+            error -> Empty(Error())
+        )
+    )
+```
+
+&#8594; (function application)
+```Java
+input ->
+    p.apply(input).match(
+        cons -> consumed(() ->
+            cons.getReply().match(
+                ok -> Empty(Ok(ok.result, ok.rest)).getReply(),
+                error -> Error()
+            )
+        ),
+        empty -> empty.getReply().match(
+            ok -> Empty(Ok(ok.result, ok.rest)),
+            error -> Empty(Error())
+        )
+    )
+```
+
+&#8594; (from definition of Ok)
+```Java
+input ->
+    p.apply(input).match(
+        cons -> consumed(() ->
+            cons.getReply().match(
+                ok -> Empty(ok).getReply(),
+                error -> Error()
+            )
+        ),
+        empty -> empty.getReply().match(
+            ok -> Empty(ok),
+            error -> Empty(Error())
+        )
+    )
+```
+
+&#8594; (simplification)
+```Java
+input ->
+    p.apply(input).match(
+        cons -> consumed(() ->cons),
+        empty -> empty
+    )
+```
+
+&#8594; (simplification)
+```Java
+input ->
+    p.apply(input).match(
+        cons -> cons,
+        empty -> empty
+    )
+```
+
+&#8594; (simplification)
+```Java
+input -> p.apply(input)
+```
+
+&#8594; (simplification)
+```Java
+p
+```
+
 &#8718;
 
 # Related Work
