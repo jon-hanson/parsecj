@@ -367,7 +367,7 @@ public abstract class Reply<A> {
 ```
 
 The `match` method provides a poor-man's equivalent to Haskell's pattern-matching.
-We can use it here to extract the result from a `Reply`:
+It can be used to extract the result from a `Reply`:
 
 ```Java
 <A> A getResult(Reply<A> reply) {
@@ -386,7 +386,6 @@ in Java we chose to call the former `ConsumedT` to distinguish it from the latte
 1. We learn further on in the document that Parsec relies on the `Consumed` type constructor being lazy (as is standard in Haskell). In order to simulate this in Java we need to make the `Consumed` class lazily constructed, using a `Supplier` instance:
 
 ```Java
-
 public abstract static class ConsumedT<A> {
     public static <A> ConsumedT<A> consumed(Supplier<Reply<A>> supplier) {
         return new Consumed<A>(supplier);
@@ -397,6 +396,10 @@ public abstract static class ConsumedT<A> {
     }
 
     public abstract <B> B match(Function<Consumed<A>, B> consumed, Function<Empty<A>, B> empty);
+
+    public abstract boolean isConsumed();
+
+    public abstract Reply<A> getReply();
 
     public static class Consumed<A> extends ConsumedT<A> {
 
@@ -410,6 +413,11 @@ public abstract static class ConsumedT<A> {
             this.supplier = supplier;
         }
 
+        public boolean isConsumed() {
+            return true;
+        }
+
+        @Override
         public Reply<A> getReply() {
             if (supplier != null) {
                 reply = supplier.get();
@@ -432,6 +440,15 @@ public abstract static class ConsumedT<A> {
             this.reply = reply;
         }
 
+        public boolean isConsumed() {
+            return false;
+        }
+
+        @Override
+        public Reply<A> getReply() {
+            return reply;
+        }
+
         @Override
         public <B> B match(Function<Consumed<A>, B> consumed, Function<Empty<A>, B> empty) {
             return empty.apply(this);
@@ -443,7 +460,7 @@ public abstract static class ConsumedT<A> {
 We can then construct `ConsumedT` instances using a lambda:
 
 ```Java
-ConsumedT<S, A> cons = ConsumedT.of(() -> Reply.of(...));
+ConsumedT<S, A> cons = consumed(() -> Reply.of(...));
 ```
 
 The final of the three Haskell types is `Parser a`,
@@ -453,11 +470,11 @@ We can model this as a functional interface in Java (Java 8 that is):
 ```Java
 @FunctionalInterface
 public interface Parser<A> {
-    ConsumedT<A> apply(String state);
+    ConsumedT<A> parse(String state);
 }
 ```
 
-Since `Parser` is a functional interface we can construct `Parser` instances using the concise lambda syntax:
+Since `Parser` is a functional interface we can construct `Parser` instances using the Java 8 lambda syntax:
 
 ```Java
 Parser<Integer> p = s -> { ... };
@@ -465,7 +482,9 @@ Parser<Integer> p = s -> { ... };
 
 ## Section 3.1 - Basic Combinators
 
-Section 3.1 of the paper outlines the implementation of some basic combinators.
+Section 3.1 of the paper outlines the implementation of some core combinators.
+
+### The return Combinator
 
 The `return` combinator:
 
@@ -481,6 +500,8 @@ public static <A> Parser<A> retn(A x) {
     return s -> empty(ok(x, s));
 }
 ```
+
+### The satisfy Combinator
 
 The `satisfy` combinator applies a predicate `test` to the next symbol on the input:
 
@@ -502,15 +523,128 @@ public static Parser<Character> satisfy(Predicate<Character> test) {
         if (!state.isEmpty()) {
             final char c = state.charAt(0);
             if (test.test(c)) {
-                return ConsumedT.consumed(() -> Reply.ok(c, state.substring(1)));
+                return consumed(() -> ok(c, state.substring(1)));
             } else {
-                return ConsumedT.empty(Reply.error());
+                return empty(error());
             }
         } else {
-            return ConsumedT.empty(Reply.error());
+            return empty(error());
         }
     };
 }
+```
+
+### The bind Combinator
+
+The bind combinator in Haskell is implemented as the `>>=` operator:
+
+```Haskell
+(>>=) :: Parser a → (a → Parser b) → Parser b
+p >>= f
+  = \input -> case (p input) of
+      Empty reply1
+        -> case (reply1) of
+             Ok x rest -> ((f x) rest)
+             Error -> Empty Error
+      Consumed reply1
+        -> Consumed
+           (case (reply1) of
+              Ok x rest
+                    -> case ((f x) rest) of
+                         Consumed reply2 -> reply2
+                         Empty reply2 -> reply2
+              error -> error
+           )
+```
+
+Java doesn't support custom operators so we have to implement this as a `bind` function:
+
+```Java
+public static <A, B> Parser<B> bind(
+        Parser<? extends A> p,
+        Function<A, Parser<B>> f) {
+    return state ->
+        p.apply(state).match(
+            cons -> consumed(() ->
+                cons.getReply().<Reply<B>>match(
+                    ok -> f.apply(ok.result).apply(ok.rest).getReply(),
+                    error -> error()
+                )
+            ),
+            empty -> empty.getReply().<ConsumedT<B>>match(
+                ok -> f.apply(ok.result).apply(ok.rest),
+                error -> empty(error())
+            )
+        );
+}
+```
+
+## Proving the Monad Laws
+
+Given the above definitions we can now prove the three monad laws.
+
+### 1. Left Identity
+
+This law requires that `retn(a).bind(f)` = `f.apply(a)`
+
+Taking the LHS, we can reduce this as follows:
+
+`retn(a).bind(f)`
+&#8594; `(s -> empty(ok(a, s))).bind(f)` (from the definition of `retn`)
+
+&#8594;
+```Java
+empty(ok(a, s)).match(
+    cons -> ConsumedT.consumed(() ->
+        cons.getReply().<Reply<B>>match(
+            ok -> f.apply(ok.result).parse(ok.rest).getReply(),
+            error -> Reply.error()
+        )
+    ),
+    empty -> empty.getReply().<ConsumedT<B>>match(
+        ok -> f.apply(ok.result).parse(ok.rest),
+        error -> ConsumedT.empty(Reply.error())
+    )
+);
+``` (from the definition of `bind`)
+
+&#8594;
+```Java
+empty(ok(a, s)).getReply().<ConsumedT<B>>match(
+    ok -> f.apply(ok.result).parse(ok.rest),
+    error -> ConsumedT.empty(Reply.error())
+);
+```
+
+&#8594;
+```Java
+ok(a, s).<ConsumedT<B>>match(
+    ok -> f.apply(ok.result).parse(ok.rest),
+    error -> ConsumedT.empty(Reply.error())
+);
+```
+
+&#8594;
+```Java
+ok(a, s).<ConsumedT<B>>match(
+    ok -> f.apply(ok.result).parse(ok.rest),
+    error -> ConsumedT.empty(Reply.error())
+);
+```
+
+&#8594;
+```Java
+f.apply(ok(a, s).result).parse(ok(a, s).rest);
+```
+
+&#8594;
+```Java
+f.apply(a).parse(ok(a, s).rest);
+```
+
+&#8594;
+```Java
+f.apply(a).parse(s);
 ```
 
 # Related Work
@@ -520,5 +654,5 @@ The current incarnation of the [Haskell Parsec](https://hackage.haskell.org/pack
 however it still essentially follows the same monadic combinator approach.
 
 [JParsec](https://github.com/jparsec/jparsec) is an existing Java port of Parsec.
-While it folllows a similar combinator approach,
-the implementation of the parsers themselves follow a much more object-oriented style as opposed to the more functional style of ParsecJ.
+While it follows a similar combinator approach,
+the implementation of the parsers themselves use a much more object-oriented style as opposed to the more functional style of ParsecJ.
