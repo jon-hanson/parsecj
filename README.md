@@ -31,7 +31,7 @@ One limitation of this approach
 is that the extra plumbing required to implement error-handling and backtracking
 obscures the correspondence between the parsing functions and the language rules.
 
-[Monadic parser combinators](http://www.artima.com/pins1ed/combinator-parsing.html)
+[Monadic parser combinators](http://www.cs.nott.ac.uk/~gmh/bib.html#pearl)
 are an extension of recursive descent parsing,
 which use a monad to encapsulate the plumbing.
 The framework provides the basic building blocks -
