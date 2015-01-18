@@ -585,29 +585,30 @@ public static <A, B> Parser<B> bind(
 
 ## Proving the Monad Laws
 
-Given the above definitions we can now attempt prove the three monad laws.
-Since our `retn` and `bind` combinators have been defined as pure functions,
+Given the above definitions of `retn` and `bind` we can now attempt to prove the three monad laws.
+Since the `retn` and `bind` combinators have been defined as pure functions,
 they observe referential tranparency,
-which means we can substitute the function body in place of calls to the function.
+which means we can substitute the function body in place of calls to the function when reasoning about the combinators.
 
 ### Left Identity
 
-This law requires that `retn(a).bind(f)` = `f.apply(a)`
+This law requires that `retn(a).bind(f)` = `f.apply(a)`.
+We prove this by reducing the LHS to the same form as the RhS through a series of steps.
 
-Taking the LHS:
+Taking the LHS as the starting point:
 
 ```Java
 retn(a).bind(f)
 ```
 
-we can reduce this by subsituting the definition of `retn` in place of the call to it:
+we can reduce this by substituting the definition of the `retn` function in place of the call to the function:
 
 &#8594; (from the definition of `retn`)
 ```Java
 (s -> Empty(Ok(a, s))).bind(f)
 ```
 
-Likewise here we substitute the definition of `bind`, and so on:
+Likewise now we substitute the definition of `bind`, and so on:
 
 &#8594; (from the definition of `bind`)
 ```Java
