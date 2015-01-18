@@ -592,9 +592,9 @@ Taking the LHS, we can reduce this as follows:
 `retn(a).bind(f)`
 &#8594; `(s -> empty(ok(a, s))).bind(f)` (from the definition of `retn`)
 
-&#8594;
+&#8594; (from the definition of `bind`)
 ```Java
-empty(ok(a, s)).match(
+s -> empty(ok(a, s)).match(
     cons -> ConsumedT.consumed(() ->
         cons.getReply().<Reply<B>>match(
             ok -> f.apply(ok.result).parse(ok.rest).getReply(),
@@ -606,46 +606,44 @@ empty(ok(a, s)).match(
         error -> ConsumedT.empty(Reply.error())
     )
 );
-``` (from the definition of `bind`)
+```
 
-&#8594;
+&#8594; (from definition of `match`)
 ```Java
-empty(ok(a, s)).getReply().<ConsumedT<B>>match(
+s -> empty(ok(a, s)).getReply().<ConsumedT<B>>match(
     ok -> f.apply(ok.result).parse(ok.rest),
     error -> ConsumedT.empty(Reply.error())
 );
 ```
 
-&#8594;
+&#8594; (from definition of `match`)
 ```Java
-ok(a, s).<ConsumedT<B>>match(
+s -> ok(a, s).<ConsumedT<B>>match(
     ok -> f.apply(ok.result).parse(ok.rest),
     error -> ConsumedT.empty(Reply.error())
 );
 ```
 
-&#8594;
+&#8594; (from definition of `match`)
 ```Java
-ok(a, s).<ConsumedT<B>>match(
-    ok -> f.apply(ok.result).parse(ok.rest),
-    error -> ConsumedT.empty(Reply.error())
-);
+s -> f.apply(ok(a, s).result).parse(ok(a, s).rest);
 ```
 
-&#8594;
+&#8594; (from definition of `result`)
 ```Java
-f.apply(ok(a, s).result).parse(ok(a, s).rest);
+s -> f.apply(a).parse(ok(a, s).rest);
 ```
 
-&#8594;
+&#8594; (from definition of `rest`)
 ```Java
-f.apply(a).parse(ok(a, s).rest);
+s -> f.apply(a).parse(s);
 ```
 
-&#8594;
+&#8594; (function introduction and application cancel out)
 ```Java
-f.apply(a).parse(s);
+f.apply(a);
 ```
+&#8718;
 
 # Related Work
 
