@@ -11,7 +11,7 @@ import static org.javafp.parsecj.Text.*;
 
 /**
  * A grammar for JSON.
- * Adapted from the Haskell Parsec-vased JSON parser:
+ * Adapted from the Haskell Parsec-based JSON parser:
  * https://hackage.haskell.org/package/json
  */
 public class Grammar {
