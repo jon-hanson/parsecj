@@ -1,6 +1,7 @@
 package org.javafp.parsecj.expr;
 
-import org.javafp.parsecj.*;
+import org.javafp.parsecj.Parser;
+import org.javafp.parsecj.State;
 import org.junit.Test;
 
 import java.util.function.BinaryOperator;
@@ -13,13 +14,19 @@ public class Grammar {
     // Forward declare expr to allow for circular references.
     private static final Parser.Ref<Character, Double> expr = Parser.Ref.of();
 
+    // Inform the compiler of the type of retn.
+    private static final Parser<Character, BinaryOperator<Double>> add = retn((l, r) -> l + r);
+    private static final Parser<Character, BinaryOperator<Double>> subt = retn((l, r) -> l - r);
+    private static final Parser<Character, BinaryOperator<Double>> times = retn((l, r) -> l * r);
+    private static final Parser<Character, BinaryOperator<Double>> divide = retn((l, r) -> l / r);
+
     // bin-op ::= '+' | '-' | '*' | '/'
     private static final Parser<Character, BinaryOperator<Double>> binOp =
         choice(
-            chr('+').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l + r)),
-            chr('-').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l - r)),
-            chr('*').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l * r)),
-            chr('/').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l / r))
+            chr('+').then(add),
+            chr('-').then(subt),
+            chr('*').then(times),
+            chr('/').then(divide)
         );
 
     // bin-expr ::= '(' expr bin-op expr ')'
@@ -36,8 +43,11 @@ public class Grammar {
         expr.set(choice(dble, binOpExpr));
     }
 
-    private static final Parser<Character, Void> end = eof();
-    private static final Parser<Character, Double> parser = expr.bind(d -> end.then(retn(d)));
+    // Inform the compiler of the type of eof.
+    private static final Parser<Character, Void> eof = eof();
+
+    // parser = expr end
+    private static final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
 
     private static void evaluate(String s) throws Exception {
         System.out.println(s + " = " + parser.parse(State.of(s)).getResult());

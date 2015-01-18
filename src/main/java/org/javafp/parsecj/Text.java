@@ -18,21 +18,21 @@ public abstract class Text {
     public static <S, A> ConsumedT<S, A> createConsError(boolean consumed, State<S> state, String expected) {
         final IList<String> expList = IList.of(expected);
         return consumed ?
-            ConsumedT.consumed(() ->
-                Reply.error(
-                    Message.Ref.of(() -> Message.of(state, expList))
-                )
-            ) : ConsumedT.empty(
-                Reply.error(
-                    Message.Ref.of(() -> Message.of(state, expList))
-                )
+            ConsumedT.Consumed(() ->
+                    Reply.Error(
+                        Message.Ref.of(() -> Message.of(state, expList))
+                    )
+            ) : ConsumedT.Empty(
+            Reply.Error(
+                Message.Ref.of(() -> Message.of(state, expList))
+            )
         );
     }
 
     private static <S, A> ConsumedT<S, A> endOfInputError(boolean consumed, State<S> state) {
         return consumed ?
-            ConsumedT.consumed(() -> endOfInput(state)) :
-            ConsumedT.empty(endOfInput(state));
+            ConsumedT.Consumed(() -> endOfInput(state)) :
+            ConsumedT.Empty(endOfInput(state));
     }
 
     /**
@@ -77,7 +77,7 @@ public abstract class Text {
     public static final Parser<Character, Integer> intr =
         state -> {
             if (state.end()) {
-                return ConsumedT.empty(endOfInput(state));
+                return ConsumedT.Empty(endOfInput(state));
             }
 
             boolean consumed = false;
@@ -120,8 +120,8 @@ public abstract class Text {
 
             final int res = signPos ? acc : -acc;
             final State<Character> tail = state;
-            return ConsumedT.consumed(
-                () -> Reply.ok(
+            return ConsumedT.Consumed(
+                () -> Reply.Ok(
                     res,
                     tail,
                     Message.Ref.of(() -> Message.of(tail, IList.empty()))
@@ -143,7 +143,7 @@ public abstract class Text {
     public static Parser<Character, String> string(String value) {
         return state -> {
             if (state.end()) {
-                return ConsumedT.empty(endOfInput(state));
+                return ConsumedT.Empty(endOfInput(state));
             }
 
             boolean consumed = false;
@@ -156,8 +156,8 @@ public abstract class Text {
                 ++i;
                 if (i == value.length()) {
                     final State<Character> tail = state;
-                    return ConsumedT.consumed(
-                        () -> Reply.ok(
+                    return ConsumedT.Consumed(
+                        () -> Reply.Ok(
                             value,
                             tail,
                             Message.Ref.of(() -> Message.of(tail, IList.empty()))
@@ -178,14 +178,14 @@ public abstract class Text {
     public static final Parser<Character, String> alphaNum =
         state -> {
             if (state.end()) {
-                return ConsumedT.empty(endOfInput(state));
+                return ConsumedT.Empty(endOfInput(state));
             }
 
             char c = state.current();
             if (!Character.isAlphabetic(c) && !Character.isDigit(c)) {
                 final State<Character> tail = state;
-                return ConsumedT.empty(
-                    Reply.error(
+                return ConsumedT.Empty(
+                    Reply.Error(
                         Message.Ref.of(() -> Message.of(tail, IList.empty()))
                     )
                 );
@@ -203,8 +203,8 @@ public abstract class Text {
             } while (Character.isAlphabetic(c) || Character.isDigit(c));
 
             final State<Character> tail = state;
-            return ConsumedT.consumed(
-                () -> Reply.ok(
+            return ConsumedT.Consumed(
+                () -> Reply.Ok(
                     sb.toString(),
                     tail,
                     Message.Ref.of(() -> Message.of(tail, IList.empty()))
@@ -235,9 +235,9 @@ public abstract class Text {
             if (matcher.lookingAt()) {
                 final int end = matcher.end();
                 final String str = cs.subSequence(0, end).toString();
-                return ConsumedT.consumed(() -> Reply.ok(str, state.next(end), msg));
+                return ConsumedT.Consumed(() -> Reply.Ok(str, state.next(end), msg));
             } else {
-                return ConsumedT.empty(Reply.error(msg));
+                return ConsumedT.Empty(Reply.Error(msg));
             }
         };
     }

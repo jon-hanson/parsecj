@@ -5,7 +5,7 @@ import org.javafp.data.IList;
 import java.util.function.Supplier;
 
 /**
- * An error message which represents a parse failure.
+ * An Error message which represents a parse failure.
  */
 public class Message<S> {
 
@@ -22,7 +22,7 @@ public class Message<S> {
     }
 
     /**
-     * A lazily-constructed error message.
+     * A lazily-constructed Error message.
      */
     public static class Ref<S> implements Supplier<Message<S>> {
 
@@ -68,10 +68,10 @@ public class Message<S> {
         }
     }
 
-    // The position the error occurred at.
+    // The position the Error occurred at.
     public final int pos;
 
-    // The symbol that caused the error.
+    // The symbol that caused the Error.
     public final S sym;
 
     // The names of the productions that were expected.
