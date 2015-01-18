@@ -56,7 +56,6 @@ Here a parser is defined which will parse and evaluate expressions of the form *
 The parser is constructed by taking the `intr` parser for integers, the `satisfy` parser for single symbols,
 and combining them using the `bind`, `then` and `retn` combinators.
 
-
 This parser can be used as follows:
 
 ```java
@@ -68,7 +67,7 @@ int i =
             )
         )
     ).parse(State.of("1+2")).getResult();
-// i is now 3.
+assert i == 3;
 ```
 
 # Usage
@@ -78,10 +77,12 @@ In rare cases a parser combinator may need to be implemented by operating direct
 
 ## Types
 
+There are three principal types to be aware of.
+
 ### Parser<S, A>
 
 All parsers implement the `org.javafp.parsecj.Parser` (functional) interface,
-which has an `apply` method :
+which has an `apply` method:
 
 ```java
 @FunctionalInterface
@@ -208,16 +209,22 @@ The key point is that they observe the three [monad laws](https://www.haskell.or
 
 where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
 
-The first two laws tell us that `retn` is the identity of the `bind` operation.
+or, using the standalone `bind` function instead of the fluent `Parser.bind` method:
+
+1. **Left Identity** : `bind(retn(a), f)` = `f.apply(a)`
+1. **Right Identity** : `bind(p, x -> retn(x))` = `p`
+1. **Associativity** : `bind(bind(p, f), g)` = `bind(p, x -> bind(f.apply(x), g))`
+
+The first two laws tell us that `retn` acts as an identity of the `bind` operation.
 The third law tells us that when we have three parser expressions being combined with `bind`,
 the order in which the expressions are evaluated has no effect on the result.
 This becomes relevant when using the fluent chaining,
 as it means we do not to worry too much about bracketing when chaining parsers.
-The intent becomes clearer if we add some redundant brackets to the equality:
+The intent becomes (slightly) more clear if we add some redundant brackets to the equality:
 
 `(p.bind(f)).bind(g)` = `p.bind(x -> (f.apply(x).bind(g)))`
 
-It is analgous to associativity of addition over numbers,
+It's analgous to associativity of addition over numbers,
 where *a+b+c* yields the same result regardless of whether we evaluate it as *(a+b)+c* or *a+(b+c)*.
 
 Also of note is the `fail` parser, which is a monadic zero,
@@ -307,7 +314,7 @@ private static void evaluate(String s) throws Exception {
 This section describes how the Haskell code from the [Parsec paper](http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf)
 paper has been translated into Java.
 
-Note, the code described below does not exactly match the implementation code of ParsecJ -
+Note, the Java code described below does not exactly match the implementation code of ParsecJ -
 it has been simplified for expository purposes.
 
 ## Section 3
@@ -461,10 +468,10 @@ public abstract static class ConsumedT<A> {
 }
 ```
 
-We can then construct `ConsumedT` instances using a lambda function with no arguments:
+We can then construct `ConsumedT` instances using a lambda function with an empty argument list:
 
 ```java
-ConsumedT<S, A> cons = consumed(() -> Of(...));
+ConsumedT<S, A> cons = consumed(() -> Ok(...));
 ```
 
 The final of the three Haskell types is `Parser a`,
@@ -567,15 +574,15 @@ Java doesn't support custom operators so we will implement this as a `bind` func
 public static <A, B> Parser<B> bind(
         Parser<? extends A> p,
         Function<A, Parser<B>> f) {
-    return input ->
-        p.apply(input).match(
-            cons -> consumed(() ->
-                cons.getReply().match(
-                    ok -> f.apply(ok.result).parse(ok.rest).getReply(),
-                    error -> Error()
-                )
+    return s ->
+        p.parse(s).<ConsumedT<B>>match(
+            cons -> Consumed(() ->
+                    cons.getReply().<Reply<B>>match(
+                        ok -> f.apply(ok.result).parse(ok.rest).getReply(),
+                        error -> Error()
+                    )
             ),
-            empty -> empty.getReply().match(
+            empty -> empty.getReply().<ConsumedT<B>>match(
                 ok -> f.apply(ok.result).parse(ok.rest),
                 error -> Empty(Error())
             )
@@ -782,8 +789,17 @@ p
 
 ### Associativity
 
-`p.bind(f).bind(g)` = `p.bind(x -> f.apply(x).bind(g))`
+Proving the associativty law is a little more involved than the other two laws, and is beyond the scope of this document.
+it can be proved by first noting that expression `p.parse(s)`,
+the Parser p applied to an input,
+must yield one of the following four outputs:
 
+1. `Consumed(Ok(a, r))`
+2. `Consumed(Error())`
+3. `Empty(Ok(a, r))`
+4. `Empty(Error())`
+
+and then proving the law holds for each of these cases. 
 
 # Related Work
 
