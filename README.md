@@ -255,19 +255,25 @@ The above grammar then, can be translated into the following Java implementation
 
 ```java
 // Forward declare expr to allow for circular references.
-final Parser.Ref<Character, Double> expr = Parser.Ref.of();
+private static final Parser.Ref<Character, Double> expr = Parser.Ref.of();
 
-// binOp ::= '+' | '-' | '*' | '/'
-final Parser<Character, BinaryOperator<Double>> binOp =
+// Inform the compiler of the type of retn.
+private static final Parser<Character, BinaryOperator<Double>> add = retn((l, r) -> l + r);
+private static final Parser<Character, BinaryOperator<Double>> subt = retn((l, r) -> l - r);
+private static final Parser<Character, BinaryOperator<Double>> times = retn((l, r) -> l * r);
+private static final Parser<Character, BinaryOperator<Double>> divide = retn((l, r) -> l / r);
+
+// bin-op ::= '+' | '-' | '*' | '/'
+private static final Parser<Character, BinaryOperator<Double>> binOp =
     choice(
-        chr('+').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l + r)),
-        chr('-').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l - r)),
-        chr('*').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l * r)),
-        chr('/').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l / r))
+        chr('+').then(add),
+        chr('-').then(subt),
+        chr('*').then(times),
+        chr('/').then(divide)
     );
 
-// binOpExpr ::= '(' expr binOp expr ')'
-final Parser<Character, Double> binOpExpr =
+// bin-expr ::= '(' expr bin-op expr ')'
+private static final Parser<Character, Double> binOpExpr =
     chr('(')
         .then(expr.bind(
             l -> binOp.bind(
@@ -275,17 +281,26 @@ final Parser<Character, Double> binOpExpr =
                     r -> chr(')')
                         .then(retn(op.apply(l, r)))))));
 
-// expr ::= dble | binOpExpr
-expr.set(dble.or(binOpExpr));
+static {
+    // expr ::= dble | binOpExpr
+    expr.set(choice(dble, binOpExpr));
+}
 
-final Parser<Character, Void> end = eof();
-final Parser<Character, Double> parser = expr.bind(d -> end.then(retn(d)));
+// Inform the compiler of the type of eof.
+private static final Parser<Character, Void> eof = eof();
+
+// parser = expr end
+private static final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
+
+private static void evaluate(String s) throws Exception {
+    System.out.println(s + " = " + parser.parse(State.of(s)).getResult());
+}
 ```
 
 **Notes**
 * The expression language is recursive - `expr` refers to `binOpExpr` which refers to `expr`. Since Java doesn't allow us to define a mutually recursive set of variables, we have to break the circularity by making the `expr` parser a `Parser.Ref`, which gets declared at the beginning and initialised at the end. `Ref` implements the `Parser` interface, hence it can be used as a parser.
-* In some cases Java's type inference fails to infer the types of expressions - the four operator parsers comprising `binOp` for instance, giving rise to compilation failures. If this happens a type hint has to be provided to the compiler to allow the expression to compile, in this case `Combinators.<Character, BinaryOperator<Double>>retn`.
-* We add the `eof` parser, which succeeds if it encounters the end of the input, to bookend the `expr` parser. This ensures the parser does not incorrectly parse malformed inputs which begin with a valid expression, such as `(1+2)Z`.
+* The return type of each combinator function is `Parser<S, A>` and the compiler attempts to infer the types of `S` and `A` from the arguments. Certain combinators do not have parameters of both types - `retn` and `eof` for instance, which causes the type inference to fail resulting in a compilation error. If this happens the error can be avoid by either assigning the combinator to a variable or by expliting specifying the generic types, e.g. `Combinators.<Character, BinaryOperator<Double>>retn`.
+* We add the `eof` parser, which succeeds if it encounters the end of the input, to bookend the `expr` parser. This ensures the parser does not inadvertently parse malformed inputs which begin with a valid expression, such as `(1+2)Z`.
 
 # Translating Haskell into Java
 
