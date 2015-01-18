@@ -325,7 +325,7 @@ The `Reply` type is a discriminated union between an `Ok` and an `Error`.
 We can model this in Java with a `Reply` base class (or interface),
 with two sub-classes:
 
-```Java
+```java
 public abstract class Reply<A> {
     public static <A> Ok<A> Ok(A result, String rest) {
         return new Ok<A>(result, rest);
@@ -373,7 +373,7 @@ public abstract class Reply<A> {
 The `match` method provides a poor-man's equivalent to Haskell's pattern-matching.
 It can be used to extract the result from a `Reply`:
 
-```Java
+```java
 <A> A getResult(Reply<A> reply) {
     return reply.match(
         ok -> ok.result,
@@ -389,7 +389,7 @@ however there are two subtleties to take into account:
 in Java we chose to call the former `ConsumedT` to distinguish it from the latter.
 1. We learn further on in the document that Parsec relies on the `Consumed` type constructor being lazy (as is standard in Haskell). In order to simulate this in Java we need to make the `Consumed` class lazily constructed, using a `Supplier` instance:
 
-```Java
+```java
 public abstract static class ConsumedT<A> {
     public static <A> ConsumedT<A> Consumed(Supplier<Reply<A>> supplier) {
         return new Consumed<A>(supplier);
@@ -463,7 +463,7 @@ public abstract static class ConsumedT<A> {
 
 We can then construct `ConsumedT` instances using a lambda function with no arguments:
 
-```Java
+```java
 ConsumedT<S, A> cons = consumed(() -> Reply.of(...));
 ```
 
@@ -471,7 +471,7 @@ The final of the three Haskell types is `Parser a`,
 which is a type synonym for a function from `String` to `Consumed a`.
 We can model this as a functional interface in Java (Java 8 that is):
 
-```Java
+```java
 @FunctionalInterface
 public interface Parser<A> {
     ConsumedT<A> parse(String input);
@@ -480,7 +480,7 @@ public interface Parser<A> {
 
 Since `Parser` is a functional interface we can construct `Parser` instances using the Java 8 lambda syntax:
 
-```Java
+```java
 Parser<Integer> p = s -> { ... };
 ```
 
@@ -492,14 +492,14 @@ Section 3.1 of the paper outlines the implementation of some core combinators.
 
 The `return` combinator:
 
-```Haskell
+```haskell
 return x
 = \input -> Empty (Ok x input)
 ```
 
 has to be renamed in Java as `return` is a reserved word, however the definition otherwise maps fairly easily:
 
-```Java
+```java
 public static <A> Parser<A> retn(A x) {
     return s -> Empty(Ok(x, s));
 }
@@ -509,7 +509,7 @@ public static <A> Parser<A> retn(A x) {
 
 The `satisfy` combinator applies a predicate `test` to the next symbol on the input:
 
-```Haskell
+```haskell
 satisfy :: (Char → Bool) → Parser Char
 satisfy test
   = \input -> case (input) of
@@ -521,7 +521,7 @@ satisfy test
 Here the combinator is returning a function which is a `Parser`.
 Using Java 8 lambda functions we can define `satisfy` in a similar fashion:
 
-```Java
+```java
 public static Parser<Character> satisfy(Predicate<Character> test) {
     return input -> {
         if (!input.isEmpty()) {
@@ -542,7 +542,7 @@ public static Parser<Character> satisfy(Predicate<Character> test) {
 
 The bind combinator in Haskell is implemented as the `>>=` operator:
 
-```Haskell
+```haskell
 (>>=) :: Parser a → (a → Parser b) → Parser b
 p >>= f
   = \input -> case (p input) of
@@ -563,7 +563,7 @@ p >>= f
 
 Java doesn't support custom operators so we will implement this as a `bind` function:
 
-```Java
+```java
 public static <A, B> Parser<B> bind(
         Parser<? extends A> p,
         Function<A, Parser<B>> f) {
@@ -597,21 +597,21 @@ We prove this by reducing the LHS to the same form as the RhS through a series o
 
 Taking the LHS as the starting point:
 
-```Java
+```java
 retn(a).bind(f)
 ```
 
 we can reduce this by substituting the definition of the `retn` function in place of the call to the function:
 
 &#8594; (from the definition of `retn`)
-```Java
+```java
 (s -> Empty(Ok(a, s))).bind(f)
 ```
 
 Likewise now we substitute the definition of `bind`, and so on:
 
 &#8594; (from the definition of `bind`)
-```Java
+```java
 s -> Empty(ok(a, s)).match(
     cons -> Consumed(() ->
         cons.getReply().match(
@@ -627,7 +627,7 @@ s -> Empty(ok(a, s)).match(
 ```
 
 &#8594; (from definition of `ConsumedT.match`)
-```Java
+```java
 s -> Empty(Ok(a, s)).getReply().match(
     ok -> f.apply(ok.result).parse(ok.rest),
     error -> Empty(Error())
@@ -635,7 +635,7 @@ s -> Empty(Ok(a, s)).getReply().match(
 ```
 
 &#8594; (from definition of `Empty.getReply`)
-```Java
+```java
 s -> Ok(a, s).match(
     ok -> f.apply(ok.result).parse(ok.rest),
     error -> Empty(Error())
@@ -643,22 +643,22 @@ s -> Ok(a, s).match(
 ```
 
 &#8594; (from definition of `Reply.match`)
-```Java
+```java
 s -> f.apply(Ok(a, s).result).parse(Ok(a, s).rest)
 ```
 
 &#8594; (from definition of `Ok.result`)
-```Java
+```java
 s -> f.apply(a).parse(Ok(a, s).rest)
 ```
 
 &#8594; (from definition of `Ok.rest`)
-```Java
+```java
 s -> f.apply(a).parse(s);
 ```
 
 &#8594; (function introduction and application cancel out)
-```Java
+```java
 f.apply(a);
 ```
 &#8718;
@@ -671,19 +671,19 @@ This law requires that `p.bind(x -> retn(x))` = `p`
 
 Again taking the LHS:
 
-```Java
+```java
 p.bind(x -> retn(x))
 ```
 
 we can reduce this as follows:
 
 &#8594; (from the definition of `retn`)
-```Java
+```java
 p.bind(x -> s -> `empty(ok(x, s))
 ```
 
 &#8594; (from the definition of `bind`)
-```Java
+```java
 input ->
     p.apply(input).match(
         cons -> consumed(() ->
@@ -700,7 +700,7 @@ input ->
 ```
 
 &#8594; (function application)
-```Java
+```java
 input ->
     p.apply(input).match(
         cons -> consumed(() ->
@@ -717,7 +717,7 @@ input ->
 ```
 
 &#8594; (function application)
-```Java
+```java
 input ->
     p.apply(input).match(
         cons -> consumed(() ->
@@ -734,7 +734,7 @@ input ->
 ```
 
 &#8594; (from definition of Ok)
-```Java
+```java
 input ->
     p.apply(input).match(
         cons -> consumed(() ->
@@ -751,7 +751,7 @@ input ->
 ```
 
 &#8594; (simplification)
-```Java
+```java
 input ->
     p.apply(input).match(
         cons -> consumed(() ->cons),
@@ -760,7 +760,7 @@ input ->
 ```
 
 &#8594; (simplification)
-```Java
+```java
 input ->
     p.apply(input).match(
         cons -> cons,
@@ -769,12 +769,12 @@ input ->
 ```
 
 &#8594; (simplification)
-```Java
+```java
 input -> p.apply(input)
 ```
 
 &#8594; (simplification)
-```Java
+```java
 p
 ```
 
