@@ -169,8 +169,8 @@ The `org.javafp.parsecj.Combinators` package provides the following core combina
 Name | Description | Returns
 -----|-------------|--------
 `retn(value)` | A parser which always succeeds | The supplied value.
-`bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser which is then applied. | Result of `q` 
-`fail()` | A parser which always fails. | An Error
+`bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser which is then applied. | Result of `q` .
+`fail()` | A parser which always fails. | An error.
 `satisfy(test)` | Applies a test to the next input symbol. | The symbol.
 `satisfy(value)` | A parser which succeeds if the next input symbol equals `value`. | The symbol.
 `eof()` | A parser which succeeds if the end of the input is reached. | UNIT.
