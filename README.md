@@ -464,7 +464,7 @@ public abstract static class ConsumedT<A> {
 We can then construct `ConsumedT` instances using a lambda function with no arguments:
 
 ```java
-ConsumedT<S, A> cons = consumed(() -> Reply.of(...));
+ConsumedT<S, A> cons = consumed(() -> Of(...));
 ```
 
 The final of the three Haskell types is `Parser a`,
@@ -779,6 +779,11 @@ p
 ```
 
 &#8718;
+
+### Associativity
+
+`p.bind(f).bind(g)` = `p.bind(x -> f.apply(x).bind(g))`
+
 
 # Related Work
 
