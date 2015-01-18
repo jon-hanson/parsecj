@@ -307,6 +307,9 @@ private static void evaluate(String s) throws Exception {
 This section describes how the Haskell code from the [Parsec paper](http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf)
 paper has been translated into Java.
 
+Note, the code described below does not exactly match the implementation code of ParsecJ -
+it has been simplified for expository purposes.
+
 ## Section 3
 
 Section 3 of the paper begins to describe the implementation of Parsec, starting with these three types:
@@ -331,6 +334,7 @@ public abstract class Reply<A> {
     public static <A> Error<A> Error() {
         return new Error<A>();
     }
+    
     public abstract <B> B match(Function<Ok<A>, B> ok, Function<Error<A>, B> error);
 
     public static final class Ok<A> extends Reply<A> {
@@ -457,7 +461,7 @@ public abstract static class ConsumedT<A> {
 }
 ```
 
-We can then construct `ConsumedT` instances using a lambda:
+We can then construct `ConsumedT` instances using a lambda function with no arguments:
 
 ```Java
 ConsumedT<S, A> cons = consumed(() -> Reply.of(...));
@@ -470,7 +474,7 @@ We can model this as a functional interface in Java (Java 8 that is):
 ```Java
 @FunctionalInterface
 public interface Parser<A> {
-    ConsumedT<A> parse(String state);
+    ConsumedT<A> parse(String input);
 }
 ```
 
@@ -557,7 +561,7 @@ p >>= f
            )
 ```
 
-Java doesn't support custom operators so we have to implement this as a `bind` function:
+Java doesn't support custom operators so we will implement this as a `bind` function:
 
 ```Java
 public static <A, B> Parser<B> bind(
@@ -590,10 +594,20 @@ which means we can substitute the function body in place of calls to the functio
 
 This law requires that `retn(a).bind(f)` = `f.apply(a)`
 
-Taking the LHS, we can reduce this as follows:
+Taking the LHS:
 
-`retn(a).bind(f)`
-&#8594; `(s -> Empty(Ok(a, s))).bind(f)` (from the definition of `retn`)
+```Java
+retn(a).bind(f)
+```
+
+we can reduce this by subsituting the definition of `retn` in place of the call to it:
+
+&#8594; (from the definition of `retn`)
+```Java
+(s -> Empty(Ok(a, s))).bind(f)
+```
+
+Likewise here we substitute the definition of `bind`, and so on:
 
 &#8594; (from the definition of `bind`)
 ```Java
@@ -648,14 +662,24 @@ f.apply(a);
 ```
 &#8718;
 
+I.e. we have shown the LHS of the first law can be reduced to RHS, i.e. we have proved to law to hold.
+
 ### Right Identity
 
 This law requires that `p.bind(x -> retn(x))` = `p`
 
-Again taking the LHS, we can reduce this as follows:
+Again taking the LHS:
 
-`p.bind(x -> retn(x))`
-&#8594; `p.bind(x -> s -> `empty(ok(x, s))` (from the definition of `retn`)
+```Java
+p.bind(x -> retn(x))
+```
+
+we can reduce this as follows:
+
+&#8594; (from the definition of `retn`)
+```Java
+p.bind(x -> s -> `empty(ok(x, s))
+```
 
 &#8594; (from the definition of `bind`)
 ```Java
