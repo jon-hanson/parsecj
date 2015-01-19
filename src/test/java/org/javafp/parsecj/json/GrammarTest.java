@@ -1,5 +1,6 @@
 package org.javafp.parsecj.json;
 
+import org.junit.Assert;
 import org.javafp.parsecj.Reply;
 import org.junit.Test;
 
@@ -10,6 +11,7 @@ public class GrammarTest {
             "{\"array\":[1,2,3],\"boolean\":true,\"null\":null,\"number\":123,\"object\":{\"a\":\"b\",\"c\":\"d\",\"e\":\"f\"},\"string\":\"Hello\nWorld\"}"
         );
         Node node = reply.getResult();
+        Assert.assertTrue(reply.getResult() != null);
     }
 
     @Test
@@ -18,6 +20,7 @@ public class GrammarTest {
             " { \"array\" : [ 1 , 2 , 3 ] , \"boolean\" : true , \"null\" : null , \"number\" : 123 , \"object\" : { \"a\" : \"b\" , \"c\" : \"d\" , \"e\" : \"f\" } , \"string\" : \"Hello World\" } "
         );
         Node node = reply.getResult();
+        Assert.assertTrue(reply.getResult() != null);
     }
 
     @Test
@@ -41,6 +44,6 @@ public class GrammarTest {
                 "}"
         );
         Node node = reply.getResult();
-        System.out.println(node);
+        Assert.assertTrue(reply.getResult() != null);
     }
 }
