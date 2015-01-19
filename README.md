@@ -46,10 +46,11 @@ As a quick illustration of how a simple parser looks when implemented using Pars
 consider the following example.
 
 ```java
-intr.bind(x ->
-    satisfy('+')
-        .then(intr.bind(y ->
-            retn(x+y))))
+Parser<Character, Integer> sum =
+    intr.bind(x ->
+        satisfy('+')
+            .then(intr.bind(y ->
+                retn(x+y))));
 ```
 
 Here a parser is defined which will parse and evaluate expressions of the form *a+b* where *a* and *b* are integers.
@@ -59,15 +60,20 @@ and combining them using the `bind`, `then` and `retn` combinators.
 This parser can be used as follows:
 
 ```java
-int i =
-    intr.bind(x ->
-        satisfy('+')
-            .then(intr.bind(y ->
-                retn(x+y)
-            )
-        )
-    ).parse(State.of("1+2")).getResult();
+int i = sum.parse(State.of("1+2")).getResult();
 assert i == 3;
+```
+
+Meanwhile, if we give it invalid input:
+
+```java
+int i = sum.parse(State.of("1+z")).getResult();
+```
+
+the it yields an exception with an error message that pinpoints the problem:
+
+```java
+Exception in thread "main" java.lang.Exception: Message{position=2, sym=<z>, expected=[integer]}
 ```
 
 # Usage
