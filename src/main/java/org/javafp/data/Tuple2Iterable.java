@@ -34,7 +34,7 @@ public class Tuple2Iterable<A, B> implements Iterable<Tuple2<A, B>> {
         }
     }
 
-    public static <A, B> Tuple2Iterable<A, B> create(Iterable<A> iterA, Iterable<B> iterB) {
+    public static <A, B> Tuple2Iterable<A, B> of(Iterable<A> iterA, Iterable<B> iterB) {
         return new Tuple2Iterable<A, B>(iterA, iterB);
     }
 
