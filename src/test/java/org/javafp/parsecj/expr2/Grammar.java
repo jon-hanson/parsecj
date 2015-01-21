@@ -93,7 +93,7 @@ public abstract class Grammar {
 
     // term = num | brackExpr | funcN | signedExpr
     private static final Parser<Character, Expr> term =
-        choice(tryP(num), brackExpr, funcN, signedExpr);
+        choice(attempt(num), brackExpr, funcN, signedExpr);
 
     // prod = term chainl1 multDiv
     private static final Parser<Character, Expr> prod =

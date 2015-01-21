@@ -2,6 +2,7 @@ package org.javafp.parsecj;
 
 import org.javafp.data.IList;
 
+import java.util.Optional;
 import java.util.function.*;
 
 /**
@@ -73,7 +74,7 @@ public interface Parser<S, A> {
         return apply(state).getReply();
     }
 
-    // Helper functions to chain combinators in a fluent style.
+    // Helper functions to allow combinators to be chained in a fluent style.
 
     default <B> Parser<S, B> bind(Function<A, Parser<S, B>> f) {
         return Combinators.bind(this, f);
@@ -91,8 +92,16 @@ public interface Parser<S, A> {
         return Combinators.label(this, name);
     }
 
-    default Parser<S, A> tryP() {
-        return Combinators.tryP(this);
+    default Parser<S, A> attempt() {
+        return Combinators.attempt(this);
+    }
+
+    default Parser<S, Optional<A>> optionalOpt() {
+        return Combinators.optionalOpt(this);
+    }
+
+    default Parser<S, Void> optional() {
+        return Combinators.optional(this);
     }
 
     default Parser<S, A> chainl1(Parser<S, BinaryOperator<A>> op) {
@@ -105,6 +114,14 @@ public interface Parser<S, A> {
 
     default Parser<S, IList<A>> many1() {
         return Combinators.many1(this);
+    }
+
+    default Parser<S, Void> skipMany() {
+        return Combinators.skipMany(this);
+    }
+
+    default Parser<S, Void> skipMany1() {
+        return Combinators.skipMany1(this);
     }
 
     default <SEP> Parser<S, IList<A>> sepBy(Parser<S, SEP> sep) {

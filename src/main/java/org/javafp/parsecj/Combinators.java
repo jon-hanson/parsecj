@@ -310,10 +310,11 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser which turns a parser which consumes input into one which doesn't (if it fails).
+     * A combinator which turns a parser which consumes input
+     * into one which doesn't consume input if it fails.
      * This allows the implementation of LL(∞) grammars.
      */
-    public static <S, A> Parser<S, A> tryP(Parser<S, A> p) {
+    public static <S, A> Parser<S, A> attempt(Parser<S, A> p) {
         return state -> {
             final ConsumedT<S, A> cons = p.apply(state);
             if (cons.isConsumed()) {
@@ -325,33 +326,6 @@ public abstract class Combinators {
                 return cons;
             }
         };
-    }
-
-    /**
-     * A parser which attempts parser p first and if it fails then return x.
-     */
-    public static <S, A> Parser<S, A> option(Parser<S, A> p, A x) {
-        return or(p, retn(x));
-    }
-
-    /**
-     * A parser for optional values.
-     */
-    public static <S, A> Parser<S, Optional<A>> optionalOpt(Parser<S, A> p) {
-        return option(
-            p.bind(x -> retn(Optional.of(x))),
-            Optional.empty()
-        );
-    }
-
-    /**
-     * A parser for optional values, which throws the result away.
-     */
-    public static <S, A> Parser<S, Void> optional(Parser<S, A> p) {
-        return or(
-            bind(p, x -> retn(UNIT)),
-            retn(UNIT)
-        );
     }
 
     /**
@@ -377,6 +351,41 @@ public abstract class Combinators {
     }
 
     /**
+     * A parser which attempts parser p first and if it fails then return x.
+     */
+    public static <S, A> Parser<S, A> option(Parser<S, A> p, A x) {
+        return or(p, retn(x));
+    }
+
+    /**
+     * A parser for optional values.
+     */
+    public static <S, A> Parser<S, Optional<A>> optionalOpt(Parser<S, A> p) {
+        return option(
+            p.bind(x -> retn(Optional.of(x))),
+            Optional.empty()
+        );
+    }
+
+    /**
+     * A parser for optional values, which throws the result away.
+     */
+    public static <S, A> Parser<S, Void> optional(Parser<S, A> p) {
+        return or(bind(p, x -> retn(UNIT)), retn(UNIT));
+    }
+
+    /**
+     * A parser which parses an OPEN symbol, then applies parser p, then parses a CLOSE symbol,
+     * and returns the result of p.
+     */
+    public static <S, A, OPEN, CLOSE> Parser<S, A> between(
+            Parser<S, OPEN> open,
+            Parser<S, CLOSE> close,
+            Parser<S, A> p) {
+        return then(open, bind(p, a -> then(close, retn(a))));
+    }
+
+    /**
      * A parser for a list of zero or more values of the same type.
      */
     public static <S, A> Parser<S, IList<A>> many(Parser<S, A> p) {
@@ -384,40 +393,17 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser for a list of one or more values of the same type.
-     */
-    public static <S, A> Parser<S, IList<A>> many1(Parser<S, A> p) {
-        return bind(p, x -> manyAcc(p, IList.of(x)));
-    }
-
-    private static <S, A> Parser<S, IList<A>> manyAcc(Parser<S, A> p, IList<A> acc) {
-        return or(bind(p, x -> manyAcc(p, acc.add(x))), retn(acc.reverse()));
-    }
-
-    /**
-     * A parser which applies the parser p zero or more times, skipping its result.
+     * A parser which applies the parser p one or more times, throwing away the result.
      */
     public static <S, A> Parser<S, Void> skipMany(Parser<S, A> p) {
         return or(bind(p, x -> skipMany(p)), retn(UNIT));
     }
 
     /**
-     * A parser for an operand followed by zero or more operands (p) separated by operators (op).
-     * This parser can for example be used to eliminate left recursion which typically occurs in expression grammars.
+     * A parser which applies the parser p zero or more times, throwing away the result.
      */
-    public static <S, A> Parser<S, A> chainl1(
-            Parser<S, A> p,
-            Parser<S, BinaryOperator<A>> op) {
-        return bind(p, x -> rest(p, op, x));
-    }
-
-    private static <S, A> Parser<S, A> rest(
-            Parser<S, A> p,
-            Parser<S, BinaryOperator<A>> op,
-            A x) {
-        return or(
-            bind(op, f -> bind(p, y -> rest(p, op, f.apply(x, y)))), retn(x)
-        );
+    public static <S, A> Parser<S, Void> skipMany1(Parser<S, A> p) {
+        return then(p, skipMany(p));
     }
 
     /**
@@ -437,8 +423,9 @@ public abstract class Combinators {
     public static <S, A, SEP> Parser<S, IList<A>> sepBy1(
             Parser<S, A> p,
             Parser<S, SEP> sep) {
-        return bind(p, x ->
-            bind(
+        return bind(
+            p,
+            x -> bind(
                 many(then(sep, p)),
                 xs -> retn(xs.add(x))
             )
@@ -446,13 +433,30 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser which parses an OPEN symbol, then applies parser p, then parses a CLOSE symbol,
-     * and returns the result of p.
+     * A parser for a list of one or more values of the same type.
      */
-    public static <S, A, OPEN, CLOSE> Parser<S, A> between(
-            Parser<S, OPEN> open,
-            Parser<S, CLOSE> close,
-            Parser<S, A> p) {
-        return then(open, bind(p, a -> then(close, retn(a))));
+    public static <S, A> Parser<S, IList<A>> many1(Parser<S, A> p) {
+        return bind(p, x -> manyAcc(p, IList.of(x)));
+    }
+
+    private static <S, A> Parser<S, IList<A>> manyAcc(Parser<S, A> p, IList<A> acc) {
+        return or(bind(p, x -> manyAcc(p, acc.add(x))), retn(acc.reverse()));
+    }
+
+    /**
+     * A parser for an operand followed by zero or more operands (p) separated by operators (op).
+     * This parser can for example be used to eliminate left recursion which typically occurs in expression grammars.
+     */
+    public static <S, A> Parser<S, A> chainl1(
+            Parser<S, A> p,
+            Parser<S, BinaryOperator<A>> op) {
+        return bind(p, x -> rest(p, op, x));
+    }
+
+    private static <S, A> Parser<S, A> rest(
+            Parser<S, A> p,
+            Parser<S, BinaryOperator<A>> op,
+            A x) {
+        return or(bind(op, f -> bind(p, y -> rest(p, op, f.apply(x, y)))), retn(x));
     }
 }
