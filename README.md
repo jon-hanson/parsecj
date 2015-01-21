@@ -15,7 +15,7 @@ The parser features include:
 
 ## Parser Combinators
 
-The typical approach to implementing parsers for special-purpose languages
+A typical approach to implementing parsers for special-purpose languages
 is to use a parser generation tool,
 such as Yacc/Bison and ANTLR.
 With these tools the language is expressed as a series of production rules,
@@ -26,7 +26,9 @@ An alternative approach is to implement a
 [recursive descent parser](http://en.wikipedia.org/wiki/Recursive_descent_parser),
 whereby the production rules comprising the grammar
 are translated by hand into parse functions.
-One limitation of this approach
+The advantage here is that the rules are expressed in the host programming language,
+obviating the need for a seperate grammar language and the consequent code-generation phase.
+A limitation of this approach
 is that the extra plumbing required to implement error-handling and backtracking
 obscures the correspondence between the parsing functions and the language rules.
 
