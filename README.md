@@ -4,12 +4,11 @@ ParsecJ
 # Introduction
 
 **ParsecJ** is a Java monadic parser combinator framework for constructing LL(1) parsers.
-It is based on the
-[Parsec paper](http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf),
-which describes a monadic parsing framework implemented in Haskell.
+It is a port of the Haskell [Parsec library](https://hackage.haskell.org/package/parsec).
+The implementation is a direct Java port of the Haskell code outlined in the original [Parsec paper](http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf).
 
 The parser features include:
-* Composable parser combinators which allow parsers to be constructed directly from grammars.
+* Composable parser combinators which provide a DSL for implementing parsers from grammars.
 * Informative error messages in the event of parse failures.
 * Thread-safe due to immutable parsers and input states.
 * A combinator approach which mirrors that of Parsec, its Haskell counterpart, allowing grammars written for Parsec to be translated into equivalent grammars for ParsecJ.
@@ -57,7 +56,7 @@ Here a parser is defined which will parse and evaluate expressions of the form *
 The parser is constructed by taking the `intr` parser for integers, the `satisfy` parser for single symbols,
 and combining them using the `bind`, `then` and `retn` combinators.
 
-This parser can be used as follows:
+The parser can be used as follows:
 
 ```java
 int i = sum.parse(State.of("1+2")).getResult();
@@ -70,7 +69,7 @@ Meanwhile, if we give it invalid input:
 int i = sum.parse(State.of("1+z")).getResult();
 ```
 
-the it yields an exception with an error message that pinpoints the problem:
+then it throws an exception with an error message that pinpoints the problem:
 
 ```java
 Exception in thread "main" java.lang.Exception: Message{position=2, sym=<z>, expected=[integer]}
@@ -310,6 +309,8 @@ private static void evaluate(String s) throws Exception {
 }
 ```
 
+The correspondence between the production rules of our mini expression language and the above set of parsers should be apparent.
+
 **Notes**
 * The expression language is recursive - `expr` refers to `binOpExpr` which refers to `expr`. Since Java doesn't allow us to define a mutually recursive set of variables, we have to break the circularity by making the `expr` parser a `Parser.Ref`, which gets declared at the beginning and initialised at the end. `Ref` implements the `Parser` interface, hence it can be used as a parser.
 * The return type of each combinator function is `Parser<S, A>` and the compiler attempts to infer the types of `S` and `A` from the arguments. Certain combinators do not have parameters of both types - `retn` and `eof` for instance, which causes the type inference to fail resulting in a compilation error. If this happens the error can be avoid by either assigning the combinator to a variable or by expliting specifying the generic types, e.g. `Combinators.<Character, BinaryOperator<Double>>retn`.
@@ -499,7 +500,7 @@ Parser<Integer> p = s -> { ... };
 
 ## Section 3.1 - Basic Combinators
 
-Section 3.1 of the paper outlines the implementation of some core combinators.
+Section 3.1 of the paper outlines the implementation of the core combinators.
 
 ### The return Combinator
 
@@ -598,10 +599,10 @@ public static <A, B> Parser<B> bind(
 
 ## Proving the Monad Laws
 
-Given the above definitions of `retn` and `bind` we can now attempt to prove the three monad laws.
-Since the `retn` and `bind` combinators have been defined as pure functions,
-they observe referential tranparency,
-which means we can substitute the function body in place of calls to the function when reasoning about the combinators.
+Given the above definitions of `retn` and `bind` we can now attempt to prove the monad laws.
+Note, that since the `retn` and `bind` combinators have been defined as pure functions,
+they observe referential transparency,
+meaning we can substitute the function body in place of calls to the function when reasoning about the combinators.
 
 ### Left Identity
 
@@ -676,7 +677,7 @@ f.apply(a);
 ```
 &#8718;
 
-I.e. we have shown the LHS of the first law can be reduced to RHS, i.e. we have proved to law to hold.
+I.e. we have shown the LHS of the first law can be reduced to RHS, in other words we have proved to law to hold.
 
 ### Right Identity
 
@@ -793,11 +794,13 @@ p
 
 &#8718;
 
+Again, we have reduced the LHS of the law to the same form as the RHS, thus proving the law.
+
 ### Associativity
 
-Proving the associativty law is a little more involved than the other two laws, and is beyond the scope of this document.
-it can be proved by first noting that expression `p.parse(s)`,
-the Parser p applied to an input,
+Proving the associativity law is a little more involved than the other two laws, and is beyond the scope of this document.
+It can be proved by first noting that the expression `p.parse(s)`,
+that is the Parser `p` applied to an input `s`,
 must yield one of the following four outputs:
 
 1. `Consumed(Ok(a, r))`
