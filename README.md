@@ -801,7 +801,7 @@ Again, we have reduced the LHS of the law to the same form as the RHS, thus prov
 ### Associativity
 
 Proving the associativity law is a little more involved than the other two laws, and is beyond the scope of this document.
-It can be proved by first noting that the expression `p.parse(s)`,
+One approach would be to first note that the expression `p.parse(s)`,
 that is the Parser `p` applied to an input `s`,
 must yield one of the following four outputs:
 
