@@ -27,7 +27,7 @@ An alternative approach is to implement a
 whereby the production rules comprising the grammar
 are translated by hand into parse functions.
 The advantage here is that the rules are expressed in the host programming language,
-obviating the need for a seperate grammar language and the consequent code-generation phase.
+obviating the need for a separate grammar language and the consequent code-generation phase.
 A limitation of this approach
 is that the extra plumbing required to implement error-handling and backtracking
 obscures the correspondence between the parsing functions and the language rules.
@@ -805,10 +805,10 @@ It can be proved by first noting that the expression `p.parse(s)`,
 that is the Parser `p` applied to an input `s`,
 must yield one of the following four outputs:
 
-1. `Consumed(Ok(a, r))`
-2. `Consumed(Error())`
-3. `Empty(Ok(a, r))`
-4. `Empty(Error())`
+* `Consumed(Ok(a, r))`
+* `Consumed(Error())`
+* `Empty(Ok(a, r))`
+* `Empty(Error())`
 
 and then proving the law holds for each of these cases. 
 
