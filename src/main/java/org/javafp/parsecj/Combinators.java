@@ -12,7 +12,7 @@ import static org.javafp.parsecj.Reply.Ok;
 
 /**
  * A set of parser combinator functions.
- * The Parser type along with retn & bind constitute a monad.
+ * The Parser type along with retn &amp; bind constitute a monad.
  * This is a Java implementation of this paper:
  * http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf
  */
@@ -97,7 +97,7 @@ public abstract class Combinators {
 
     /**
      * Apply the first parser, then apply the second parser and return the result.
-     * Optimisation for bind(p, x -> q) - i.e. discard x, the result of the first parser, p.
+     * Optimisation for bind(p, x -&gt; q) - i.e. discard x, the result of the first parser, p.
      */
     public static <S, A, B> Parser<S, B> then(Parser<S, ? extends A> p, Parser<S, B> q) {
         return state -> {

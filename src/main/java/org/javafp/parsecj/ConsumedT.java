@@ -3,7 +3,7 @@ package org.javafp.parsecj;
 import java.util.function.Supplier;
 
 /**
- * Discriminated union between a Consumed type and an Empty type.
+ * ConsumedT is a discriminated union between a Consumed type and an Empty type.
  * Wraps a parse result (Reply) and indicates whether the parser consumed input
  * in the process of computing the parse result.
  * @param <S> Input stream symbol type.
@@ -30,6 +30,7 @@ public interface ConsumedT<S, A> {
 
 /**
  * A parse result that indicates the parser did consume some input.
+ * Consumed is lazy with regards to the reply it wraps.
  */
 final class Consumed<S, A> implements ConsumedT<S, A> {
 
