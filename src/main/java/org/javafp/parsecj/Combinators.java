@@ -393,14 +393,25 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser which applies the parser p one or more times, throwing away the result.
+     * A parser for a list of one or more values of the same type.
+     */
+    public static <S, A> Parser<S, IList<A>> many1(Parser<S, A> p) {
+        return bind(p, x -> manyAcc(p, IList.of(x)));
+    }
+
+    private static <S, A> Parser<S, IList<A>> manyAcc(Parser<S, A> p, IList<A> acc) {
+        return or(bind(p, x -> manyAcc(p, acc.add(x))), retn(acc.reverse()));
+    }
+
+    /**
+     * A parser which applies the parser p zero or more times, throwing away the result.
      */
     public static <S, A> Parser<S, Void> skipMany(Parser<S, A> p) {
         return or(bind(p, x -> skipMany(p)), retn(UNIT));
     }
 
     /**
-     * A parser which applies the parser p zero or more times, throwing away the result.
+     * A parser which applies the parser p one or more times, throwing away the result.
      */
     public static <S, A> Parser<S, Void> skipMany1(Parser<S, A> p) {
         return then(p, skipMany(p));
@@ -433,14 +444,25 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser for a list of one or more values of the same type.
+     * A parser which parses zero or more occurrences of p, separated by sep,
+     * and ended by sep,
+     * and returns a list of values returned by p.
      */
-    public static <S, A> Parser<S, IList<A>> many1(Parser<S, A> p) {
-        return bind(p, x -> manyAcc(p, IList.of(x)));
+    public static <S, A, SEP> Parser<S, IList<A>> sepEndBy(
+            Parser<S, A> p,
+            Parser<S, SEP> sep) {
+        return many(bind(p, x -> retn(x)));
     }
 
-    private static <S, A> Parser<S, IList<A>> manyAcc(Parser<S, A> p, IList<A> acc) {
-        return or(bind(p, x -> manyAcc(p, acc.add(x))), retn(acc.reverse()));
+    /**
+     * A parser which parses one or more occurrences of p, separated by sep,
+     * and ended by sep,
+     * and returns a list of values returned by p.
+     */
+    public static <S, A, SEP> Parser<S, IList<A>> sepEndBy1(
+        Parser<S, A> p,
+        Parser<S, SEP> sep) {
+        return many1(bind(p, x -> retn(x)));
     }
 
     /**

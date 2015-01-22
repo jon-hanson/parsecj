@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import static org.javafp.parsecj.Combinators.*;
-import static org.javafp.parsecj.Text.dble;
+import static org.javafp.parsecj.Text.*;
 
 public class ParserTest {
 
@@ -58,7 +58,7 @@ public class ParserTest {
     }
 
     @Test
-    public void testBind1() throws Exception {
+    public void testBind_A() throws Exception {
         final Parser<Character, String> p =
             satisfy('a').bind(a ->
                 satisfy('b').bind(b ->
@@ -70,7 +70,7 @@ public class ParserTest {
     }
 
     @Test
-    public void testBind2() throws Exception {
+    public void testBind_B() throws Exception {
         final Parser<Character, String> p =
             satisfy('a').then(
                 satisfy('b').then(
@@ -81,6 +81,26 @@ public class ParserTest {
         Assert.assertEquals("'ab' should parse", "ab", p.apply(State.of("ab")).getReply().getResult());
     }
 
+    @Test
+    public void testSatisfy_A() throws Exception {
+        final Parser<Character, Character> p = satisfy('a');
+        Assert.assertTrue("'ba' should fail to parse", isError(p.apply(State.of("ba")).getReply()));
+        Assert.assertEquals("'ab' should parse", (long)'a', (long)p.apply(State.of("ab")).getReply().getResult());
+    }
+
+    @Test
+    public void testSatisfy_B() throws Exception {
+        final Parser<Character, Character> p = satisfy(Character::isDigit);
+        Assert.assertTrue("'ba' should fail to parse", isError(p.apply(State.of("ba")).getReply()));
+        Assert.assertEquals("'9a' should parse", (long)'9', (long)p.apply(State.of("9a")).getReply().getResult());
+    }
+
+    @Test
+    public void testSatisfy_C() throws Exception {
+        final Parser<Character, Character> p = satisfy('a', 'c');
+        Assert.assertTrue("'c' should fail to parse", isError(p.apply(State.of("c")).getReply()));
+        Assert.assertEquals("'ab' should parse", (long)'c', (long)p.apply(State.of("ab")).getReply().getResult());
+    }
 
     @Test
     public void testOr() throws Exception {
@@ -89,5 +109,76 @@ public class ParserTest {
         Assert.assertEquals("'a' should parse", 'a', p.apply(State.of("a")).getReply().getResult().charValue());
         Assert.assertEquals("'b' should parse", 'b', p.apply(State.of("b")).getReply().getResult().charValue());
         Assert.assertTrue("'c' should fail to parse", isError(p.apply(State.of("c")).getReply()));
+    }
+
+    @Test
+    public void testLabel() throws Exception {
+        final String unlikelyName = "6b%gfb$nj";
+        final String msg = satisfy('A').label(unlikelyName).parse(State.of("FAIL")).getMsg();
+        Assert.assertTrue("Parse error contains label", msg.contains(unlikelyName));
+    }
+
+    @Test
+    public void testAttempt() throws Exception {
+    }
+
+    @Test
+    public void testChoice() throws Exception {
+    }
+
+    @Test
+    public void testOption() throws Exception {
+    }
+
+    @Test
+    public void testOptionalOpt() throws Exception {
+    }
+
+    @Test
+    public void testOptional() throws Exception {
+    }
+
+    @Test
+    public void testBetween() throws Exception {
+    }
+
+    @Test
+    public void testMany() throws Exception {
+    }
+
+    @Test
+    public void testMany1() throws Exception {
+    }
+
+    @Test
+    public void testSkipMany() throws Exception {
+    }
+
+    @Test
+    public void testSkipMany1() throws Exception {
+    }
+
+    @Test
+    public void testSepBy() throws Exception {
+    }
+
+    @Test
+    public void testSepBy1() throws Exception {
+    }
+
+    @Test
+    public void testSepEndBy() throws Exception {
+    }
+
+    @Test
+    public void testSepEndBy1() throws Exception {
+    }
+
+    @Test
+    public void testChainl1() throws Exception {
+    }
+
+    @Test
+    public void testX() throws Exception {
     }
 }
