@@ -120,6 +120,10 @@ public class ParserTest {
 
     @Test
     public void testAttempt() throws Exception {
+        final Parser<Character, String> p = string("abcde");
+        Assert.assertTrue("parse of 'abcde' will consume input", p.apply(State.of("abcde")).isConsumed());
+        Assert.assertTrue("parse of 'abcd' will consume input", p.apply(State.of("abcd")).isConsumed());
+        Assert.assertFalse("attempt parse of 'abcd' will not consume input", p.attempt().apply(State.of("abcd")).isConsumed());
     }
 
     @Test

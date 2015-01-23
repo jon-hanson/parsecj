@@ -152,7 +152,6 @@ public abstract class Text {
             while (c == value.charAt(i)) {
                 consumed = true;
                 state = state.next();
-                c = state.current();
                 ++i;
                 if (i == value.length()) {
                     final State<Character> tail = state;
@@ -166,6 +165,7 @@ public abstract class Text {
                 } else if (state.end()) {
                     return endOfInputError(consumed, state);
                 }
+                c = state.current();
             }
 
             return createConsError(consumed, state, "\"" + value + '"');
