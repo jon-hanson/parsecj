@@ -14,11 +14,11 @@ public abstract class IList<T> implements Iterable<T> {
         return Empty.EMPTY;
     }
 
-    public static <T> IList<T> of(T elem) {
+    public static <T> IList<T> list(T elem) {
         return Empty.EMPTY.add(elem);
     }
 
-    public static <T> IList<T> of(T... elems) {
+    public static <T> IList<T> list(T... elems) {
         IList<T> list = Empty.EMPTY;
         for (int i = elems.length - 1; i >= 0; --i) {
             list = list.add(elems[i]);
@@ -30,7 +30,7 @@ public abstract class IList<T> implements Iterable<T> {
         return new Node<T>(head, tail);
     }
 
-    public static <T> List<T> toJList(IList<T> list) {
+    public static <T> List<T> toList(IList<T> list) {
         final List<T> result = new LinkedList<T>();
         for (; !list.isEmpty(); list = list.tail()) {
             result.add(list.head());

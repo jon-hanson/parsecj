@@ -96,6 +96,10 @@ public interface Parser<S, A> {
         return Combinators.attempt(this);
     }
 
+    default Parser<S, A> option(A x) {
+        return Combinators.option(this, x);
+    }
+
     default Parser<S, Optional<A>> optionalOpt() {
         return Combinators.optionalOpt(this);
     }
@@ -104,8 +108,8 @@ public interface Parser<S, A> {
         return Combinators.optional(this);
     }
 
-    default Parser<S, A> chainl1(Parser<S, BinaryOperator<A>> op) {
-        return Combinators.chainl1(this, op);
+    default <OPEN, CLOSE> Parser<S, A> between(Parser<S, OPEN> open, Parser<S, CLOSE> close) {
+        return Combinators.between(open, close, this);
     }
 
     default Parser<S, IList<A>> many() {
@@ -130,5 +134,17 @@ public interface Parser<S, A> {
 
     default <SEP> Parser<S, IList<A>> sepBy1 (Parser<S, SEP> sep) {
         return Combinators.sepBy1(this, sep);
+    }
+
+    default <SEP> Parser<S, IList<A>> sepEndBy(Parser<S, SEP> sep) {
+        return Combinators.sepEndBy(this, sep);
+    }
+
+    default <SEP> Parser<S, IList<A>> sepEndBy1 (Parser<S, SEP> sep) {
+        return Combinators.sepEndBy1(this, sep);
+    }
+
+    default Parser<S, A> chainl1(Parser<S, BinaryOperator<A>> op) {
+        return Combinators.chainl1(this, op);
     }
 }

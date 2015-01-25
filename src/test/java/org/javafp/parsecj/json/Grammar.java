@@ -78,7 +78,7 @@ public class Grammar {
                 jvalue,
                 tok(chr(','))
             )
-        ).bind(l -> retn(Node.array(IList.toJList(l))))
+        ).bind(l -> retn(Node.array(IList.toList(l))))
             .label("array");
 
     static LinkedHashMap<String, Node> toMap(IList<Tuple2<String, Node>> fields) {

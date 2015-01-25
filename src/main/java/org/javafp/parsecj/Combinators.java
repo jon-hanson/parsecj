@@ -5,10 +5,9 @@ import org.javafp.data.IList;
 import java.util.Optional;
 import java.util.function.*;
 
-import static org.javafp.parsecj.ConsumedT.Consumed;
-import static org.javafp.parsecj.ConsumedT.Empty;
-import static org.javafp.parsecj.Reply.Error;
-import static org.javafp.parsecj.Reply.Ok;
+import static org.javafp.parsecj.ConsumedT.*;
+import static org.javafp.parsecj.Message.*;
+import static org.javafp.parsecj.Reply.*;
 
 /**
  * A set of parser combinator functions.
@@ -23,11 +22,9 @@ public abstract class Combinators {
     /**
      * Construct an Error Reply indicating the end of the input has been reached.
      */
-    public static <S, A> Reply<S, A> endOfInput(State<S> state) {
-        return Reply.<S, A>Error(
-            Message.Ref.of(() ->
-                    Message.of(state.position(), IList.empty())
-            )
+    public static <S, A> Reply<S, A> endOfInput(State<S> state, String expected) {
+        return Reply.<S, A>error(
+            lazy(() -> Message.endOfInput(state.position(), expected))
         );
     }
 
@@ -37,16 +34,11 @@ public abstract class Combinators {
      */
     public static <S, A> Parser<S, A> retn(A x) {
         return state ->
-            Empty(
-                Ok(
+            empty(
+                Reply.ok(
                     x,
                     state,
-                    Message.Ref.of(() ->
-                            Message.of(
-                                state.position(),
-                                IList.empty()
-                            )
-                    )
+                    lazy(() -> message(state))
                 )
             );
     }
@@ -67,7 +59,7 @@ public abstract class Combinators {
         return state -> {
             final ConsumedT<S, ? extends A> cons1 = p.apply(state);
             if (cons1.isConsumed()) {
-                return Consumed(() ->
+                return consumed(() ->
                         cons1.getReply().<Reply<S, B>>match(
                             ok1 -> {
                                 final ConsumedT<S, B> cons2 = f.apply(ok1.result).apply(ok1.rest);
@@ -89,7 +81,7 @@ public abstract class Combinators {
                             );
                         }
                     },
-                    error -> Empty(error.cast())
+                    error -> empty(error.cast())
                 );
             }
         };
@@ -103,7 +95,7 @@ public abstract class Combinators {
         return state -> {
             final ConsumedT<S, ? extends A> cons1 = p.apply(state);
             if (cons1.isConsumed()) {
-                return Consumed(() ->
+                return consumed(() ->
                         cons1.getReply().<Reply<S, B>>match(
                             ok1 -> {
                                 final ConsumedT<S, B> cons2 = q.apply(ok1.rest);
@@ -136,9 +128,9 @@ public abstract class Combinators {
      */
     public static <S, A> Parser<S, A> fail() {
         return state ->
-            Empty(
-                Reply.Error(
-                    Message.Ref.of(() -> Message.of(state, IList.empty()))
+            empty(
+                Reply.error(
+                    lazy(() -> message(state))
                 )
             );
     }
@@ -149,16 +141,16 @@ public abstract class Combinators {
     public static <S> Parser<S, Void> eof() {
         return state -> {
             if (state.end()) {
-                return Empty(
+                return empty(
                     Ok(
                         state,
-                        Message.Ref.of(() -> Message.of(state, IList.of()))
+                        lazy(() -> message(state))
                     )
                 );
             } else {
-                return Empty(
-                    Reply.<S, Void>Error(
-                        Message.Ref.of(() -> Message.of(state, IList.of("EOF")))
+                return empty(
+                    Reply.<S, Void>error(
+                        lazy(() -> message(state, "EOF"))
                     )
                 );
             }
@@ -174,26 +166,21 @@ public abstract class Combinators {
                 final S s = state.current();
                 if (test.test(s)) {
                     final State<S> newState = state.next();
-                    return Consumed(() -> Ok(
+                    return consumed(() -> Reply.ok(
                             s,
                             newState,
-                            Message.Ref.of(() ->
-                                    Message.of(
-                                        state.position(),
-                                        IList.empty()
-                                    )
-                            )
+                            lazy(() -> message(state))
                         )
                     );
                 } else {
-                    return Empty(
-                        Error(
-                            Message.Ref.of(() -> Message.of(state, IList.of("<test>")))
+                    return empty(
+                        error(
+                            lazy(() -> message(state, "<test>"))
                         )
                     );
                 }
             } else {
-                return Empty(endOfInput(state));
+                return empty(endOfInput(state, "<test>"));
             }
         };
     }
@@ -206,22 +193,22 @@ public abstract class Combinators {
             if (!state.end()) {
                 if (state.current().equals(value)) {
                     final State<S> newState = state.next();
-                    return Consumed(() ->
-                            Ok(
+                    return consumed(() ->
+                            Reply.ok(
                                 state.current(),
                                 newState,
-                                Message.Ref.of(() -> Message.of(state, IList.empty()))
+                                lazy(() -> message(state))
                             )
                     );
                 } else {
-                    return Empty(
-                        Error(
-                            Message.Ref.of(() -> Message.of(state, IList.of(value.toString())))
+                    return empty(
+                        error(
+                            lazy(() -> message(state, value.toString()))
                         )
                     );
                 }
             } else {
-                return Empty(endOfInput(state));
+                return empty(endOfInput(state, value.toString()));
             }
         };
     }
@@ -236,24 +223,24 @@ public abstract class Combinators {
             if (!state.end()) {
                 if (state.current().equals(value)) {
                     final State<S> newState = state.next();
-                    return Consumed(() ->
-                            Ok(
+                    return consumed(() ->
+                            Reply.ok(
                                 result,
                                 newState,
-                                Message.Ref.of(() -> Message.of(state, IList.empty()))
+                                lazy(() -> message(state))
                             )
                     );
                 } else {
-                    return Empty(
-                        Error(
-                            Message.Ref.of(() ->
-                                    Message.of(state, IList.of(value.toString()))
+                    return empty(
+                        error(
+                            lazy(() ->
+                                    message(state, value.toString())
                             )
                         )
                     );
                 }
             } else {
-                return Empty(endOfInput(state));
+                return empty(endOfInput(state, value.toString()));
             }
         };
     }
@@ -293,7 +280,7 @@ public abstract class Combinators {
     }
 
     /**
-     * Label a parser with a readable name for more meaningful Error messages.
+     * Label a parser with a readable name for more meaningful error messages.
      */
     public static <S, A> Parser<S, A> label(Parser<S, A> p, String name) {
         return state -> {
@@ -302,8 +289,8 @@ public abstract class Combinators {
                 return cons;
             } else {
                 return cons.getReply().match(
-                    ok -> Empty(Ok(ok.result, ok.rest, ok.msg.expect(name))),
-                    error -> Empty(Reply.Error((error.msg.expect(name))))
+                    ok -> empty(Reply.ok(ok.result, ok.rest, ok.msg.expect(name))),
+                    error -> empty(Reply.error((error.msg.expect(name))))
                 );
             }
         };
@@ -320,7 +307,7 @@ public abstract class Combinators {
             if (cons.isConsumed()) {
                 return cons.getReply().match(
                     ok -> cons,
-                    error -> Empty(error)
+                    error -> empty(error)
                 );
             } else {
                 return cons;
@@ -347,7 +334,7 @@ public abstract class Combinators {
      * parser
      */
     public static <S, A> Parser<S, A> choice(Parser<S, A>... ps) {
-        return choice(IList.of(ps));
+        return choice(IList.list(ps));
     }
 
     /**
@@ -396,7 +383,7 @@ public abstract class Combinators {
      * A parser for a list of one or more values of the same type.
      */
     public static <S, A> Parser<S, IList<A>> many1(Parser<S, A> p) {
-        return bind(p, x -> manyAcc(p, IList.of(x)));
+        return bind(p, x -> manyAcc(p, IList.list(x)));
     }
 
     private static <S, A> Parser<S, IList<A>> manyAcc(Parser<S, A> p, IList<A> acc) {
@@ -451,7 +438,7 @@ public abstract class Combinators {
     public static <S, A, SEP> Parser<S, IList<A>> sepEndBy(
             Parser<S, A> p,
             Parser<S, SEP> sep) {
-        return many(bind(p, x -> retn(x)));
+        return many(bind(p, x -> then(sep, retn(x))));
     }
 
     /**
@@ -460,9 +447,9 @@ public abstract class Combinators {
      * and returns a list of values returned by p.
      */
     public static <S, A, SEP> Parser<S, IList<A>> sepEndBy1(
-        Parser<S, A> p,
-        Parser<S, SEP> sep) {
-        return many1(bind(p, x -> retn(x)));
+            Parser<S, A> p,
+            Parser<S, SEP> sep) {
+        return many1(bind(p, x -> then(sep, retn(x))));
     }
 
     /**

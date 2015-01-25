@@ -9,21 +9,21 @@ import java.util.function.Function;
  */
 public abstract class Reply<S, A> {
 
-    public static <S, A> Ok<S, A> Ok(A result, State<S> tail, Message.Ref<S> msg) {
+    public static <S, A> Ok<S, A> ok(A result, State<S> tail, Message<S> msg) {
         return new Ok<S, A>(result, tail, msg);
     }
 
-    public static <S> Ok<S, Void> Ok(State<S> tail, Message.Ref<S> msg) {
+    public static <S> Ok<S, Void> Ok(State<S> tail, Message<S> msg) {
         return new Ok<S, Void>(null, tail, msg);
     }
 
-    public static <S, A> Error<S, A> Error(Message.Ref<S> msg) {
+    public static <S, A> Error<S, A> error(Message<S> msg) {
         return new Error<S, A>(msg);
     }
 
-    public final Message.Ref<S> msg;
+    public final Message<S> msg;
 
-    Reply(Message.Ref<S> msg) {
+    Reply(Message<S> msg) {
         this.msg = msg;
     }
 
@@ -31,8 +31,11 @@ public abstract class Reply<S, A> {
 
     public abstract A getResult() throws Exception;
 
+    public abstract boolean isOk();
+    public abstract boolean isError();
+
     public String getMsg() {
-        return msg.get().msg();
+        return msg.toString();
     }
 
     /**
@@ -50,7 +53,7 @@ public abstract class Reply<S, A> {
          */
         public final State<S> rest;
 
-        Ok(A result, State<S> rest, Message.Ref<S> msg) {
+        Ok(A result, State<S> rest, Message<S> msg) {
             super(msg);
             this.result = result;
             this.rest = rest;
@@ -64,6 +67,16 @@ public abstract class Reply<S, A> {
         @Override
         public A getResult() {
             return result;
+        }
+
+        @Override
+        public boolean isOk() {
+            return true;
+        }
+
+        @Override
+        public boolean isError() {
+            return false;
         }
 
         @Override
@@ -104,7 +117,7 @@ public abstract class Reply<S, A> {
      */
     public static final class Error<S, A> extends Reply<S, A> {
 
-        Error(Message.Ref<S> msg) {
+        Error(Message<S> msg) {
             super(msg);
         }
 
@@ -119,7 +132,17 @@ public abstract class Reply<S, A> {
 
         @Override
         public A getResult() throws Exception {
-            throw new Exception(msg.get().toString());
+            throw new Exception(msg.toString());
+        }
+
+        @Override
+        public boolean isOk() {
+            return false;
+        }
+
+        @Override
+        public boolean isError() {
+            return true;
         }
 
         @Override
