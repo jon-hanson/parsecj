@@ -79,8 +79,13 @@ Exception in thread "main" java.lang.Exception: Message{position=2, sym=<z>, exp
 
 # Usage
 
-Typically parsers are defined by composing the predefined combinators provided by the library.
-In rare cases a parser combinator may need to be implemented by operating directly on the input state.
+The usual approach to using the library to implement a parser for a language is as follows:
+1. Define a model for language, i.e. a set of classes that represent the language elements.
+2. Define a grammar for the language - a set of production rules.
+3. Translate the production rules into parsers using the library combinators.
+4. Book-end the parser for the top-level element with the `eof` combinator.
+5. Invoke the parser by passing it a `State` object, usually constructed from a `String`.
+6. The resultant `Reply` result holds either the successfully parsed value or an error message.
 
 ## Types
 
@@ -205,37 +210,8 @@ Name | Description | Returns
 `alphaNum` | A parser which parses an alphanumeric string. | The string.
 `regex(regex)` | A parser which parses a string matching the supplied regex. | The string matching the regex.
 
-### Parser Monad
-
-The `retn` and `bind` combinators are slightly special as they are what make `Parser` a monad.
-The key point is that they observe the three [monad laws](https://www.haskell.org/haskellwiki/Monad_laws):
-
-1. **Left Identity** : `retn(a).bind(f)` = `f.apply(a)`
-1. **Right Identity** : `p.bind(x -> retn(x)` = `p`
-1. **Associativity** : `p.bind(f).bind(g)` = `p.bind(x -> f.apply(x).bind(g))`
-
-where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
-
-or, using the standalone `bind` function instead of the fluent `Parser.bind` method:
-
-1. **Left Identity** : `bind(retn(a), f)` = `f.apply(a)`
-1. **Right Identity** : `bind(p, x -> retn(x))` = `p`
-1. **Associativity** : `bind(bind(p, f), g)` = `bind(p, x -> bind(f.apply(x), g))`
-
-The first two laws tell us that `retn` acts as an identity of the `bind` operation.
-The third law tells us that when we have three parser expressions being combined with `bind`,
-the order in which the expressions are evaluated has no effect on the result.
-This becomes relevant when using the fluent chaining,
-as it means we do not to worry too much about bracketing when chaining parsers.
-The intent becomes (slightly) more clear if we add some redundant brackets to the equality:
-
-`(p.bind(f)).bind(g)` = `p.bind(x -> (f.apply(x).bind(g)))`
-
-It's analgous to associativity of addition over numbers,
-where *a+b+c* yields the same result regardless of whether we evaluate it as *(a+b)+c* or *a+(b+c)*.
-
-Also of note is the `fail` parser, which is a monadic zero,
-since if combined with any other parser the result is always a parser that fails.
+Typically parsers are defined by composing the predefined combinators provided by the library.
+In rare cases a parser combinator may need to be implemented by operating directly on the input state.
 
 # Example
 
@@ -599,11 +575,43 @@ public static <A, B> Parser<B> bind(
 }
 ```
 
-## Proving the Monad Laws
+# Parser Monad
 
-Given the above definitions of `retn` and `bind` we can now attempt to prove the monad laws.
+The `retn` and `bind` combinators are slightly special as they are what make `Parser` a monad.
+The key point is that they observe the three [monad laws](https://www.haskell.org/haskellwiki/Monad_laws):
+
+1. **Left Identity** : `retn(a).bind(f)` = `f.apply(a)`
+1. **Right Identity** : `p.bind(x -> retn(x)` = `p`
+1. **Associativity** : `p.bind(f).bind(g)` = `p.bind(x -> f.apply(x).bind(g))`
+
+where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
+
+or, using the standalone `bind` function instead of the fluent `Parser.bind` method:
+
+1. **Left Identity** : `bind(retn(a), f)` = `f.apply(a)`
+1. **Right Identity** : `bind(p, x -> retn(x))` = `p`
+1. **Associativity** : `bind(bind(p, f), g)` = `bind(p, x -> bind(f.apply(x), g))`
+
+The first two laws tell us that `retn` acts as an identity of the `bind` operation.
+The third law tells us that when we have three parser expressions being combined with `bind`,
+the order in which the expressions are evaluated has no effect on the result.
+This becomes relevant when using the fluent chaining,
+as it means we do not to worry too much about bracketing when chaining parsers.
+The intent becomes (slightly) more clear if we add some redundant brackets to the equality:
+
+`(p.bind(f)).bind(g)` = `p.bind(x -> (f.apply(x).bind(g)))`
+
+It's analgous to associativity of addition over numbers,
+where *a+b+c* yields the same result regardless of whether we evaluate it as *(a+b)+c* or *a+(b+c)*.
+
+Also of note is the `fail` parser, which is a monadic zero,
+since if combined with any other parser the result is always a parser that fails.
+
+## Proving the Laws
+
+Given the above definitions of `retn` and `bind` we can attempt to prove the monad laws.
 Note, that since the `retn` and `bind` combinators have been defined as pure functions,
-they observe referential transparency,
+they are referential transparent,
 meaning we can substitute the function body in place of calls to the function when reasoning about the combinators.
 
 ### Left Identity
