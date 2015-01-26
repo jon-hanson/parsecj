@@ -1,7 +1,6 @@
 package org.javafp.parsecj;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 
 import static org.javafp.parsecj.Combinators.eof;
 import static org.javafp.parsecj.Combinators.retn;
@@ -19,11 +18,11 @@ public class TextTest {
     }
 
     private double parseDbl(String s) throws Exception {
-        return dble_eof.apply(State.of(s)).getReply().getResult();
+        return dble_eof.apply(State.state(s)).getReply().getResult();
     }
 
     private Reply<Character, Double> parseErrorDbl(String s) {
-        return dble_eof.apply(State.of(s)).getReply();
+        return dble_eof.apply(State.state(s)).getReply();
     }
 
     @Test

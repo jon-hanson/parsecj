@@ -5,9 +5,12 @@ import org.javafp.data.IList;
 import java.util.Optional;
 import java.util.function.*;
 
-import static org.javafp.parsecj.ConsumedT.*;
-import static org.javafp.parsecj.Message.*;
-import static org.javafp.parsecj.Reply.*;
+import static org.javafp.parsecj.ConsumedT.consumed;
+import static org.javafp.parsecj.ConsumedT.empty;
+import static org.javafp.parsecj.Message.lazy;
+import static org.javafp.parsecj.Message.message;
+import static org.javafp.parsecj.Reply.Ok;
+import static org.javafp.parsecj.Reply.error;
 
 /**
  * A set of parser combinator functions.

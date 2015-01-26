@@ -1,13 +1,20 @@
 package org.javafp.parsecj.json;
 
-import org.javafp.data.IList;
-import org.javafp.data.Tuple2;
+import org.javafp.data.*;
 import org.javafp.parsecj.*;
 
 import java.util.LinkedHashMap;
 
-import static org.javafp.parsecj.Combinators.*;
-import static org.javafp.parsecj.Text.*;
+import static org.javafp.parsecj.Combinators.between;
+import static org.javafp.parsecj.Combinators.choice;
+import static org.javafp.parsecj.Combinators.many;
+import static org.javafp.parsecj.Combinators.retn;
+import static org.javafp.parsecj.Combinators.satisfy;
+import static org.javafp.parsecj.Combinators.sepBy;
+import static org.javafp.parsecj.Text.chr;
+import static org.javafp.parsecj.Text.dble;
+import static org.javafp.parsecj.Text.string;
+import static org.javafp.parsecj.Text.wspaces;
 
 /**
  * A grammar for JSON.
@@ -120,6 +127,6 @@ public class Grammar {
     public static final Parser<Character, Node> parser = wspaces.then(jvalue);
 
     public static Reply<Character, Node> parse(String str) {
-        return parser.parse(State.of(str));
+        return parser.parse(State.state(str));
     }
 }

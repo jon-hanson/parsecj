@@ -2,8 +2,7 @@ package org.javafp.data;
 
 import java.util.*;
 import java.util.function.*;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import java.util.stream.*;
 
 /**
  * Simple recursive, immutable linked list.

@@ -1,7 +1,6 @@
 package org.javafp.data;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 
 public class IListTest {
 

@@ -1,28 +1,31 @@
 package org.javafp.parsecj;
 
 import org.javafp.data.IList;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.Optional;
 import java.util.function.BinaryOperator;
 
-import static org.javafp.parsecj.Combinators.*;
-import static org.javafp.parsecj.Text.*;
+import static org.javafp.parsecj.Combinators.choice;
+import static org.javafp.parsecj.Combinators.retn;
+import static org.javafp.parsecj.Combinators.satisfy;
+import static org.javafp.parsecj.Text.chr;
+import static org.javafp.parsecj.Text.digit;
+import static org.javafp.parsecj.Text.string;
 
 public class CombinatorsTest {
 
     private static <A> void assertParserSucceeds(
         Parser<Character, A> p,
         String input) throws Exception {
-        Assert.assertTrue("Parse of \"" + input + "\" should succeed", p.parse(State.of(input)).isOk());
+        Assert.assertTrue("Parse of \"" + input + "\" should succeed", p.parse(State.state(input)).isOk());
     }
 
     private static <A> void assertParserSucceedsWithValue(
         Parser<Character, A> p,
         String input,
         A expected) throws Exception {
-        Assert.assertEquals("Parse of \"" + input + "\" should succeed", expected, p.parse(State.of(input)).getResult());
+        Assert.assertEquals("Parse of \"" + input + "\" should succeed", expected, p.parse(State.state(input)).getResult());
     }
 
     private static void assertParserSucceedsWithValue(
@@ -34,7 +37,7 @@ public class CombinatorsTest {
     private static <A> void assertParserFails(
             Parser<Character, A> p,
             String input) throws Exception {
-        Assert.assertTrue("Parse of \"" + input + "\" should fail", isError(p.parse(State.of(input))));
+        Assert.assertTrue("Parse of \"" + input + "\" should fail", isError(p.parse(State.state(input))));
     }
 
     private static <S, A> boolean isError(Reply<S, A> reply) {
@@ -98,16 +101,16 @@ public class CombinatorsTest {
     public void testLabel() throws Exception {
         final String unlikelyName = "6b%gfb$nj";
         final Parser<Character, Character> p = satisfy('A').label(unlikelyName);
-        final String msg = p.parse(State.of("FAIL")).getMsg();
+        final String msg = p.parse(State.state("FAIL")).getMsg();
         Assert.assertTrue("Parse error contains label", msg.contains(unlikelyName));
     }
 
     @Test
     public void testAttempt() throws Exception {
         final Parser<Character, String> p = string("abcde");
-        Assert.assertTrue("parse of 'abcde' should consume input", p.apply(State.of("abcde")).isConsumed());
-        Assert.assertTrue("parse of 'abcd' should consume input", p.apply(State.of("abcd")).isConsumed());
-        Assert.assertFalse("attempt parse of 'abcd' will not consume input", p.attempt().apply(State.of("abcd")).isConsumed());
+        Assert.assertTrue("parse of 'abcde' should consume input", p.apply(State.state("abcde")).isConsumed());
+        Assert.assertTrue("parse of 'abcd' should consume input", p.apply(State.state("abcd")).isConsumed());
+        Assert.assertFalse("attempt parse of 'abcd' will not consume input", p.attempt().apply(State.state("abcd")).isConsumed());
     }
 
     @Test

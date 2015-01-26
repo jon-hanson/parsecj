@@ -1,8 +1,7 @@
 package org.javafp.parsecj.json;
 
-import org.junit.Assert;
 import org.javafp.parsecj.Reply;
-import org.junit.Test;
+import org.junit.*;
 
 public class GrammarTest {
     @Test

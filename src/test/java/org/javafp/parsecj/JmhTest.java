@@ -3,10 +3,8 @@ package org.javafp.parsecj;
 import org.javafp.parsecj.expr2.GrammarTest;
 import org.junit.Test;
 import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.runner.Runner;
-import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
-import org.openjdk.jmh.runner.options.OptionsBuilder;
+import org.openjdk.jmh.runner.*;
+import org.openjdk.jmh.runner.options.*;
 
 import java.io.IOException;
 

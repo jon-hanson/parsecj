@@ -1,9 +1,10 @@
 package org.javafp.parsecj;
 
 import org.javafp.data.IList;
-import static org.javafp.data.IList.*;
 
 import java.util.function.Supplier;
+
+import static org.javafp.data.IList.list;
 
 /**
  * An Error message which represents a parse failure.

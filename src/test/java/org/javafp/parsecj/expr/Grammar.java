@@ -1,12 +1,13 @@
 package org.javafp.parsecj.expr;
 
-import org.javafp.parsecj.Parser;
-import org.javafp.parsecj.State;
+import org.javafp.parsecj.*;
 import org.junit.Test;
 
 import java.util.function.BinaryOperator;
 
-import static org.javafp.parsecj.Combinators.*;
+import static org.javafp.parsecj.Combinators.choice;
+import static org.javafp.parsecj.Combinators.eof;
+import static org.javafp.parsecj.Combinators.retn;
 import static org.javafp.parsecj.Text.chr;
 import static org.javafp.parsecj.Text.dble;
 
@@ -50,7 +51,7 @@ public class Grammar {
     private static final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
 
     private static void evaluate(String s) throws Exception {
-        System.out.println(s + " = " + parser.parse(State.of(s)).getResult());
+        System.out.println(s + " = " + parser.parse(State.state(s)).getResult());
     }
 
     @Test

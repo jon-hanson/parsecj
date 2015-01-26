@@ -1,11 +1,11 @@
 package org.javafp.parsecj;
 
-import org.javafp.data.IList;
+import java.util.regex.*;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static org.javafp.parsecj.Combinators.*;
+import static org.javafp.parsecj.Combinators.endOfInput;
+import static org.javafp.parsecj.Combinators.retn;
+import static org.javafp.parsecj.Combinators.satisfy;
+import static org.javafp.parsecj.Combinators.skipMany;
 
 /**
  * Parser combinators to be used with Character streams.
