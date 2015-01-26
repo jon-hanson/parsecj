@@ -517,7 +517,7 @@ has to be renamed in Java as `return` is a reserved word, however the definition
 
 ```java
 public static <A> Parser<A> retn(A x) {
-    return s -> empty(ok(x, s));
+    return input -> empty(ok(x, input));
 }
 ```
 
@@ -583,13 +583,13 @@ Java doesn't support custom operators so we will implement this as a `bind` func
 public static <A, B> Parser<B> bind(
         Parser<? extends A> p,
         Function<A, Parser<B>> f) {
-    return s ->
-        p.parse(s).<ConsumedT<B>>match(
+    return input ->
+        p.parse(input).<ConsumedT<B>>match(
             cons -> consumed(() ->
-                    cons.getReply().<Reply<B>>match(
-                        ok -> f.apply(ok.result).parse(ok.rest).getReply(),
-                        error -> error()
-                    )
+                cons.getReply().<Reply<B>>match(
+                    ok -> f.apply(ok.result).parse(ok.rest).getReply(),
+                    error -> error()
+                )
             ),
             empty -> empty.getReply().<ConsumedT<B>>match(
                 ok -> f.apply(ok.result).parse(ok.rest),
@@ -621,14 +621,14 @@ we can reduce this by substituting the definition of the `retn` function in plac
 
 &#8594; (from the definition of `retn`)
 ```java
-(s -> empty(ok(a, s))).bind(f)
+(input -> empty(ok(a, input))).bind(f)
 ```
 
 Likewise now we substitute the definition of `bind`, and so on:
 
 &#8594; (from the definition of `bind`)
 ```java
-s -> empty(ok(a, s)).match(
+input -> empty(ok(a, input)).match(
     cons -> consumed(() ->
         cons.getReply().match(
             ok -> f.apply(ok.result).parse(ok.rest).getReply(),
@@ -644,7 +644,7 @@ s -> empty(ok(a, s)).match(
 
 &#8594; (from definition of `ConsumedT.match`)
 ```java
-s -> empty(ok(a, s)).getReply().match(
+input -> empty(ok(a, input)).getReply().match(
     ok -> f.apply(ok.result).parse(ok.rest),
     error -> empty(error())
 )
@@ -652,7 +652,7 @@ s -> empty(ok(a, s)).getReply().match(
 
 &#8594; (from definition of `Empty.getReply`)
 ```java
-s -> ok(a, s).match(
+input -> ok(a, input).match(
     ok -> f.apply(ok.result).parse(ok.rest),
     error -> empty(error())
 )
@@ -660,17 +660,17 @@ s -> ok(a, s).match(
 
 &#8594; (from definition of `Reply.match`)
 ```java
-s -> f.apply(ok(a, s).result).parse(ok(a, s).rest)
+input -> f.apply(ok(a, input).result).parse(ok(a, input).rest)
 ```
 
 &#8594; (from definition of `Ok.result`)
 ```java
-s -> f.apply(a).parse(ok(a, s).rest)
+input -> f.apply(a).parse(ok(a, input).rest)
 ```
 
 &#8594; (from definition of `Ok.rest`)
 ```java
-s -> f.apply(a).parse(s);
+input -> f.apply(a).parse(input);
 ```
 
 &#8594; (function introduction and application cancel out)
@@ -695,7 +695,7 @@ we can reduce this as follows:
 
 &#8594; (from the definition of `retn`)
 ```java
-p.bind(x -> s -> `empty(ok(x, s))
+p.bind(x -> input -> `empty(ok(x, input))
 ```
 
 &#8594; (from the definition of `bind`)
@@ -704,12 +704,12 @@ input ->
     p.apply(input).match(
         cons -> consumed(() ->
             cons.getReply().match(
-                ok -> (x -> s -> empty(ok(x, s))).apply(ok.result).parse(ok.rest).getReply(),
+                ok -> (x -> input2 -> empty(ok(x, input2))).apply(ok.result).parse(ok.rest).getReply(),
                 error -> error()
             )
         ),
         empty -> empty.getReply().match(
-            ok -> (x -> s -> empty(ok(x, s))).apply(ok.result).parse(ok.rest),
+            ok -> (x -> input2 -> empty(ok(x, input2))).apply(ok.result).parse(ok.rest),
             error -> empty(error())
         )
     )
@@ -721,12 +721,12 @@ input ->
     p.apply(input).match(
         cons -> consumed(() ->
             cons.getReply().match(
-                ok -> (s -> empty(ok(ok.result, s))).parse(ok.rest).getReply(),
+                ok -> (input2 -> empty(ok(ok.result, input2))).parse(ok.rest).getReply(),
                 error -> error()
             )
         ),
         empty -> empty.getReply().match(
-            ok -> (s -> empty(ok(ok.result, s))).parse(ok.rest),
+            ok -> (input2 -> empty(ok(ok.result, input2))).parse(ok.rest),
             error -> empty(error())
         )
     )
@@ -770,7 +770,7 @@ input ->
 ```java
 input ->
     p.apply(input).match(
-        cons -> consumed(() ->cons),
+        cons -> consumed(() -> cons),
         empty -> empty
     )
 ```
@@ -796,7 +796,7 @@ p
 
 &#8718;
 
-Again, we have reduced the LHS of the law to the same form as the RHS, thus proving the law.
+Again, we have reduced the LHS of the law to the same form as the RHS, proving the law holds.
 
 ### Associativity
 
