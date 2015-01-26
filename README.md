@@ -116,19 +116,19 @@ the `parse` method is also provided to apply the parser and extract the `Reply` 
 ### State<S>
 
 The `State<S>` interface is an abstraction representing an immutable input state.
-It provides several static `of` methods for constructing `State` instances from sequences of symbols:
+It provides several static `state` methods for constructing `State` instances from sequences of symbols:
 
 ```java
 public interface State<S> {
-    static <S> State<S> of(S[] symbols) {
+    static <S> State<S> state(S[] symbols) {
         return new ArrayState<S>(symbols);
     }
 
-    static State<Character> of(Character[] symbols) {
+    static State<Character> state(Character[] symbols) {
         return new CharArrayState(symbols);
     }
 
-    static State<Character> of(String symbols) {
+    static State<Character> state(String symbols) {
         return new StringState(symbols);
     }
 
@@ -269,7 +269,7 @@ The above grammar then, can be translated into the following Java implementation
 
 ```java
 // Forward declare expr to allow for circular references.
-private static final Parser.Ref<Character, Double> expr = Parser.Ref.of();
+private static final Parser.Ref<Character, Double> expr = Parser.ref();
 
 // Inform the compiler of the type of retn.
 private static final Parser<Character, BinaryOperator<Double>> add = retn((l, r) -> l + r);
@@ -343,11 +343,11 @@ with two sub-classes:
 
 ```java
 public abstract class Reply<A> {
-    public static <A> Ok<A> Ok(A result, String rest) {
+    public static <A> Ok<A> ok(A result, String rest) {
         return new Ok<A>(result, rest);
     }
         
-    public static <A> Error<A> Error() {
+    public static <A> Error<A> error() {
         return new Error<A>();
     }
     
@@ -407,11 +407,11 @@ in Java we chose to call the former `ConsumedT` to distinguish it from the latte
 
 ```java
 public abstract static class ConsumedT<A> {
-    public static <A> ConsumedT<A> Consumed(Supplier<Reply<A>> supplier) {
+    public static <A> ConsumedT<A> consumed(Supplier<Reply<A>> supplier) {
         return new Consumed<A>(supplier);
     }
 
-    public static <A> ConsumedT<A> Empty(Reply<A> reply) {
+    public static <A> ConsumedT<A> empty(Reply<A> reply) {
         return new Empty<A>(reply);
     }
 
@@ -480,7 +480,7 @@ public abstract static class ConsumedT<A> {
 We can then construct `ConsumedT` instances using a lambda function with an empty argument list:
 
 ```java
-ConsumedT<S, A> cons = consumed(() -> Ok(...));
+ConsumedT<S, A> cons = consumed(() -> ok(...));
 ```
 
 The final of the three Haskell types is `Parser a`,
@@ -517,7 +517,7 @@ has to be renamed in Java as `return` is a reserved word, however the definition
 
 ```java
 public static <A> Parser<A> retn(A x) {
-    return s -> Empty(Ok(x, s));
+    return s -> empty(ok(x, s));
 }
 ```
 
@@ -543,12 +543,12 @@ public static Parser<Character> satisfy(Predicate<Character> test) {
         if (!input.isEmpty()) {
             final char c = input.charAt(0);
             if (test.test(c)) {
-                return consumed(() -> Ok(c, input.substring(1)));
+                return consumed(() -> ok(c, input.substring(1)));
             } else {
-                return Empty(Error());
+                return empty(error());
             }
         } else {
-            return Empty(Error());
+            return empty(error());
         }
     };
 }
@@ -585,15 +585,15 @@ public static <A, B> Parser<B> bind(
         Function<A, Parser<B>> f) {
     return s ->
         p.parse(s).<ConsumedT<B>>match(
-            cons -> Consumed(() ->
+            cons -> consumed(() ->
                     cons.getReply().<Reply<B>>match(
                         ok -> f.apply(ok.result).parse(ok.rest).getReply(),
-                        error -> Error()
+                        error -> error()
                     )
             ),
             empty -> empty.getReply().<ConsumedT<B>>match(
                 ok -> f.apply(ok.result).parse(ok.rest),
-                error -> Empty(Error())
+                error -> empty(error())
             )
         );
 }
@@ -621,51 +621,51 @@ we can reduce this by substituting the definition of the `retn` function in plac
 
 &#8594; (from the definition of `retn`)
 ```java
-(s -> Empty(Ok(a, s))).bind(f)
+(s -> empty(ok(a, s))).bind(f)
 ```
 
 Likewise now we substitute the definition of `bind`, and so on:
 
 &#8594; (from the definition of `bind`)
 ```java
-s -> Empty(ok(a, s)).match(
-    cons -> Consumed(() ->
+s -> empty(ok(a, s)).match(
+    cons -> consumed(() ->
         cons.getReply().match(
             ok -> f.apply(ok.result).parse(ok.rest).getReply(),
-            error -> Error()
+            error -> error()
         )
     ),
     empty -> empty.getReply().match(
         ok -> f.apply(ok.result).parse(ok.rest),
-        error -> Empty(Error())
+        error -> empty(error())
     )
 )
 ```
 
 &#8594; (from definition of `ConsumedT.match`)
 ```java
-s -> Empty(Ok(a, s)).getReply().match(
+s -> empty(ok(a, s)).getReply().match(
     ok -> f.apply(ok.result).parse(ok.rest),
-    error -> Empty(Error())
+    error -> empty(error())
 )
 ```
 
 &#8594; (from definition of `Empty.getReply`)
 ```java
-s -> Ok(a, s).match(
+s -> ok(a, s).match(
     ok -> f.apply(ok.result).parse(ok.rest),
-    error -> Empty(Error())
+    error -> empty(error())
 )
 ```
 
 &#8594; (from definition of `Reply.match`)
 ```java
-s -> f.apply(Ok(a, s).result).parse(Ok(a, s).rest)
+s -> f.apply(ok(a, s).result).parse(ok(a, s).rest)
 ```
 
 &#8594; (from definition of `Ok.result`)
 ```java
-s -> f.apply(a).parse(Ok(a, s).rest)
+s -> f.apply(a).parse(ok(a, s).rest)
 ```
 
 &#8594; (from definition of `Ok.rest`)
@@ -704,13 +704,13 @@ input ->
     p.apply(input).match(
         cons -> consumed(() ->
             cons.getReply().match(
-                ok -> (x -> s -> Empty(Ok(x, s))).apply(ok.result).parse(ok.rest).getReply(),
-                error -> Error()
+                ok -> (x -> s -> empty(ok(x, s))).apply(ok.result).parse(ok.rest).getReply(),
+                error -> error()
             )
         ),
         empty -> empty.getReply().match(
-            ok -> (x -> s -> Empty(Ok(x, s))).apply(ok.result).parse(ok.rest),
-            error -> Empty(Error())
+            ok -> (x -> s -> empty(ok(x, s))).apply(ok.result).parse(ok.rest),
+            error -> empty(error())
         )
     )
 ```
@@ -721,13 +721,13 @@ input ->
     p.apply(input).match(
         cons -> consumed(() ->
             cons.getReply().match(
-                ok -> (s -> Empty(Ok(ok.result, s))).parse(ok.rest).getReply(),
-                error -> Error()
+                ok -> (s -> empty(ok(ok.result, s))).parse(ok.rest).getReply(),
+                error -> error()
             )
         ),
         empty -> empty.getReply().match(
-            ok -> (s -> Empty(Ok(ok.result, s))).parse(ok.rest),
-            error -> Empty(Error())
+            ok -> (s -> empty(ok(ok.result, s))).parse(ok.rest),
+            error -> empty(error())
         )
     )
 ```
@@ -738,13 +738,13 @@ input ->
     p.apply(input).match(
         cons -> consumed(() ->
             cons.getReply().match(
-                ok -> Empty(Ok(ok.result, ok.rest)).getReply(),
-                error -> Error()
+                ok -> empty(ok(ok.result, ok.rest)).getReply(),
+                error -> error()
             )
         ),
         empty -> empty.getReply().match(
-            ok -> Empty(Ok(ok.result, ok.rest)),
-            error -> Empty(Error())
+            ok -> empty(ok(ok.result, ok.rest)),
+            error -> empty(error())
         )
     )
 ```
@@ -755,13 +755,13 @@ input ->
     p.apply(input).match(
         cons -> consumed(() ->
             cons.getReply().match(
-                ok -> Empty(ok).getReply(),
-                error -> Error()
+                ok -> empty(ok).getReply(),
+                error -> error()
             )
         ),
         empty -> empty.getReply().match(
-            ok -> Empty(ok),
-            error -> Empty(Error())
+            ok -> empty(ok),
+            error -> empty(error())
         )
     )
 ```
@@ -805,10 +805,10 @@ One approach would be to first note that the expression `p.parse(s)`,
 that is the Parser `p` applied to an input `s`,
 must yield one of the following four outputs:
 
-* `Consumed(Ok(a, r))`
-* `Consumed(Error())`
-* `Empty(Ok(a, r))`
-* `Empty(Error())`
+* `consumed(ok(a, r))`
+* `consumed(error())`
+* `empty(ok(a, r))`
+* `empty(error())`
 
 and then proving the law holds for each of these cases. 
 
