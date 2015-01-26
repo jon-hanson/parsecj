@@ -608,7 +608,7 @@ since if combined with any other parser the result is always a parser that fails
 
 Given the above definitions of `retn` and `bind` we can attempt to prove the monad laws.
 Note, that since the `retn` and `bind` combinators have been defined as pure functions,
-they are referential transparent,
+they are referentially transparent,
 meaning we can substitute the function body in place of calls to the function when reasoning about the combinators.
 
 ### Left Identity
