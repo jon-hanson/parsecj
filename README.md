@@ -245,16 +245,16 @@ The above grammar then, can be translated into the following Java implementation
 
 ```java
 // Forward declare expr to allow for circular references.
-private static final Parser.Ref<Character, Double> expr = Parser.ref();
+final org.javafp.parsecj.Parser.Ref<Character, Double> expr = Parser.ref();
 
 // Inform the compiler of the type of retn.
-private static final Parser<Character, BinaryOperator<Double>> add = retn((l, r) -> l + r);
-private static final Parser<Character, BinaryOperator<Double>> subt = retn((l, r) -> l - r);
-private static final Parser<Character, BinaryOperator<Double>> times = retn((l, r) -> l * r);
-private static final Parser<Character, BinaryOperator<Double>> divide = retn((l, r) -> l / r);
+final Parser<Character, BinaryOperator<Double>> add = retn((l, r) -> l + r);
+final Parser<Character, BinaryOperator<Double>> subt = retn((l, r) -> l - r);
+final Parser<Character, BinaryOperator<Double>> times = retn((l, r) -> l * r);
+final Parser<Character, BinaryOperator<Double>> divide = retn((l, r) -> l / r);
 
 // bin-op ::= '+' | '-' | '*' | '/'
-private static final Parser<Character, BinaryOperator<Double>> binOp =
+final Parser<Character, BinaryOperator<Double>> binOp =
     choice(
         chr('+').then(add),
         chr('-').then(subt),
@@ -263,7 +263,7 @@ private static final Parser<Character, BinaryOperator<Double>> binOp =
     );
 
 // bin-expr ::= '(' expr bin-op expr ')'
-private static final Parser<Character, Double> binOpExpr =
+final Parser<Character, Double> binOpExpr =
     chr('(')
         .then(expr.bind(
             l -> binOp.bind(
@@ -271,20 +271,17 @@ private static final Parser<Character, Double> binOpExpr =
                     r -> chr(')')
                         .then(retn(op.apply(l, r)))))));
 
-static {
-    // expr ::= dble | binOpExpr
-    expr.set(choice(dble, binOpExpr));
-}
+// expr ::= dble | binOpExpr
+expr.set(choice(dble, binOpExpr));
 
-// Inform the compiler of the type of eof.
-private static final Parser<Character, Void> eof = eof();
+// Hint to the compiler for the type of eof.
+final Parser<Character, Void> eof = eof();
 
 // parser = expr end
-private static final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
+final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
 
-private static void evaluate(String s) throws Exception {
-    System.out.println(s + " = " + parser.parse(State.of(s)).getResult());
-}
+final String s = "((1.2*3.4)+5.6)";
+System.out.println(s + " = " + parser.parse(State.state(s)).getResult());
 ```
 
 The correspondence between the production rules of our mini expression language and the above set of parsers should be apparent.
