@@ -593,7 +593,7 @@ The first two laws tell us that `retn` acts as an identity of the `bind` operati
 The third law tells us that when we have three parser expressions being combined with `bind`,
 the order in which the expressions are evaluated has no effect on the result.
 This becomes relevant when using the fluent chaining,
-as it means we do not to worry too much about bracketing when chaining parsers.
+as it means we do not need to worry too much about bracketing when chaining parsers.
 The intent becomes (slightly) more clear if we add some redundant brackets to the equality:
 
 `(p.bind(f)).bind(g)` = `p.bind(x -> (f.apply(x).bind(g)))`
