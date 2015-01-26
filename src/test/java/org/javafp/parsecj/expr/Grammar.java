@@ -13,7 +13,7 @@ import static org.javafp.parsecj.Text.dble;
 
 public class Grammar {
     // Forward declare expr to allow for circular references.
-    private static final Parser.Ref<Character, Double> expr = Parser.Ref.of();
+    private static final Parser.Ref<Character, Double> expr = Parser.ref();
 
     // Inform the compiler of the type of retn.
     private static final Parser<Character, BinaryOperator<Double>> add = retn((l, r) -> l + r);

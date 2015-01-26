@@ -26,7 +26,7 @@ public class Grammar {
         return p.bind(x -> wspaces.then(retn(x)));
     }
 
-    private static Parser.Ref<Character, Node> jvalue = Parser.Ref.of();
+    private static Parser.Ref<Character, Node> jvalue = Parser.ref();
 
     private static Parser<Character, Node> jnull = tok(string("null")).then(retn(Node.nul())).label("null");
 

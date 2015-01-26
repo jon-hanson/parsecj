@@ -14,22 +14,22 @@ import java.util.function.*;
 @FunctionalInterface
 public interface Parser<S, A> {
 
-    public static <S, A> Parser<S, A> of(Function<State<S>, ConsumedT<S, A>> parser) {
+    public static <S, A> Parser<S, A> parser(Function<State<S>, ConsumedT<S, A>> parser) {
         return parser::apply;
+    }
+
+    static <S, A> Ref<S, A> ref() {
+        return new Ref();
+    }
+
+    static <S, A> Ref<S, A> ref(Parser<S, A> parser) {
+        return new Ref(parser);
     }
 
     /**
      * A lazily initialised reference to a Parser.
      */
     public static class Ref<S, A> implements Supplier<Parser<S, A>>, Parser<S, A> {
-
-        public static <S, A> Ref<S, A> of() {
-            return new Ref();
-        }
-
-        public static <S, A> Ref<S, A> of(Parser<S, A> parser) {
-            return new Ref(parser);
-        }
 
         private Parser<S, A> parser;
 

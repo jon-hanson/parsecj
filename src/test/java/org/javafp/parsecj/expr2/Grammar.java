@@ -24,7 +24,7 @@ import static org.javafp.parsecj.expr2.Model.varExpr;
 public abstract class Grammar {
 
     // To get around circular references.
-    private static final Parser.Ref<Character, Expr> expr = Parser.Ref.of();
+    private static final Parser.Ref<Character, Expr> expr = Parser.ref();
 
     private static final Parser<Character, Character> open = satisfy('(');
     private static final Parser<Character, Character> close = satisfy(')');
