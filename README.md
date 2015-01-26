@@ -79,8 +79,13 @@ Exception in thread "main" java.lang.Exception: Message{position=2, sym=<z>, exp
 
 # Usage
 
-Typically parsers are defined by composing the predefined combinators provided by the library.
-In rare cases a parser combinator may need to be implemented by operating directly on the input state.
+The usual approach to using the library to implement a parser for a language is as follows:
+1. Define a model for language, i.e. a set of classes that represent the language elements.
+2. Define a grammar for the language - a set of production rules.
+3. Translate the production rules into parsers using the library combinators.
+4. Book-end the parser for the top-level element with the `eof` combinator.
+5. Invoke the parser by passing it a `State` object, usually constructed from a `String`.
+6. The resultant `Reply` result holds either the successfully parsed value or an error message.
 
 ## Types
 
@@ -205,37 +210,8 @@ Name | Description | Returns
 `alphaNum` | A parser which parses an alphanumeric string. | The string.
 `regex(regex)` | A parser which parses a string matching the supplied regex. | The string matching the regex.
 
-### Parser Monad
-
-The `retn` and `bind` combinators are slightly special as they are what make `Parser` a monad.
-The key point is that they observe the three [monad laws](https://www.haskell.org/haskellwiki/Monad_laws):
-
-1. **Left Identity** : `retn(a).bind(f)` = `f.apply(a)`
-1. **Right Identity** : `p.bind(x -> retn(x)` = `p`
-1. **Associativity** : `p.bind(f).bind(g)` = `p.bind(x -> f.apply(x).bind(g))`
-
-where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
-
-or, using the standalone `bind` function instead of the fluent `Parser.bind` method:
-
-1. **Left Identity** : `bind(retn(a), f)` = `f.apply(a)`
-1. **Right Identity** : `bind(p, x -> retn(x))` = `p`
-1. **Associativity** : `bind(bind(p, f), g)` = `bind(p, x -> bind(f.apply(x), g))`
-
-The first two laws tell us that `retn` acts as an identity of the `bind` operation.
-The third law tells us that when we have three parser expressions being combined with `bind`,
-the order in which the expressions are evaluated has no effect on the result.
-This becomes relevant when using the fluent chaining,
-as it means we do not to worry too much about bracketing when chaining parsers.
-The intent becomes (slightly) more clear if we add some redundant brackets to the equality:
-
-`(p.bind(f)).bind(g)` = `p.bind(x -> (f.apply(x).bind(g)))`
-
-It's analgous to associativity of addition over numbers,
-where *a+b+c* yields the same result regardless of whether we evaluate it as *(a+b)+c* or *a+(b+c)*.
-
-Also of note is the `fail` parser, which is a monadic zero,
-since if combined with any other parser the result is always a parser that fails.
+Typically parsers are defined by composing the predefined combinators provided by the library.
+In rare cases a parser combinator may need to be implemented by operating directly on the input state.
 
 # Example
 
@@ -269,16 +245,16 @@ The above grammar then, can be translated into the following Java implementation
 
 ```java
 // Forward declare expr to allow for circular references.
-private static final Parser.Ref<Character, Double> expr = Parser.ref();
+final org.javafp.parsecj.Parser.Ref<Character, Double> expr = Parser.ref();
 
 // Inform the compiler of the type of retn.
-private static final Parser<Character, BinaryOperator<Double>> add = retn((l, r) -> l + r);
-private static final Parser<Character, BinaryOperator<Double>> subt = retn((l, r) -> l - r);
-private static final Parser<Character, BinaryOperator<Double>> times = retn((l, r) -> l * r);
-private static final Parser<Character, BinaryOperator<Double>> divide = retn((l, r) -> l / r);
+final Parser<Character, BinaryOperator<Double>> add = retn((l, r) -> l + r);
+final Parser<Character, BinaryOperator<Double>> subt = retn((l, r) -> l - r);
+final Parser<Character, BinaryOperator<Double>> times = retn((l, r) -> l * r);
+final Parser<Character, BinaryOperator<Double>> divide = retn((l, r) -> l / r);
 
 // bin-op ::= '+' | '-' | '*' | '/'
-private static final Parser<Character, BinaryOperator<Double>> binOp =
+final Parser<Character, BinaryOperator<Double>> binOp =
     choice(
         chr('+').then(add),
         chr('-').then(subt),
@@ -287,7 +263,7 @@ private static final Parser<Character, BinaryOperator<Double>> binOp =
     );
 
 // bin-expr ::= '(' expr bin-op expr ')'
-private static final Parser<Character, Double> binOpExpr =
+final Parser<Character, Double> binOpExpr =
     chr('(')
         .then(expr.bind(
             l -> binOp.bind(
@@ -295,20 +271,17 @@ private static final Parser<Character, Double> binOpExpr =
                     r -> chr(')')
                         .then(retn(op.apply(l, r)))))));
 
-static {
-    // expr ::= dble | binOpExpr
-    expr.set(choice(dble, binOpExpr));
-}
+// expr ::= dble | binOpExpr
+expr.set(choice(dble, binOpExpr));
 
-// Inform the compiler of the type of eof.
-private static final Parser<Character, Void> eof = eof();
+// Hint to the compiler for the type of eof.
+final Parser<Character, Void> eof = eof();
 
 // parser = expr end
-private static final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
+final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
 
-private static void evaluate(String s) throws Exception {
-    System.out.println(s + " = " + parser.parse(State.of(s)).getResult());
-}
+final String s = "((1.2*3.4)+5.6)";
+System.out.println(s + " = " + parser.parse(State.state(s)).getResult());
 ```
 
 The correspondence between the production rules of our mini expression language and the above set of parsers should be apparent.
@@ -517,7 +490,7 @@ has to be renamed in Java as `return` is a reserved word, however the definition
 
 ```java
 public static <A> Parser<A> retn(A x) {
-    return s -> empty(ok(x, s));
+    return input -> empty(ok(x, input));
 }
 ```
 
@@ -583,13 +556,13 @@ Java doesn't support custom operators so we will implement this as a `bind` func
 public static <A, B> Parser<B> bind(
         Parser<? extends A> p,
         Function<A, Parser<B>> f) {
-    return s ->
-        p.parse(s).<ConsumedT<B>>match(
+    return input ->
+        p.parse(input).<ConsumedT<B>>match(
             cons -> consumed(() ->
-                    cons.getReply().<Reply<B>>match(
-                        ok -> f.apply(ok.result).parse(ok.rest).getReply(),
-                        error -> error()
-                    )
+                cons.getReply().<Reply<B>>match(
+                    ok -> f.apply(ok.result).parse(ok.rest).getReply(),
+                    error -> error()
+                )
             ),
             empty -> empty.getReply().<ConsumedT<B>>match(
                 ok -> f.apply(ok.result).parse(ok.rest),
@@ -599,11 +572,43 @@ public static <A, B> Parser<B> bind(
 }
 ```
 
-## Proving the Monad Laws
+# Parser Monad
 
-Given the above definitions of `retn` and `bind` we can now attempt to prove the monad laws.
+The `retn` and `bind` combinators are slightly special as they are what make `Parser` a monad.
+The key point is that they observe the three [monad laws](https://www.haskell.org/haskellwiki/Monad_laws):
+
+1. **Left Identity** : `retn(a).bind(f)` = `f.apply(a)`
+1. **Right Identity** : `p.bind(x -> retn(x)` = `p`
+1. **Associativity** : `p.bind(f).bind(g)` = `p.bind(x -> f.apply(x).bind(g))`
+
+where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
+
+or, using the standalone `bind` function instead of the fluent `Parser.bind` method:
+
+1. **Left Identity** : `bind(retn(a), f)` = `f.apply(a)`
+1. **Right Identity** : `bind(p, x -> retn(x))` = `p`
+1. **Associativity** : `bind(bind(p, f), g)` = `bind(p, x -> bind(f.apply(x), g))`
+
+The first two laws tell us that `retn` acts as an identity of the `bind` operation.
+The third law tells us that when we have three parser expressions being combined with `bind`,
+the order in which the expressions are evaluated has no effect on the result.
+This becomes relevant when using the fluent chaining,
+as it means we do not to worry too much about bracketing when chaining parsers.
+The intent becomes (slightly) more clear if we add some redundant brackets to the equality:
+
+`(p.bind(f)).bind(g)` = `p.bind(x -> (f.apply(x).bind(g)))`
+
+It's analgous to associativity of addition over numbers,
+where *a+b+c* yields the same result regardless of whether we evaluate it as *(a+b)+c* or *a+(b+c)*.
+
+Also of note is the `fail` parser, which is a monadic zero,
+since if combined with any other parser the result is always a parser that fails.
+
+## Proving the Laws
+
+Given the above definitions of `retn` and `bind` we can attempt to prove the monad laws.
 Note, that since the `retn` and `bind` combinators have been defined as pure functions,
-they observe referential transparency,
+they are referential transparent,
 meaning we can substitute the function body in place of calls to the function when reasoning about the combinators.
 
 ### Left Identity
@@ -621,14 +626,14 @@ we can reduce this by substituting the definition of the `retn` function in plac
 
 &#8594; (from the definition of `retn`)
 ```java
-(s -> empty(ok(a, s))).bind(f)
+(input -> empty(ok(a, input))).bind(f)
 ```
 
 Likewise now we substitute the definition of `bind`, and so on:
 
 &#8594; (from the definition of `bind`)
 ```java
-s -> empty(ok(a, s)).match(
+input -> empty(ok(a, input)).match(
     cons -> consumed(() ->
         cons.getReply().match(
             ok -> f.apply(ok.result).parse(ok.rest).getReply(),
@@ -644,7 +649,7 @@ s -> empty(ok(a, s)).match(
 
 &#8594; (from definition of `ConsumedT.match`)
 ```java
-s -> empty(ok(a, s)).getReply().match(
+input -> empty(ok(a, input)).getReply().match(
     ok -> f.apply(ok.result).parse(ok.rest),
     error -> empty(error())
 )
@@ -652,7 +657,7 @@ s -> empty(ok(a, s)).getReply().match(
 
 &#8594; (from definition of `Empty.getReply`)
 ```java
-s -> ok(a, s).match(
+input -> ok(a, input).match(
     ok -> f.apply(ok.result).parse(ok.rest),
     error -> empty(error())
 )
@@ -660,17 +665,17 @@ s -> ok(a, s).match(
 
 &#8594; (from definition of `Reply.match`)
 ```java
-s -> f.apply(ok(a, s).result).parse(ok(a, s).rest)
+input -> f.apply(ok(a, input).result).parse(ok(a, input).rest)
 ```
 
 &#8594; (from definition of `Ok.result`)
 ```java
-s -> f.apply(a).parse(ok(a, s).rest)
+input -> f.apply(a).parse(ok(a, input).rest)
 ```
 
 &#8594; (from definition of `Ok.rest`)
 ```java
-s -> f.apply(a).parse(s);
+input -> f.apply(a).parse(input);
 ```
 
 &#8594; (function introduction and application cancel out)
@@ -695,7 +700,7 @@ we can reduce this as follows:
 
 &#8594; (from the definition of `retn`)
 ```java
-p.bind(x -> s -> `empty(ok(x, s))
+p.bind(x -> input -> `empty(ok(x, input))
 ```
 
 &#8594; (from the definition of `bind`)
@@ -704,12 +709,12 @@ input ->
     p.apply(input).match(
         cons -> consumed(() ->
             cons.getReply().match(
-                ok -> (x -> s -> empty(ok(x, s))).apply(ok.result).parse(ok.rest).getReply(),
+                ok -> (x -> input2 -> empty(ok(x, input2))).apply(ok.result).parse(ok.rest).getReply(),
                 error -> error()
             )
         ),
         empty -> empty.getReply().match(
-            ok -> (x -> s -> empty(ok(x, s))).apply(ok.result).parse(ok.rest),
+            ok -> (x -> input2 -> empty(ok(x, input2))).apply(ok.result).parse(ok.rest),
             error -> empty(error())
         )
     )
@@ -721,12 +726,12 @@ input ->
     p.apply(input).match(
         cons -> consumed(() ->
             cons.getReply().match(
-                ok -> (s -> empty(ok(ok.result, s))).parse(ok.rest).getReply(),
+                ok -> (input2 -> empty(ok(ok.result, input2))).parse(ok.rest).getReply(),
                 error -> error()
             )
         ),
         empty -> empty.getReply().match(
-            ok -> (s -> empty(ok(ok.result, s))).parse(ok.rest),
+            ok -> (input2 -> empty(ok(ok.result, input2))).parse(ok.rest),
             error -> empty(error())
         )
     )
@@ -770,7 +775,7 @@ input ->
 ```java
 input ->
     p.apply(input).match(
-        cons -> consumed(() ->cons),
+        cons -> consumed(() -> cons),
         empty -> empty
     )
 ```
@@ -796,7 +801,7 @@ p
 
 &#8718;
 
-Again, we have reduced the LHS of the law to the same form as the RHS, thus proving the law.
+Again, we have reduced the LHS of the law to the same form as the RHS, proving the law holds.
 
 ### Associativity
 
