@@ -13,7 +13,7 @@ public abstract class Reply<S, A> {
         return new Ok<S, A>(result, tail, msg);
     }
 
-    public static <S> Ok<S, Void> Ok(State<S> tail, Message<S> msg) {
+    public static <S> Ok<S, Void> ok(State<S> tail, Message<S> msg) {
         return new Ok<S, Void>(null, tail, msg);
     }
 

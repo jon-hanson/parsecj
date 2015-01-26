@@ -5,12 +5,10 @@ import org.javafp.data.IList;
 import java.util.Optional;
 import java.util.function.*;
 
-import static org.javafp.parsecj.ConsumedT.consumed;
-import static org.javafp.parsecj.ConsumedT.empty;
-import static org.javafp.parsecj.Message.lazy;
-import static org.javafp.parsecj.Message.message;
-import static org.javafp.parsecj.Reply.Ok;
-import static org.javafp.parsecj.Reply.error;
+import static org.javafp.parsecj.ConsumedT.*;
+import static org.javafp.parsecj.Merge.*;
+import static org.javafp.parsecj.Message.*;
+import static org.javafp.parsecj.Reply.*;
 
 /**
  * A set of parser combinator functions.
@@ -21,6 +19,10 @@ import static org.javafp.parsecj.Reply.error;
 public abstract class Combinators {
 
     public static final Void UNIT = null;
+
+    public static <S> S unit() {
+        return null;
+    }
 
     /**
      * Construct an Error Reply indicating the end of the input has been reached.
@@ -79,7 +81,7 @@ public abstract class Combinators {
                             return cons2;
                         } else {
                             return cons2.getReply().match(
-                                ok2 -> Merge.mergeOk(ok2.result, ok2.rest, ok1.msg, ok2.msg),
+                                ok2 -> mergeOk(ok2.result, ok2.rest, ok1.msg, ok2.msg),
                                 error -> Merge.<S, B>mergeError(ok1.msg, error.msg)
                             );
                         }
@@ -115,7 +117,7 @@ public abstract class Combinators {
                             return cons2;
                         } else {
                             return cons2.getReply().match(
-                                ok2 -> Merge.mergeOk(ok2.result, ok2.rest, ok1.msg, ok2.msg),
+                                ok2 -> mergeOk(ok2.result, ok2.rest, ok1.msg, ok2.msg),
                                 error2 -> Merge.<S, B>mergeError(ok1.msg, error2.msg)
                             );
                         }
@@ -145,15 +147,15 @@ public abstract class Combinators {
         return state -> {
             if (state.end()) {
                 return empty(
-                    Ok(
+                    Reply.ok(
                         state,
-                        lazy(() -> message(state))
+                        lazy(() -> message(state.position(), unit(), "EOF"))
                     )
                 );
             } else {
                 return empty(
                     Reply.<S, Void>error(
-                        lazy(() -> message(state, "EOF"))
+                        lazy(() -> message(state.position(), unit(), "EOF"))
                     )
                 );
             }
@@ -169,7 +171,7 @@ public abstract class Combinators {
                 final S s = state.current();
                 if (test.test(s)) {
                     final State<S> newState = state.next();
-                    return consumed(() -> Reply.ok(
+                    return consumed(() -> ok(
                             s,
                             newState,
                             lazy(() -> message(state))
@@ -197,7 +199,7 @@ public abstract class Combinators {
                 if (state.current().equals(value)) {
                     final State<S> newState = state.next();
                     return consumed(() ->
-                            Reply.ok(
+                            ok(
                                 state.current(),
                                 newState,
                                 lazy(() -> message(state))
@@ -227,7 +229,7 @@ public abstract class Combinators {
                 if (state.current().equals(value)) {
                     final State<S> newState = state.next();
                     return consumed(() ->
-                            Reply.ok(
+                            ok(
                                 result,
                                 newState,
                                 lazy(() -> message(state))
@@ -237,7 +239,7 @@ public abstract class Combinators {
                     return empty(
                         error(
                             lazy(() ->
-                                    message(state, value.toString())
+                                message(state, value.toString())
                             )
                         )
                     );
@@ -263,7 +265,7 @@ public abstract class Combinators {
                         if (cons2.isConsumed()) {
                             return cons2;
                         } else {
-                            return Merge.mergeOk(ok1.result, ok1.rest, ok1.msg, cons2.getReply().msg);
+                            return mergeOk(ok1.result, ok1.rest, ok1.msg, cons2.getReply().msg);
                         }
                     },
                     error1 -> {
@@ -272,7 +274,7 @@ public abstract class Combinators {
                             return cons2;
                         } else {
                             return cons2.getReply().match(
-                                ok2 -> Merge.mergeOk(ok2.result, ok2.rest, error1.msg, ok2.msg),
+                                ok2 -> mergeOk(ok2.result, ok2.rest, error1.msg, ok2.msg),
                                 error2 -> Merge.<S, A>mergeError(error1.msg, error2.msg)
                             );
                         }
