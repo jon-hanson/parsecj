@@ -300,7 +300,7 @@ The correspondence between the production rules of the simple expression languag
 
 **Notes**
 * The expression language is recursive - `expr` refers to `binOpExpr`, which in turn refers to `expr`. Since Java doesn't allow us to define a mutually recursive set of variables, we have to break the circularity by making the `expr` parser a `Parser.Ref`, which gets declared at the beginning and initialised at the end. `Ref` implements the `Parser` interface, hence it can be used as a parser.
-* The return type of each combinator function is `Parser<S, A>` and the compiler attempts to infer the types of `S` and `A` from the arguments. Certain combinators do not have parameters of both types - `retn` and `eof` for instance, which causes the type inference to fail resulting in a compilation error. If this happens the error can be avoid by either assigning the combinator to a variable or by expliting specifying the generic types, e.g. `Combinators.<Character, BinaryOperator<Double>>retn`.
+* The return type of each combinator function is `Parser<S, A>` and the compiler attempts to infer the types of `S` and `A` from the arguments. Certain combinators do not have parameters of both types - `retn` and `eof` for instance, which causes the type inference to fail resulting in a compilation error. If this happens the error can be avoid by either assigning the combinator to a variable or by explicitly specifying the generic types, e.g. `Combinators.<Character, BinaryOperator<Double>>retn`.
 * We add the `eof` parser, which succeeds if it encounters the end of the input, to bookend the `expr` parser. This ensures the parser does not inadvertently parse malformed inputs that begin with a valid expression, such as `(1+2)Z`.
 
 # Translating Haskell into Java
@@ -331,11 +331,11 @@ public abstract class Reply<A> {
     public static <A> Ok<A> ok(A result, String rest) {
         return new Ok<A>(result, rest);
     }
-        
+
     public static <A> Error<A> error() {
         return new Error<A>();
     }
-    
+
     public abstract <B> B match(Function<Ok<A>, B> ok, Function<Error<A>, B> error);
 
     public static final class Ok<A> extends Reply<A> {
@@ -353,7 +353,7 @@ public abstract class Reply<A> {
         public <U> U match(Function<Ok<A>, U> ok, Function<Error<A>, U> error) {
             return ok.apply(this);
         }
-        
+
         // Usual toString, equals etc.
     }
 
@@ -365,7 +365,7 @@ public abstract class Reply<A> {
         public <B> B match(Function<Ok<A>, B> ok, Function<Error<A>, B> error) {
             return error.apply(this);
         }
-        
+
         // Usual toString, equals etc.
     }
 }
@@ -610,7 +610,7 @@ The intent becomes (slightly) more clear if we add some redundant brackets to th
 
 `(p.bind(f)).bind(g)` = `p.bind(x -> (f.apply(x).bind(g)))`
 
-It's analgous to associativity of addition over numbers,
+It's analogous to associativity of addition over numbers,
 where *a+b+c* yields the same result regardless of whether we evaluate it as *(a+b)+c* or *a+(b+c)*.
 
 Also of note is the `fail` parser, which is a monadic zero,
@@ -827,7 +827,7 @@ must yield one of the following four outputs:
 * `empty(ok(a, r))`
 * `empty(error())`
 
-and then proving the law holds for each of these cases. 
+and then proving the law holds for each of these cases.
 
 # Related Work
 

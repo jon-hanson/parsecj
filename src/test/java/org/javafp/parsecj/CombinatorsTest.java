@@ -252,8 +252,4 @@ public class CombinatorsTest {
         assertParserFails(p, ">2");
         assertParserSucceedsWithValue(p, "3>2>1", (3 - 2) - 1);
     }
-
-    @Test
-    public void testX() throws Exception {
-    }
 }

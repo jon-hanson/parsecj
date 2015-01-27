@@ -9,7 +9,7 @@ public class TestUtils {
 
     static <A> void assertParserSucceeds(
             Parser<Character, A> p,
-            String input) throws Exception {
+            String input) {
         Assert.assertTrue(
             "Parse of \"" + input + "\"",
             p.parse(State.state(input)).isOk()
@@ -57,7 +57,7 @@ public class TestUtils {
 
     static <A> void assertParserFails(
             Parser<Character, A> p,
-            String input) throws Exception {
+            String input) {
         Assert.assertTrue(
             "Parse of \"" + input + "\"",
             p.parse(State.state(input)).isError()

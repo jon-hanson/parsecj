@@ -2,7 +2,6 @@ package org.javafp.parsecj;
 
 import org.javafp.data.IList;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 
 import static org.javafp.data.IList.list;
@@ -129,7 +128,10 @@ final class MessageImpl<S> implements Message<S> {
             return false;
         }
 
-        Message message = (Message)rhs;
+        final Message message = (Message)rhs;
+        if (message instanceof EndOfInput || message instanceof EmptyMessage) {
+            return false;
+        }
 
         if (pos != message.position()) return false;
         if (!expected.equals(message.expected())) return false;
@@ -148,15 +150,11 @@ final class MessageImpl<S> implements Message<S> {
     @Override
     public String toString() {
         final String expectedStr = expected.isEmpty() ? "" : expected.foldr1((x, y) -> x + ',' + y);
-        if (expected == null) {
-            return "Unexpected EOF at position " + pos;
-        } else {
-            return
-                "Unexpected '" + sym +
-                    "' at position " + (pos == -1 ? "EOF" : pos) +
-                    ". Expecting one of [" +
-                    expectedStr + ']';
-        }
+        return
+            "Unexpected '" + sym +
+                "' at position " + (pos == -1 ? "EOF" : pos) +
+                ". Expecting one of [" +
+                expectedStr + ']';
     }
 
     @Override

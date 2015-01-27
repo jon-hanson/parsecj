@@ -34,27 +34,31 @@ public abstract class Text {
     /**
      * A parser which parses an alphabetic character.
      */
-    public static Parser<Character, Character> alpha = satisfy((Character c) -> Character.isAlphabetic(c)).label("alpha");
+    public static final Parser<Character, Character> alpha =
+        satisfy((Character c) -> Character.isAlphabetic(c)).label("alpha");
 
     /**
      * A parser which parses a numeric character, i.e. a digit.
      */
-    public static Parser<Character, Character> digit = satisfy((Character c) -> Character.isDigit(c)).label("digit");
+    public static final Parser<Character, Character> digit =
+        satisfy((Character c) -> Character.isDigit(c)).label("digit");
 
     /**
      * A parser which parses space.
      */
-    public static Parser<Character, Character> space = satisfy((Character c) -> Character.isSpaceChar(c)).label("space");
+    public static final Parser<Character, Character> space =
+        satisfy((Character c) -> Character.isSpaceChar(c)).label("space");
 
     /**
      * A parser which parses whitespace.
      */
-    public static Parser<Character, Character> wspace = satisfy((Character c) -> Character.isWhitespace(c)).label("wspace");
+    public static final Parser<Character, Character> wspace =
+        satisfy((Character c) -> Character.isWhitespace(c)).label("wspace");
 
     /**
      * A parser which skips whitespace.
      */
-    public static Parser<Character, Void> wspaces = skipMany(wspace);
+    public static final Parser<Character, Void> wspaces = skipMany(wspace);
 
     /**
      * A parser which parses the specified char.

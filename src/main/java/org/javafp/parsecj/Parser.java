@@ -19,11 +19,11 @@ public interface Parser<S, A> {
     }
 
     static <S, A> Ref<S, A> ref() {
-        return new Ref();
+        return new Ref<S, A>();
     }
 
     static <S, A> Ref<S, A> ref(Parser<S, A> parser) {
-        return new Ref(parser);
+        return new Ref<S, A>(parser);
     }
 
     /**
