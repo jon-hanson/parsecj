@@ -46,15 +46,25 @@ whereby each grammar instance implements an executable parser.
 As a quick illustration of how a simple parser looks when implemented using ParsecJ,
 consider the following example.
 
-```java
-Parser<Character, Integer> sum =
-    intr.bind(x ->
-        satisfy('+')
-            .then(intr.bind(y ->
-                retn(x+y))));
+We wish to parse and evaluate simple addition expressions,
+of the form form *x+y*, where *x* and *y* are integers.
+
+The grammar consists of a single production rule:
+
+```
+sum ::= integer '+' integer
 ```
 
-Here a parser is defined that will parse and evaluate expressions of the form *a+b*, where *a* and *b* are integers.
+This can be translated into the following ParsecJ parser:
+
+```java
+Parser<Character, Integer> sum =
+    intr.bind(x ->                  // parse an integer and bind the result to the variable x.
+        satisfy('+').then(          // parse a '+' sign, and throw away the result.
+            intr.bind(y ->          // parse an integer and bind the result to the variable y.
+                retn(x+y))));       // return the sum of a and y.
+```
+
 The parser is constructed by taking the `intr` parser for integers, the `satisfy` parser for single symbols,
 and combining them using the `bind`, `then` and `retn` combinators.
 
@@ -190,7 +200,7 @@ Name | Description | Returns
 `eof()` | A parser that succeeds if the end of the input is reached. | UNIT.
 `then(p, q)` | A parser that first applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
 `or(p, q)` | A parser that first applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
-... |
+(see class def for full list)... |
 
 Combinators that take a `Parser` as a first parameter, such as `bind` and `or`,
 also exist as methods on the `Parser` interface, to allow parsers to be constructed in a fluent style.
@@ -213,6 +223,7 @@ Name | Description | Returns
 
 Typically parsers are defined by composing the predefined combinators provided by the library.
 In rare cases a parser combinator may need to be implemented by operating directly on the input state.
+The implementations of `bind`, `or` and `attempt` provide examples of the latter case.
 
 # Example
 
@@ -285,7 +296,7 @@ final String s = "((1.2*3.4)+5.6)";
 System.out.println(s + " = " + parser.parse(State.state(s)).getResult());
 ```
 
-The correspondence between the production rules of our mini expression language and the above set of parsers should be apparent.
+The correspondence between the production rules of the simple expression language and the above set of parsers should be apparent.
 
 **Notes**
 * The expression language is recursive - `expr` refers to `binOpExpr`, which in turn refers to `expr`. Since Java doesn't allow us to define a mutually recursive set of variables, we have to break the circularity by making the `expr` parser a `Parser.Ref`, which gets declared at the beginning and initialised at the end. `Ref` implements the `Parser` interface, hence it can be used as a parser.
