@@ -79,7 +79,8 @@ Exception in thread "main" java.lang.Exception: Message{position=2, sym=<z>, exp
 
 # Usage
 
-The usual approach to using the library to implement a parser for a language is as follows:
+The typical approach to using the library to implement a parser for a language is as follows:
+
 1. Define a model for language, i.e. a set of classes that represent the language elements.
 2. Define a grammar for the language - a set of production rules.
 3. Translate the production rules into parsers using the library combinators.
