@@ -372,7 +372,7 @@ public abstract class Reply<A> {
 ```
 
 The `match` method provides a poor-man's equivalent to Haskell's pattern-matching.
-It can be used to extract the result from a `Reply`:
+It could be used, for example, to extract the result from a `Reply`:
 
 ```java
 <A> A getResult(Reply<A> reply) {
