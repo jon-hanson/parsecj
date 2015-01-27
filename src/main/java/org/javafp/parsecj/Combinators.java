@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.function.*;
 
 import static org.javafp.parsecj.ConsumedT.*;
-import static org.javafp.parsecj.Merge.*;
+import static org.javafp.parsecj.Merge.mergeOk;
 import static org.javafp.parsecj.Message.*;
 import static org.javafp.parsecj.Reply.*;
 
@@ -43,7 +43,7 @@ public abstract class Combinators {
                 Reply.ok(
                     x,
                     state,
-                    lazy(() -> message(state))
+                    lazy(() -> message(state.position()))
                 )
             );
     }
@@ -135,7 +135,7 @@ public abstract class Combinators {
         return state ->
             empty(
                 Reply.error(
-                    lazy(() -> message(state))
+                    lazy(() -> message(state.position()))
                 )
             );
     }
@@ -174,13 +174,13 @@ public abstract class Combinators {
                     return consumed(() -> ok(
                             s,
                             newState,
-                            lazy(() -> message(state))
+                            lazy(() -> message(state.position()))
                         )
                     );
                 } else {
                     return empty(
                         error(
-                            lazy(() -> message(state, "<test>"))
+                            lazy(() -> message(state.position(), state.current(), "<test>"))
                         )
                     );
                 }
@@ -202,13 +202,13 @@ public abstract class Combinators {
                             ok(
                                 state.current(),
                                 newState,
-                                lazy(() -> message(state))
+                                lazy(() -> message(state.position()))
                             )
                     );
                 } else {
                     return empty(
                         error(
-                            lazy(() -> message(state, value.toString()))
+                            lazy(() -> message(state.position(), state.current(), value.toString()))
                         )
                     );
                 }
@@ -232,14 +232,14 @@ public abstract class Combinators {
                             ok(
                                 result,
                                 newState,
-                                lazy(() -> message(state))
+                                lazy(() -> message(state.position()))
                             )
                     );
                 } else {
                     return empty(
                         error(
                             lazy(() ->
-                                message(state, value.toString())
+                                message(state.position(), state.current(), value.toString())
                             )
                         )
                     );
@@ -512,7 +512,18 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser for an operand followed by zero or more operands (p) separated by operators (op).
+     * A parser for an operand followed by zero or more operands (p) separated by right-associative operators (op).
+     * If there are zero operands then x is returned.
+     */
+    public static <S, A> Parser<S, A> chainr(
+            Parser<S, A> p,
+            Parser<S, BinaryOperator<A>> op,
+            A x) {
+        return or(chainr1(p, op), retn(x));
+    }
+
+    /**
+     * A parser for an operand followed by zero or more operands (p) separated by left-associative operators (op).
      * If there are zero operands then x is returned.
      */
     public static <S, A> Parser<S, A> chainl(
@@ -523,19 +534,63 @@ public abstract class Combinators {
     }
 
     /**
+     * A parser for an operand followed by one or more operands (p) separated by right-associative operators (op).
+     */
+    public static <S, A> Parser<S, A> chainr1(
+            Parser<S, A> p,
+            Parser<S, BinaryOperator<A>> op) {
+        return scanr1(p, op);
+    }
+
+    private static <S, A> Parser<S, A> scanr1(
+            Parser<S, A> p,
+            Parser<S, BinaryOperator<A>> op) {
+        return bind(p, x -> restr1(p, op, x));
+    }
+
+    private static <S, A> Parser<S, A> restr1(
+            Parser<S, A> p,
+            Parser<S, BinaryOperator<A>> op,
+            A x) {
+        return or(
+            bind(
+                op,
+                f -> bind(
+                    scanr1(p, op),
+                    y -> retn(f.apply(x, y))
+                )
+            ),
+            retn(x)
+        );
+    }
+
+    /**
      * A parser for an operand followed by one or more operands (p) separated by operators (op).
      * This parser can for example be used to eliminate left recursion which typically occurs in expression grammars.
      */
     public static <S, A> Parser<S, A> chainl1(
             Parser<S, A> p,
             Parser<S, BinaryOperator<A>> op) {
-        return bind(p, x -> rest(p, op, x));
+        return bind(p, x -> restl1(p, op, x));
     }
 
-    private static <S, A> Parser<S, A> rest(
+    private static <S, A> Parser<S, A> restl1(
             Parser<S, A> p,
             Parser<S, BinaryOperator<A>> op,
             A x) {
-        return or(bind(op, f -> bind(p, y -> rest(p, op, f.apply(x, y)))), retn(x));
+        return or(
+            bind(
+                op,
+                f -> bind(
+                    p,
+                    y -> restl1(
+                        p,
+                        op,
+                        f.apply(x, y)
+                    )
+                )
+            ),
+            retn(x)
+        );
     }
 }

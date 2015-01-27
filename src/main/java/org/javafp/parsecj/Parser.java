@@ -71,7 +71,14 @@ public interface Parser<S, A> {
      * @return a parse result
      */
     default Reply<S, A> parse(State<S> state) {
-        return apply(state).getReply();
+        return
+            apply(state)
+                .getReply()
+                .match(
+                    // Strip off the message if the parse was successful.
+                    ok -> Reply.ok(ok.result, ok.rest, Message.message()),
+                    error -> error
+                );
     }
 
     // Helper functions to allow combinators to be chained in a fluent style.
@@ -154,6 +161,14 @@ public interface Parser<S, A> {
 
     default Parser<S, IList<A>> count(int n) {
         return Combinators.count(this, n);
+    }
+
+    default Parser<S, A> chainr(Parser<S, BinaryOperator<A>> op, A x) {
+        return Combinators.chainr(this, op, x);
+    }
+
+    default Parser<S, A> chainr1(Parser<S, BinaryOperator<A>> op) {
+        return Combinators.chainr1(this, op);
     }
 
     default Parser<S, A> chainl(Parser<S, BinaryOperator<A>> op, A x) {

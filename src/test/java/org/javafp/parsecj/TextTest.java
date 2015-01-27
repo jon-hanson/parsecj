@@ -2,58 +2,149 @@ package org.javafp.parsecj;
 
 import org.junit.*;
 
-import static org.javafp.parsecj.Combinators.eof;
-import static org.javafp.parsecj.Combinators.retn;
-import static org.javafp.parsecj.Text.dble;
+import static org.javafp.parsecj.Combinators.*;
+import static org.javafp.parsecj.Text.*;
+
+import static org.javafp.parsecj.TestUtils.*;
 
 public class TextTest {
 
-    private static final double THRESHOLD = 1e-8;
-
     private static final Parser<Character, Void> eof = eof();
-    private static final Parser<Character, Double> dble_eof = dble.bind(d -> eof.then(retn(d)));
 
-    private static <S, A> boolean isError(Reply<S, A> reply) {
-        return reply.match(ok -> false, error -> true);
+    @Test
+    public void testAlpha() throws Exception {
+        assertParserFails(alpha, "\0");
+        assertParserFails(alpha, "0");
+        assertParserFails(alpha, "9");
+        assertParserFails(alpha, "!");
+        assertParserFails(alpha, " ");
+        assertParserFails(alpha, ",");
+
+        assertParserSucceedsWithValue(alpha, "a", 'a');
+        assertParserSucceedsWithValue(alpha, "z", 'z');
+        assertParserSucceedsWithValue(alpha, "A", 'A');
+        assertParserSucceedsWithValue(alpha, "Z", 'Z');
     }
 
-    private double parseDbl(String s) throws Exception {
-        return dble_eof.apply(State.state(s)).getReply().getResult();
+    @Test
+    public void testDigit() throws Exception {
+        assertParserFails(digit, "\0");
+        assertParserFails(digit, "a");
+        assertParserFails(digit, "A");
+        assertParserFails(digit, "!");
+        assertParserFails(digit, " ");
+        assertParserFails(digit, ",");
+
+        assertParserSucceedsWithValue(digit, "0", '0');
+        assertParserSucceedsWithValue(digit, "9", '9');
     }
 
-    private Reply<Character, Double> parseErrorDbl(String s) {
-        return dble_eof.apply(State.state(s)).getReply();
+    @Test
+    public void testSpace() throws Exception {
+        assertParserFails(space, "\r");
+        assertParserFails(space, "\n");
+        assertParserFails(space, "\t");
+        assertParserFails(space, "\0");
+        assertParserFails(space, "0");
+        assertParserFails(space, "a");
+        assertParserFails(space, ",");
+
+        assertParserSucceedsWithValue(space, " ", ' ');
+    }
+
+    @Test
+    public void testWSpace() throws Exception {
+        assertParserFails(wspace, "\0");
+        assertParserFails(wspace, "0");
+        assertParserFails(wspace, "a");
+        assertParserFails(wspace, ",");
+
+        assertParserSucceedsWithValue(wspace, " ", ' ');
+        assertParserSucceedsWithValue(wspace, "\r", '\r');
+        assertParserSucceedsWithValue(wspace, "\n", '\n');
+        assertParserSucceedsWithValue(wspace, "\t", '\t');
+    }
+
+    @Test
+    public void testWSpaces() throws Exception {
+        final Parser<Character, Void> p = wspaces.then(eof);
+
+        assertParserFails(p, "A ");
+        assertParserFails(p, " A");
+        assertParserFails(p, " A ");
+
+        assertParserSucceeds(p, " ");
+        assertParserSucceeds(p, " \t\n\r ");
+    }
+
+    @Test
+    public void testChr() throws Exception {
+        final Parser<Character, Character> p = chr('X');
+
+        assertParserFails(p, "A");
+        assertParserFails(p, "AX");
+        assertParserFails(p, "x");
+        assertParserFails(p, " X");
+
+        assertParserSucceeds(p, "X");
+    }
+
+    @Test
+    public void testInteger() throws Exception {
+        final Parser<Character, Integer> p = intr.bind(i -> eof.then(retn(i)));
+
+        assertParserFails(p, "");
+        assertParserFails(p, "+");
+        assertParserFails(p, "-");
+        assertParserFails(p, "1.1");
+        assertParserFails(p, "+-1");
+        assertParserFails(p, "0-0");
+        assertParserFails(p, "0+0");
+        assertParserFails(p, "+0+");
+        assertParserFails(p, "1 0");
+        assertParserFails(p, "0 1");
+
+        assertParserSucceedsWithValue(p, "0", 0);
+        assertParserSucceedsWithValue(p, "1", 1);
+        assertParserSucceedsWithValue(p, "-1", -1);
+        assertParserSucceedsWithValue(p, "123456789", 123456789);
+        assertParserSucceedsWithValue(p, "-123456789", -123456789);
     }
 
     @Test
     public void testDouble() throws Exception {
-        Assert.assertEquals(0.0, parseDbl("0"), THRESHOLD);
-        Assert.assertEquals(0.0, parseDbl("0.0"), THRESHOLD);
-        Assert.assertEquals(.1, parseDbl(".1"), THRESHOLD);
-        Assert.assertEquals(1.0, parseDbl("1"), THRESHOLD);
-        Assert.assertEquals(1.0, parseDbl("1.0"), THRESHOLD);
-        Assert.assertEquals(1.2, parseDbl("1.2"), THRESHOLD);
-        Assert.assertEquals(-1.2, parseDbl("-1.2"), THRESHOLD);
-        Assert.assertEquals(123456789.123456789, parseDbl("123456789.123456789"), THRESHOLD);
-        Assert.assertEquals(-123456789.123456789, parseDbl("-123456789.123456789"), THRESHOLD);
-        Assert.assertEquals(12345.6789e12, parseDbl("12345.6789e12"), THRESHOLD);
-        Assert.assertEquals(-12345.6789e12, parseDbl("-12345.6789e12"), THRESHOLD);
-        Assert.assertEquals(12345.6789e-12, parseDbl("12345.6789e-12"), THRESHOLD);
-        Assert.assertEquals(-12345.6789e-12, parseDbl("-12345.6789e-12"), THRESHOLD);
+        final Parser<Character, Double> p = dble.bind(d -> eof.then(retn(d)));
 
-        Assert.assertTrue("9e99999999", Double.isInfinite(parseDbl("9e99999999")));
-        Assert.assertTrue("-9e99999999", Double.isInfinite(parseDbl("-9e99999999")));
+        assertParserFails(p, "");
+        assertParserFails(p, "+");
+        assertParserFails(p, "-");
+        assertParserFails(p, "1.1.");
+        assertParserFails(p, "+-1");
+        assertParserFails(p, "e");
+        assertParserFails(p, "0-0");
+        assertParserFails(p, "0+0");
+        assertParserFails(p, "+0+");
+        assertParserFails(p, "1 0");
+        assertParserFails(p, "0 1");
 
-        Assert.assertTrue("", isError(parseErrorDbl("")));
-        Assert.assertTrue("", isError(parseErrorDbl("+")));
-        Assert.assertTrue("", isError(parseErrorDbl("-")));
-        Assert.assertTrue("1.1.", isError(parseErrorDbl("1.1.")));
-        Assert.assertTrue("+-1", isError(parseErrorDbl("+-1")));
-        Assert.assertTrue("e", isError(parseErrorDbl("e")));
-        Assert.assertTrue("0-0", isError(parseErrorDbl("0-0")));
-        Assert.assertTrue("0+0", isError(parseErrorDbl("0+0")));
-        Assert.assertTrue("+0+", isError(parseErrorDbl("+0+")));
-        Assert.assertTrue("1 0", isError(parseErrorDbl("1 0")));
-        Assert.assertTrue("0 1", isError(parseErrorDbl("0 1")));
+        assertParserSucceedsWithValue(p, "0", 0.0);
+        assertParserSucceedsWithValue(p, "0.", 0.0);
+        assertParserSucceedsWithValue(p, ".0", 0.0);
+        assertParserSucceedsWithValue(p, "0.0", 0.0);
+        assertParserSucceedsWithValue(p, ".1", 0.1);
+        assertParserSucceedsWithValue(p, "1", 1.0);
+        assertParserSucceedsWithValue(p, "1.0", 1.0);
+        assertParserSucceedsWithValue(p, "1.2", 1.2);
+        assertParserSucceedsWithValue(p, "-1.2", -1.2);
+        assertParserSucceedsWithValue(p, "123456789.123456789", 123456789.123456789);
+        assertParserSucceedsWithValue(p, "-123456789.123456789", -123456789.123456789);
+
+        assertParserSucceedsWithValue(p, "12345.6789e12", 12345.6789e12);
+        assertParserSucceedsWithValue(p, "-12345.6789e12", -12345.6789e12);
+        assertParserSucceedsWithValue(p, "12345.6789e-12", 12345.6789e-12);
+        assertParserSucceedsWithValue(p, "-12345.6789e-12", -12345.6789e-12);
+
+        assertParserSucceeds(p, "9e99999999", d -> Double.isInfinite(d));
+        assertParserSucceeds(p, "-9e99999999", d -> Double.isInfinite(d));
     }
 }

@@ -6,43 +6,11 @@ import org.junit.*;
 import java.util.Optional;
 import java.util.function.BinaryOperator;
 
-import static org.javafp.parsecj.Combinators.choice;
-import static org.javafp.parsecj.Combinators.retn;
-import static org.javafp.parsecj.Combinators.satisfy;
-import static org.javafp.parsecj.Text.chr;
-import static org.javafp.parsecj.Text.digit;
-import static org.javafp.parsecj.Text.string;
+import static org.javafp.parsecj.Combinators.*;
+import static org.javafp.parsecj.Text.*;
+import static org.javafp.parsecj.TestUtils.*;
 
 public class CombinatorsTest {
-
-    private static <A> void assertParserSucceeds(
-        Parser<Character, A> p,
-        String input) throws Exception {
-        Assert.assertTrue("Parse of \"" + input + "\" should succeed", p.parse(State.state(input)).isOk());
-    }
-
-    private static <A> void assertParserSucceedsWithValue(
-        Parser<Character, A> p,
-        String input,
-        A expected) throws Exception {
-        Assert.assertEquals("Parse of \"" + input + "\" should succeed", expected, p.parse(State.state(input)).getResult());
-    }
-
-    private static void assertParserSucceedsWithValue(
-        Parser<Character, String> p,
-        String input) throws Exception {
-        assertParserSucceedsWithValue(p, input, input);
-    }
-
-    private static <A> void assertParserFails(
-            Parser<Character, A> p,
-            String input) throws Exception {
-        Assert.assertTrue("Parse of \"" + input + "\" should fail", isError(p.parse(State.state(input))));
-    }
-
-    private static <S, A> boolean isError(Reply<S, A> reply) {
-        return reply.match(ok -> false, error -> true);
-    }
 
     @Test
     public void testBind_A() throws Exception {
@@ -242,25 +210,47 @@ public class CombinatorsTest {
     }
 
     @Test
+    public void testChainr() throws Exception {
+        final Parser<Character, BinaryOperator<Integer>> op =
+            chr('>').then(Combinators.<Character, BinaryOperator<Integer>>retn((x, y) -> x - y));
+        final Parser<Character, Integer> p = digit.bind(c -> retn(Character.getNumericValue(c))).chainr(op, 0);
+//        assertParserSucceedsWithValue(p, "", 0);
+//        assertParserSucceedsWithValue(p, "x", 0);
+        assertParserSucceedsWithValue(p, "3>2>1", 3 - (2 - 1));
+    }
+
+    @Test
+    public void testChainr1() throws Exception {
+        final Parser<Character, BinaryOperator<Integer>> op =
+            chr('>').then(Combinators.<Character, BinaryOperator<Integer>>retn((x, y) -> x - y));
+        final Parser<Character, Integer> p = digit.bind(c -> retn(Character.getNumericValue(c))).chainr1(op);
+        assertParserFails(p, "a");
+        assertParserFails(p, ">");
+        assertParserFails(p, "1>");
+        assertParserFails(p, ">2");
+        assertParserSucceedsWithValue(p, "3>2>1", 3 - (2 - 1));
+    }
+
+    @Test
     public void testChainl() throws Exception {
         final Parser<Character, BinaryOperator<Integer>> op =
-            chr('+').then(Combinators.<Character, BinaryOperator<Integer>>retn((x, y) -> x + y));
+            chr('>').then(Combinators.<Character, BinaryOperator<Integer>>retn((x, y) -> x - y));
         final Parser<Character, Integer> p = digit.bind(c -> retn(Character.getNumericValue(c))).chainl(op, 0);
         assertParserSucceedsWithValue(p, "", 0);
         assertParserSucceedsWithValue(p, "x", 0);
-        assertParserSucceedsWithValue(p, "1+2+3", 6);
+        assertParserSucceedsWithValue(p, "3>2>1", (3 - 2) - 1);
     }
 
     @Test
     public void testChainl1() throws Exception {
         final Parser<Character, BinaryOperator<Integer>> op =
-            chr('+').then(Combinators.<Character, BinaryOperator<Integer>>retn((x, y) -> x + y));
+            chr('>').then(Combinators.<Character, BinaryOperator<Integer>>retn((x, y) -> x - y));
         final Parser<Character, Integer> p = digit.bind(c -> retn(Character.getNumericValue(c))).chainl1(op);
         assertParserFails(p, "a");
         assertParserFails(p, "+");
-        assertParserFails(p, "1+");
-        assertParserFails(p, "+2");
-        assertParserSucceedsWithValue(p, "1+2+3", 6);
+        assertParserFails(p, "1>");
+        assertParserFails(p, ">2");
+        assertParserSucceedsWithValue(p, "3>2>1", (3 - 2) - 1);
     }
 
     @Test

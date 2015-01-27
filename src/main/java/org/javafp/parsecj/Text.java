@@ -2,10 +2,7 @@ package org.javafp.parsecj;
 
 import java.util.regex.*;
 
-import static org.javafp.parsecj.Combinators.endOfInput;
-import static org.javafp.parsecj.Combinators.retn;
-import static org.javafp.parsecj.Combinators.satisfy;
-import static org.javafp.parsecj.Combinators.skipMany;
+import static org.javafp.parsecj.Combinators.*;
 
 /**
  * Parser combinators to be used with Character streams.
@@ -18,12 +15,12 @@ public abstract class Text {
     public static <S, A> ConsumedT<S, A> createConsError(boolean consumed, State<S> state, String expected) {
         return consumed ?
             ConsumedT.consumed(() ->
-                    Reply.error(
-                        Message.lazy(() -> Message.message(state, expected))
-                    )
+                Reply.error(
+                    Message.lazy(() -> Message.message(state.position(), state.current(), expected))
+                )
             ) : ConsumedT.empty(
-            Reply.error(
-                Message.lazy(() -> Message.message(state, expected))
+                Reply.error(
+                    Message.lazy(() -> Message.message(state.position(), state.current(), expected))
             )
         );
     }
@@ -55,13 +52,9 @@ public abstract class Text {
     public static Parser<Character, Character> wspace = satisfy((Character c) -> Character.isWhitespace(c)).label("wspace");
 
     /**
-     * A parser which parses whitespace.
+     * A parser which skips whitespace.
      */
-    public static Parser<Character, Void> wspaces = skipMany(
-        satisfy(
-            c -> Character.isWhitespace(c)
-        )
-    );
+    public static Parser<Character, Void> wspaces = skipMany(wspace);
 
     /**
      * A parser which parses the specified char.
@@ -123,7 +116,7 @@ public abstract class Text {
                 () -> Reply.ok(
                     res,
                     tail,
-                    Message.lazy(() -> Message.message(tail))
+                    Message.lazy(() -> Message.message(tail.position()))
                 )
             );
         };
@@ -158,7 +151,7 @@ public abstract class Text {
                         () -> Reply.ok(
                             value,
                             tail,
-                            Message.lazy(() -> Message.message(tail))
+                            Message.lazy(() -> Message.message(tail.position()))
                         )
                     );
                 } else if (state.end()) {
@@ -185,7 +178,7 @@ public abstract class Text {
                 final State<Character> tail = state;
                 return ConsumedT.empty(
                     Reply.error(
-                        Message.lazy(() -> Message.message(tail, "alphaNum"))
+                        Message.lazy(() -> Message.message(tail.position(), tail.current(), "alphaNum"))
                     )
                 );
             }
@@ -206,7 +199,7 @@ public abstract class Text {
                 () -> Reply.ok(
                     sb.toString(),
                     tail,
-                    Message.lazy(() -> Message.message(tail))
+                    Message.lazy(() -> Message.message(tail.position()))
                 )
             );
         };
@@ -228,7 +221,7 @@ public abstract class Text {
             final Matcher matcher = pattern.matcher(cs);
 
             final Message<Character> msg = Message.lazy(
-                () -> Message.message(state, "Regex('" + regex + "')")
+                () -> Message.message(state.position(), state.current(), "Regex('" + regex + "')")
             );
 
             if (matcher.lookingAt()) {

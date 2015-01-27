@@ -5,16 +5,8 @@ import org.javafp.parsecj.*;
 
 import java.util.LinkedHashMap;
 
-import static org.javafp.parsecj.Combinators.between;
-import static org.javafp.parsecj.Combinators.choice;
-import static org.javafp.parsecj.Combinators.many;
-import static org.javafp.parsecj.Combinators.retn;
-import static org.javafp.parsecj.Combinators.satisfy;
-import static org.javafp.parsecj.Combinators.sepBy;
-import static org.javafp.parsecj.Text.chr;
-import static org.javafp.parsecj.Text.dble;
-import static org.javafp.parsecj.Text.string;
-import static org.javafp.parsecj.Text.wspaces;
+import static org.javafp.parsecj.Combinators.*;
+import static org.javafp.parsecj.Text.*;
 
 /**
  * A grammar for JSON.

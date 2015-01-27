@@ -4,22 +4,9 @@ import org.javafp.parsecj.*;
 
 import java.util.function.BinaryOperator;
 
-import static org.javafp.parsecj.Combinators.attempt;
-import static org.javafp.parsecj.Combinators.choice;
-import static org.javafp.parsecj.Combinators.eof;
-import static org.javafp.parsecj.Combinators.retn;
-import static org.javafp.parsecj.Combinators.satisfy;
-import static org.javafp.parsecj.Text.alphaNum;
-import static org.javafp.parsecj.Text.dble;
-import static org.javafp.parsecj.Text.string;
-import static org.javafp.parsecj.expr2.Model.BinOp;
-import static org.javafp.parsecj.expr2.Model.Expr;
-import static org.javafp.parsecj.expr2.Model.NumExpr;
-import static org.javafp.parsecj.expr2.Model.UnaryOp;
-import static org.javafp.parsecj.expr2.Model.func2Expr;
-import static org.javafp.parsecj.expr2.Model.numExpr;
-import static org.javafp.parsecj.expr2.Model.unaryOpExpr;
-import static org.javafp.parsecj.expr2.Model.varExpr;
+import static org.javafp.parsecj.Combinators.*;
+import static org.javafp.parsecj.Text.*;
+import static org.javafp.parsecj.expr2.Model.*;
 
 public abstract class Grammar {
 

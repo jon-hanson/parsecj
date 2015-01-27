@@ -5,11 +5,8 @@ import org.junit.Test;
 
 import java.util.function.BinaryOperator;
 
-import static org.javafp.parsecj.Combinators.choice;
-import static org.javafp.parsecj.Combinators.eof;
-import static org.javafp.parsecj.Combinators.retn;
-import static org.javafp.parsecj.Text.chr;
-import static org.javafp.parsecj.Text.dble;
+import static org.javafp.parsecj.Combinators.*;
+import static org.javafp.parsecj.Text.*;
 
 public class Grammar {
     // Forward declare expr to allow for circular references.
