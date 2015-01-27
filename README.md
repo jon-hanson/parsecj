@@ -8,10 +8,10 @@ It is a port of the Haskell [Parsec library](https://hackage.haskell.org/package
 The implementation is, where possible, a direct Java port of the Haskell code outlined in the original [Parsec paper](http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf).
 
 The parser features include:
-* Composable parser combinators which provide a DSL for implementing parsers from grammars.
+* Composable parser combinators, which provide a DSL for implementing parsers from grammars.
 * Informative error messages in the event of parse failures.
 * Thread-safe due to immutable parsers and input states.
-* A combinator approach which mirrors that of Parsec, its Haskell counterpart, allowing grammars written for Parsec to be translated into equivalent grammars for ParsecJ.
+* A combinator approach that mirrors that of Parsec, its Haskell counterpart, allowing grammars written for Parsec to be translated into equivalent grammars for ParsecJ.
 
 ## Parser Combinators
 
@@ -37,7 +37,7 @@ are an extension of recursive descent parsing,
 which use a monad to encapsulate the plumbing.
 The framework provides the basic building blocks -
 parsers for constituent language elements such as characters, words and numbers.
-It also provides combinators which construct more complex parsers by composing existing parsers.
+It also provides combinators that construct more complex parsers by composing existing parsers.
 The framework effectively provides a Domain Specific Language for expressing language grammars,
 whereby each grammar instance implements an executable parser.
 
@@ -54,7 +54,7 @@ Parser<Character, Integer> sum =
                 retn(x+y))));
 ```
 
-Here a parser is defined which will parse and evaluate expressions of the form *a+b* where *a* and *b* are integers.
+Here a parser is defined that will parse and evaluate expressions of the form *a+b*, where *a* and *b* are integers.
 The parser is constructed by taking the `intr` parser for integers, the `satisfy` parser for single symbols,
 and combining them using the `bind`, `then` and `retn` combinators.
 
@@ -111,7 +111,7 @@ public interface Parser<S, A> {
 I.e. a `Parser<S, A>` is essentially a function from a `State<S>` to a `ConsumedT<S, A>`,
 where `S` is the input stream symbol type (usually `Character`),
 and `A` is the type of the value being parsed.
-For example, a parser which operates on character input and parses an integer would have type `Parser<Character, Integer>`.
+For example, a parser that operates on character input and parses an integer would have type `Parser<Character, Integer>`.
 
 The `apply` method contains the main machinery of the parser,
 and combinators use this method to compose parsers.
@@ -181,17 +181,17 @@ The `org.javafp.parsecj.Combinators` package provides the following core combina
 
 Name | Description | Returns
 -----|-------------|--------
-`retn(value)` | A parser which always succeeds | The supplied value.
-`bind(p, f)` | A parser which first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser which is then applied. | Result of `q` .
-`fail()` | A parser which always fails. | An error.
+`retn(value)` | A parser that always succeeds | The supplied value.
+`bind(p, f)` | A parser that first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser that is then applied. | Result of `q` .
+`fail()` | A parser that always fails. | An error.
 `satisfy(test)` | Applies a test to the next input symbol. | The symbol.
-`satisfy(value)` | A parser which succeeds if the next input symbol equals `value`. | The symbol.
-`eof()` | A parser which succeeds if the end of the input is reached. | UNIT.
-`then(p, q)` | A parser which first applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
-`or(p, q)` | A parser which first applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
+`satisfy(value)` | A parser that succeeds if the next input symbol equals `value`. | The symbol.
+`eof()` | A parser that succeeds if the end of the input is reached. | UNIT.
+`then(p, q)` | A parser that first applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
+`or(p, q)` | A parser that first applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
 ... |
 
-Combinators which take a `Parser` as a first parameter, such as `bind` and `or`,
+Combinators that take a `Parser` as a first parameter, such as `bind` and `or`,
 also exist as methods on the `Parser` interface, to allow parsers to be constructed in a fluent style.
 E.g. `p.bind(f)` is equivalent to `bind(p, f)`.
 
@@ -202,13 +202,13 @@ the following parsers specialised for parsing text input:
 
 Name | Description | Returns
 -----|-------------|--------
-`alpha` | A parser which succeeds if the next character is alphabetic. | The character.
-`digit` | A parser which succeeds if the next character is a digit. | The character.
-`intr` | A parser which parses an integer. | The integer.
-`dble` | A parser which parses an double. | The double.
-`string(s)` | A parser which parses the supplied string. | The string.
-`alphaNum` | A parser which parses an alphanumeric string. | The string.
-`regex(regex)` | A parser which parses a string matching the supplied regex. | The string matching the regex.
+`alpha` | A parser that succeeds if the next character is alphabetic. | The character.
+`digit` | A parser that succeeds if the next character is a digit. | The character.
+`intr` | A parser that parses an integer. | The integer.
+`dble` | A parser that parses an double. | The double.
+`string(s)` | A parser that parses the supplied string. | The string.
+`alphaNum` | A parser that parses an alphanumeric string. | The string.
+`regex(regex)` | A parser that parses a string matching the supplied regex. | The string matching the regex.
 
 Typically parsers are defined by composing the predefined combinators provided by the library.
 In rare cases a parser combinator may need to be implemented by operating directly on the input state.
@@ -287,9 +287,9 @@ System.out.println(s + " = " + parser.parse(State.state(s)).getResult());
 The correspondence between the production rules of our mini expression language and the above set of parsers should be apparent.
 
 **Notes**
-* The expression language is recursive - `expr` refers to `binOpExpr` which refers to `expr`. Since Java doesn't allow us to define a mutually recursive set of variables, we have to break the circularity by making the `expr` parser a `Parser.Ref`, which gets declared at the beginning and initialised at the end. `Ref` implements the `Parser` interface, hence it can be used as a parser.
+* The expression language is recursive - `expr` refers to `binOpExpr`, which in turn refers to `expr`. Since Java doesn't allow us to define a mutually recursive set of variables, we have to break the circularity by making the `expr` parser a `Parser.Ref`, which gets declared at the beginning and initialised at the end. `Ref` implements the `Parser` interface, hence it can be used as a parser.
 * The return type of each combinator function is `Parser<S, A>` and the compiler attempts to infer the types of `S` and `A` from the arguments. Certain combinators do not have parameters of both types - `retn` and `eof` for instance, which causes the type inference to fail resulting in a compilation error. If this happens the error can be avoid by either assigning the combinator to a variable or by expliting specifying the generic types, e.g. `Combinators.<Character, BinaryOperator<Double>>retn`.
-* We add the `eof` parser, which succeeds if it encounters the end of the input, to bookend the `expr` parser. This ensures the parser does not inadvertently parse malformed inputs which begin with a valid expression, such as `(1+2)Z`.
+* We add the `eof` parser, which succeeds if it encounters the end of the input, to bookend the `expr` parser. This ensures the parser does not inadvertently parse malformed inputs that begin with a valid expression, such as `(1+2)Z`.
 
 # Translating Haskell into Java
 
@@ -507,7 +507,7 @@ satisfy test
              | otherwise -> Empty Error
 ```
 
-Here the combinator is returning a function which is a `Parser`.
+Here the combinator is returning a function that is a `Parser`.
 Using Java 8 lambda functions we can define `satisfy` in a similar fashion:
 
 ```java
