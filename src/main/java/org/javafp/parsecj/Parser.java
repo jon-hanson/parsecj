@@ -144,6 +144,22 @@ public interface Parser<S, A> {
         return Combinators.sepEndBy1(this, sep);
     }
 
+    default <SEP> Parser<S, IList<A>> endBy(Parser<S, SEP> sep) {
+        return Combinators.endBy(this, sep);
+    }
+
+    default <SEP> Parser<S, IList<A>> endBy1 (Parser<S, SEP> sep) {
+        return Combinators.endBy1(this, sep);
+    }
+
+    default Parser<S, IList<A>> count(int n) {
+        return Combinators.count(this, n);
+    }
+
+    default Parser<S, A> chainl(Parser<S, BinaryOperator<A>> op, A x) {
+        return Combinators.chainl(this, op, x);
+    }
+
     default Parser<S, A> chainl1(Parser<S, BinaryOperator<A>> op) {
         return Combinators.chainl1(this, op);
     }

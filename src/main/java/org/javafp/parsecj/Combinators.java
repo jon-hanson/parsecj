@@ -437,10 +437,44 @@ public abstract class Combinators {
 
     /**
      * A parser which parses zero or more occurrences of p, separated by sep,
-     * and ended by sep,
+     * and optionally ended by sep,
      * and returns a list of values returned by p.
      */
     public static <S, A, SEP> Parser<S, IList<A>> sepEndBy(
+            Parser<S, A> p,
+            Parser<S, SEP> sep) {
+        return or(sepEndBy1(p, sep), retn(IList.empty()));
+    }
+
+    /**
+     * A parser which parses one or more occurrences of p, separated by sep,
+     * and optionally ended by sep,
+     * and returns a list of values returned by p.
+     */
+    public static <S, A, SEP> Parser<S, IList<A>> sepEndBy1(
+            Parser<S, A> p,
+            Parser<S, SEP> sep) {
+        return bind(
+            p,
+            x -> or(
+                then(
+                    sep,
+                    bind(
+                        sepEndBy(p, sep),
+                        xs -> retn(xs.add(x))
+                    )
+                ),
+                retn(IList.list(x))
+            )
+        );
+    }
+
+    /**
+     * A parser which parses zero or more occurrences of p, separated and ended by sep,
+     * and ended by sep,
+     * and returns a list of values returned by p.
+     */
+    public static <S, A, SEP> Parser<S, IList<A>> endBy(
             Parser<S, A> p,
             Parser<S, SEP> sep) {
         return many(bind(p, x -> then(sep, retn(x))));
@@ -451,14 +485,45 @@ public abstract class Combinators {
      * and ended by sep,
      * and returns a list of values returned by p.
      */
-    public static <S, A, SEP> Parser<S, IList<A>> sepEndBy1(
+    public static <S, A, SEP> Parser<S, IList<A>> endBy1(
             Parser<S, A> p,
             Parser<S, SEP> sep) {
         return many1(bind(p, x -> then(sep, retn(x))));
     }
 
     /**
+     * A parser which applies parser p n times.
+     */
+    public static <S, A> Parser<S, IList<A>> count(
+            Parser<S, A> p,
+            int n) {
+        return countAcc(p, n, IList.empty());
+    }
+
+    private static <S, A> Parser<S, IList<A>> countAcc(
+            Parser<S, A> p,
+            int n,
+            IList<A> acc) {
+        if (n == 0) {
+            return retn(acc.reverse());
+        } else {
+            return bind(p, x -> countAcc(p, n - 1, acc.add(x)));
+        }
+    }
+
+    /**
      * A parser for an operand followed by zero or more operands (p) separated by operators (op).
+     * If there are zero operands then x is returned.
+     */
+    public static <S, A> Parser<S, A> chainl(
+            Parser<S, A> p,
+            Parser<S, BinaryOperator<A>> op,
+            A x) {
+        return or(chainl1(p, op), retn(x));
+    }
+
+    /**
+     * A parser for an operand followed by one or more operands (p) separated by operators (op).
      * This parser can for example be used to eliminate left recursion which typically occurs in expression grammars.
      */
     public static <S, A> Parser<S, A> chainl1(

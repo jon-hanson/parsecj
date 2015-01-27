@@ -201,7 +201,7 @@ public class CombinatorsTest {
         final Parser<Character, IList<Character>> p = digit.sepEndBy(chr(';'));
         assertParserSucceeds(p, "a");
         assertParserSucceedsWithValue(p, ";", IList.empty());
-        assertParserFails(p, "0;1;2;3");
+        assertParserSucceedsWithValue(p, "0;1;2;3", IList.list('0', '1', '2', '3'));
         assertParserSucceedsWithValue(p, "0;1;2;3;", IList.list('0', '1', '2', '3'));
     }
 
@@ -210,8 +210,45 @@ public class CombinatorsTest {
         final Parser<Character, IList<Character>> p = digit.sepEndBy1(chr(';'));
         assertParserFails(p, "a");
         assertParserFails(p, ";");
+        assertParserSucceedsWithValue(p, "0;1;2;3", IList.list('0', '1', '2', '3'));
+        assertParserSucceedsWithValue(p, "0;1;2;3;", IList.list('0', '1', '2', '3'));
+    }
+
+    @Test
+    public void testEndBy() throws Exception {
+        final Parser<Character, IList<Character>> p = digit.endBy(chr(';'));
+        assertParserSucceeds(p, "a");
+        assertParserSucceedsWithValue(p, ";", IList.empty());
         assertParserFails(p, "0;1;2;3");
         assertParserSucceedsWithValue(p, "0;1;2;3;", IList.list('0', '1', '2', '3'));
+    }
+
+    @Test
+    public void testEndBy1() throws Exception {
+        final Parser<Character, IList<Character>> p = digit.endBy1(chr(';'));
+        assertParserFails(p, "a");
+        assertParserFails(p, ";");
+        assertParserFails(p, "0;1;2;3");
+        assertParserSucceedsWithValue(p, "0;1;2;3;", IList.list('0', '1', '2', '3'));
+    }
+
+    @Test
+    public void testCount() throws Exception {
+        final Parser<Character, IList<Character>> p = digit.count(3);
+        assertParserFails(p, "");
+        assertParserFails(p, "0");
+        assertParserFails(p, "01");
+        assertParserSucceedsWithValue(p, "012", IList.list('0', '1', '2'));
+    }
+
+    @Test
+    public void testChainl() throws Exception {
+        final Parser<Character, BinaryOperator<Integer>> op =
+            chr('+').then(Combinators.<Character, BinaryOperator<Integer>>retn((x, y) -> x + y));
+        final Parser<Character, Integer> p = digit.bind(c -> retn(Character.getNumericValue(c))).chainl(op, 0);
+        assertParserSucceedsWithValue(p, "", 0);
+        assertParserSucceedsWithValue(p, "x", 0);
+        assertParserSucceedsWithValue(p, "1+2+3", 6);
     }
 
     @Test
