@@ -820,7 +820,7 @@ Again, we have reduced the LHS of the law to the same form as the RHS, proving t
 
 Proving the associativity law is a little more involved than the other two laws, and is beyond the scope of this document.
 One approach would be to first note that the expression `p.parse(s)`,
-that is the Parser `p` applied to an input `s`,
+i.e. parser `p` applied to an input `s`,
 must yield one of the following four outputs:
 
 * `consumed(Reply.ok(a, r))`
