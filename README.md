@@ -133,19 +133,19 @@ the `parse` method is also provided to apply the parser and extract the `Reply` 
 ### State<S>
 
 The `State<S>` interface is an abstraction representing an immutable input state.
-It provides several static `state` methods for constructing `State` instances from sequences of symbols:
+It provides several static `of` constructor methods for constructing `State` instances from sequences of symbols:
 
 ```java
 public interface State<S> {
-    static <S> State<S> state(S[] symbols) {
+    static <S> State<S> of(S[] symbols) {
         return new ArrayState<S>(symbols);
     }
 
-    static State<Character> state(Character[] symbols) {
+    static State<Character> of(Character[] symbols) {
         return new CharArrayState(symbols);
     }
 
-    static State<Character> state(String symbols) {
+    static State<Character> of(String symbols) {
         return new StringState(symbols);
     }
 
@@ -466,7 +466,7 @@ public abstract static class ConsumedT<A> {
 We can then construct `ConsumedT` instances using a lambda function with an empty argument list:
 
 ```java
-ConsumedT<S, A> cons = consumed(() -> ok(...));
+ConsumedT<S, A> cons = consumed(() -> Reply.ok(...));
 ```
 
 The final of the three Haskell types is `Parser a`,
@@ -503,7 +503,7 @@ has to be renamed in Java as `return` is a reserved word, however the definition
 
 ```java
 public static <A> Parser<A> retn(A x) {
-    return input -> empty(ok(x, input));
+    return input -> empty(Reply.ok(x, input));
 }
 ```
 
@@ -529,12 +529,12 @@ public static Parser<Character> satisfy(Predicate<Character> test) {
         if (!input.isEmpty()) {
             final char c = input.charAt(0);
             if (test.test(c)) {
-                return consumed(() -> ok(c, input.substring(1)));
+                return consumed(() -> Reply.ok(c, input.substring(1)));
             } else {
-                return empty(error());
+                return empty(Reply.error());
             }
         } else {
-            return empty(error());
+            return empty(Reply.error());
         }
     };
 }
@@ -574,12 +574,12 @@ public static <A, B> Parser<B> bind(
             cons -> consumed(() ->
                 cons.getReply().<Reply<B>>match(
                     ok -> f.apply(ok.result).parse(ok.rest).getReply(),
-                    error -> error()
+                    error -> Reply.error()
                 )
             ),
             empty -> empty.getReply().<ConsumedT<B>>match(
                 ok -> f.apply(ok.result).parse(ok.rest),
-                error -> empty(error())
+                error -> empty(Reply.error())
             )
         );
 }
@@ -627,7 +627,7 @@ meaning we can substitute the function body in place of calls to the function wh
 ### Left Identity
 
 This law requires that `retn(a).bind(f)` = `f.apply(a)`.
-We prove this by reducing the LHS to the same form as the RhS through a series of steps.
+We prove this by reducing the LHS to the same form as the RHS through a series of steps.
 
 Taking the LHS as the starting point:
 
@@ -639,51 +639,51 @@ we can reduce this by substituting the definition of the `retn` function in plac
 
 &#8594; (from the definition of `retn`)
 ```java
-(input -> empty(ok(a, input))).bind(f)
+(input -> empty(Reply.ok(a, input))).bind(f)
 ```
 
 Likewise now we substitute the definition of `bind`, and so on:
 
 &#8594; (from the definition of `bind`)
 ```java
-input -> empty(ok(a, input)).match(
+input -> empty(Reply.ok(a, input)).match(
     cons -> consumed(() ->
         cons.getReply().match(
             ok -> f.apply(ok.result).parse(ok.rest).getReply(),
-            error -> error()
+            error -> Reply.error()
         )
     ),
     empty -> empty.getReply().match(
         ok -> f.apply(ok.result).parse(ok.rest),
-        error -> empty(error())
+        error -> empty(Reply.error())
     )
 )
 ```
 
 &#8594; (from definition of `ConsumedT.match`)
 ```java
-input -> empty(ok(a, input)).getReply().match(
+input -> empty(Reply.ok(a, input)).getReply().match(
     ok -> f.apply(ok.result).parse(ok.rest),
-    error -> empty(error())
+    error -> empty(Reply.error())
 )
 ```
 
 &#8594; (from definition of `Empty.getReply`)
 ```java
-input -> ok(a, input).match(
+input -> Reply.ok(a, input).match(
     ok -> f.apply(ok.result).parse(ok.rest),
-    error -> empty(error())
+    error -> empty(Reply.error())
 )
 ```
 
 &#8594; (from definition of `Reply.match`)
 ```java
-input -> f.apply(ok(a, input).result).parse(ok(a, input).rest)
+input -> f.apply(Reply.ok(a, input).result).parse(Reply.ok(a, input).rest)
 ```
 
 &#8594; (from definition of `Ok.result`)
 ```java
-input -> f.apply(a).parse(ok(a, input).rest)
+input -> f.apply(a).parse(Reply.ok(a, input).rest)
 ```
 
 &#8594; (from definition of `Ok.rest`)
@@ -691,7 +691,7 @@ input -> f.apply(a).parse(ok(a, input).rest)
 input -> f.apply(a).parse(input);
 ```
 
-&#8594; (function introduction and application cancel out)
+&#8594; (lambda introduction and application cancel out)
 ```java
 f.apply(a);
 ```
@@ -713,7 +713,7 @@ we can reduce this as follows:
 
 &#8594; (from the definition of `retn`)
 ```java
-p.bind(x -> input -> `empty(ok(x, input))
+p.bind(x -> input -> `empty(Reply.ok(x, input))
 ```
 
 &#8594; (from the definition of `bind`)
@@ -722,13 +722,13 @@ input ->
     p.apply(input).match(
         cons -> consumed(() ->
             cons.getReply().match(
-                ok -> (x -> input2 -> empty(ok(x, input2))).apply(ok.result).parse(ok.rest).getReply(),
-                error -> error()
+                ok -> (x -> input2 -> empty(Reply.ok(x, input2))).apply(ok.result).parse(ok.rest).getReply(),
+                error -> Reply.error()
             )
         ),
         empty -> empty.getReply().match(
-            ok -> (x -> input2 -> empty(ok(x, input2))).apply(ok.result).parse(ok.rest),
-            error -> empty(error())
+            ok -> (x -> input2 -> empty(Reply.ok(x, input2))).apply(ok.result).parse(ok.rest),
+            error -> empty(Reply.error())
         )
     )
 ```
@@ -739,13 +739,13 @@ input ->
     p.apply(input).match(
         cons -> consumed(() ->
             cons.getReply().match(
-                ok -> (input2 -> empty(ok(ok.result, input2))).parse(ok.rest).getReply(),
-                error -> error()
+                ok -> (input2 -> empty(Reply.ok(ok.result, input2))).parse(ok.rest).getReply(),
+                error -> Reply.error()
             )
         ),
         empty -> empty.getReply().match(
-            ok -> (input2 -> empty(ok(ok.result, input2))).parse(ok.rest),
-            error -> empty(error())
+            ok -> (input2 -> empty(Reply.ok(ok.result, input2))).parse(ok.rest),
+            error -> empty(Reply.error())
         )
     )
 ```
@@ -756,13 +756,13 @@ input ->
     p.apply(input).match(
         cons -> consumed(() ->
             cons.getReply().match(
-                ok -> empty(ok(ok.result, ok.rest)).getReply(),
-                error -> error()
+                ok -> empty(Reply.ok(ok.result, ok.rest)).getReply(),
+                error -> Reply.error()
             )
         ),
         empty -> empty.getReply().match(
-            ok -> empty(ok(ok.result, ok.rest)),
-            error -> empty(error())
+            ok -> empty(Reply.ok(ok.result, ok.rest)),
+            error -> empty(Reply.error())
         )
     )
 ```
@@ -774,12 +774,12 @@ input ->
         cons -> consumed(() ->
             cons.getReply().match(
                 ok -> empty(ok).getReply(),
-                error -> error()
+                error -> Reply.error()
             )
         ),
         empty -> empty.getReply().match(
             ok -> empty(ok),
-            error -> empty(error())
+            error -> empty(Reply.error())
         )
     )
 ```
@@ -823,10 +823,10 @@ One approach would be to first note that the expression `p.parse(s)`,
 that is the Parser `p` applied to an input `s`,
 must yield one of the following four outputs:
 
-* `consumed(ok(a, r))`
-* `consumed(error())`
-* `empty(ok(a, r))`
-* `empty(error())`
+* `consumed(Reply.ok(a, r))`
+* `consumed(Reply.error())`
+* `empty(Reply.ok(a, r))`
+* `empty(Reply.error())`
 
 and then proving the law holds for each of these cases.
 
