@@ -184,9 +184,7 @@ public abstract class Reply<S, A> {
 ```
 
 The `isOk` and `isError` methods can be used to test the type.
-Alternatively, use the `match` method to handle both cases:
-
-E.g.:
+Alternatively, use the `match` method to handle both cases, e.g.:
 
 ```java
 String msg =
@@ -197,12 +195,13 @@ String msg =
         );
 ```
 
-A third option is the `getResult` method which either returns the successfully parsed result,
+A third option is to use the `getResult` method which either returns the successfully parsed result,
 if the reply is an `Ok`,
 or throws an exception if it's an `Error`.
 
 ```java
 // May throw.
+Parser<Character, MyResult> p = ...
 MyResult res = parser.parse(input).getResult();
 ```
 
