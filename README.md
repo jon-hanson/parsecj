@@ -258,7 +258,7 @@ The above grammar then, can be translated into the following Java implementation
 
 ```java
 // Forward declare expr to allow for circular references.
-final org.javafp.parsecj.Parser.Ref<Character, Double> expr = Parser.ref();
+final Parser.Ref<Character, Double> expr = Parser.ref();
 
 // Inform the compiler of the type of retn.
 final Parser<Character, BinaryOperator<Double>> add = retn((l, r) -> l + r);
