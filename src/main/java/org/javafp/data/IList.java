@@ -9,15 +9,15 @@ import java.util.stream.*;
  */
 public abstract class IList<T> implements Iterable<T> {
 
-    public static <T> IList<T> empty() {
+    public static <T> IList<T> of() {
         return Empty.EMPTY;
     }
 
-    public static <T> IList<T> list(T elem) {
+    public static <T> IList<T> of(T elem) {
         return Empty.EMPTY.add(elem);
     }
 
-    public static <T> IList<T> list(T... elems) {
+    public static <T> IList<T> of(T... elems) {
         IList<T> list = Empty.EMPTY;
         for (int i = elems.length - 1; i >= 0; --i) {
             list = list.add(elems[i]);
@@ -81,7 +81,7 @@ public abstract class IList<T> implements Iterable<T> {
     public abstract int length();
 
     public IList<T> reverse() {
-        return reverse(empty());
+        return reverse(of());
     }
 
     protected abstract IList<T> reverse(IList<T> acc);

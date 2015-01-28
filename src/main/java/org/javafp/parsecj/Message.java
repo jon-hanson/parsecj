@@ -4,35 +4,35 @@ import org.javafp.data.IList;
 
 import java.util.function.Supplier;
 
-import static org.javafp.data.IList.list;
-
 /**
- * An Error message which represents a parse failure.
+ * An message which represents a (potential) parse failure.
+ * Note, the construction of a Message doesn't necessarily indicate an failure,
+ * the message may be intended for use later on when a parse failure occurs.
  */
 public interface Message<S> {
 
-    public static <S> Message<S> message(int pos, S sym, String expected) {
-        return new MessageImpl<S>(pos, sym, list(expected));
+    public static <S> Message<S> of(int pos, S sym, String expected) {
+        return new MessageImpl<S>(pos, sym, IList.of(expected));
     }
 
-    public static <S> Message<S> message(int pos, String expected) {
-        return new MessageImpl<S>(pos, null, list(expected));
+    public static <S> Message<S> of(int pos, String expected) {
+        return new MessageImpl<S>(pos, null, IList.of(expected));
     }
 
-    public static <S> Message<S> message(int pos) {
-        return new MessageImpl<S>(pos, null, list());
+    public static <S> Message<S> of(int pos) {
+        return new MessageImpl<S>(pos, null, IList.of());
     }
 
-    public static <S> Message<S> message() {
+    public static <S> Message<S> of() {
         return EmptyMessage.instance();
     }
 
     public static <S> Message<S> endOfInput(int pos, String expected) {
-        return new EndOfInput<S>(pos, list(expected));
+        return new EndOfInput<S>(pos, IList.of(expected));
     }
 
-    public static <S> Ref<S> lazy(Supplier<Message<S>> supplier) {
-        return new Ref(supplier);
+    public static <S> LazyMessage<S> lazy(Supplier<Message<S>> supplier) {
+        return new LazyMessage(supplier);
     }
 
     // The position the error occurred at.
@@ -44,19 +44,19 @@ public interface Message<S> {
     // The names of the productions that were expected.
     public IList<String> expected();
 
-    public default Ref<S> expect(String name) {
+    public default LazyMessage<S> expect(String name) {
         return Message.lazy(() ->
-                Message.message(position(), symbol(), name)
+            Message.of(position(), symbol(), name)
         );
     }
 
     public default Message<S> merge(Message<S> rhs) {
         return Message.lazy(() ->
-                new MessageImpl<S>(
-                    this.position(),
-                    this.symbol(),
-                    this.expected().add(rhs.expected())
-                )
+            new MessageImpl<S>(
+                this.position(),
+                this.symbol(),
+                this.expected().add(rhs.expected())
+            )
         );
     }
 }
@@ -84,7 +84,7 @@ final class EmptyMessage<S> implements Message<S> {
 
     @Override
     public IList<String> expected() {
-        return IList.empty();
+        return IList.of();
     }
 
     @Override
@@ -173,6 +173,9 @@ final class MessageImpl<S> implements Message<S> {
     }
 }
 
+/**
+ * Message indicating the
+ */
 final class EndOfInput<S> implements Message<S> {
 
     // The position the Error occurred at.
@@ -234,14 +237,14 @@ final class EndOfInput<S> implements Message<S> {
 }
 
 /**
- * A lazily-constructed Error message.
+ * A lazily-constructed message.
  */
-final class Ref<S> implements Message<S> {
+final class LazyMessage<S> implements Message<S> {
 
     private Supplier<Message<S>> supplier;
     private Message<S> value;
 
-    public Ref(Supplier<Message<S>> supplier) {
+    public LazyMessage(Supplier<Message<S>> supplier) {
         this.supplier = supplier;
     }
 

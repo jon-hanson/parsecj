@@ -6,15 +6,11 @@ import java.util.Optional;
 import java.util.function.*;
 
 import static org.javafp.parsecj.ConsumedT.*;
-import static org.javafp.parsecj.Merge.mergeOk;
-import static org.javafp.parsecj.Message.*;
-import static org.javafp.parsecj.Reply.*;
+import static org.javafp.parsecj.Merge.*;
 
 /**
  * A set of parser combinator functions.
  * The Parser type along with retn &amp; bind constitute a monad.
- * This is a Java implementation of this paper:
- * http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf
  */
 public abstract class Combinators {
 
@@ -29,7 +25,7 @@ public abstract class Combinators {
      */
     public static <S, A> Reply<S, A> endOfInput(State<S> state, String expected) {
         return Reply.<S, A>error(
-            lazy(() -> Message.endOfInput(state.position(), expected))
+            Message.lazy(() -> Message.endOfInput(state.position(), expected))
         );
     }
 
@@ -43,7 +39,7 @@ public abstract class Combinators {
                 Reply.ok(
                     x,
                     state,
-                    lazy(() -> message(state.position()))
+                    Message.lazy(() -> Message.of(state.position()))
                 )
             );
     }
@@ -135,7 +131,7 @@ public abstract class Combinators {
         return state ->
             empty(
                 Reply.error(
-                    lazy(() -> message(state.position()))
+                    Message.lazy(() -> Message.of(state.position()))
                 )
             );
     }
@@ -149,13 +145,13 @@ public abstract class Combinators {
                 return empty(
                     Reply.ok(
                         state,
-                        lazy(() -> message(state.position(), unit(), "EOF"))
+                        Message.lazy(() -> Message.of(state.position(), unit(), "EOF"))
                     )
                 );
             } else {
                 return empty(
                     Reply.<S, Void>error(
-                        lazy(() -> message(state.position(), unit(), "EOF"))
+                        Message.lazy(() -> Message.of(state.position(), unit(), "EOF"))
                     )
                 );
             }
@@ -171,16 +167,16 @@ public abstract class Combinators {
                 final S s = state.current();
                 if (test.test(s)) {
                     final State<S> newState = state.next();
-                    return consumed(() -> ok(
+                    return consumed(() -> Reply.ok(
                             s,
                             newState,
-                            lazy(() -> message(state.position()))
+                            Message.lazy(() -> Message.of(state.position()))
                         )
                     );
                 } else {
                     return empty(
-                        error(
-                            lazy(() -> message(state.position(), state.current(), "<test>"))
+                        Reply.error(
+                            Message.lazy(() -> Message.of(state.position(), state.current(), "<test>"))
                         )
                     );
                 }
@@ -199,16 +195,16 @@ public abstract class Combinators {
                 if (state.current().equals(value)) {
                     final State<S> newState = state.next();
                     return consumed(() ->
-                            ok(
-                                state.current(),
-                                newState,
-                                lazy(() -> message(state.position()))
-                            )
+                        Reply.ok(
+                            state.current(),
+                            newState,
+                            Message.lazy(() -> Message.of(state.position()))
+                        )
                     );
                 } else {
                     return empty(
-                        error(
-                            lazy(() -> message(state.position(), state.current(), value.toString()))
+                        Reply.error(
+                            Message.lazy(() -> Message.of(state.position(), state.current(), value.toString()))
                         )
                     );
                 }
@@ -229,17 +225,17 @@ public abstract class Combinators {
                 if (state.current().equals(value)) {
                     final State<S> newState = state.next();
                     return consumed(() ->
-                            ok(
-                                result,
-                                newState,
-                                lazy(() -> message(state.position()))
-                            )
+                        Reply.ok(
+                            result,
+                            newState,
+                            Message.lazy(() -> Message.of(state.position()))
+                        )
                     );
                 } else {
                     return empty(
-                        error(
-                            lazy(() ->
-                                message(state.position(), state.current(), value.toString())
+                        Reply.error(
+                            Message.lazy(() ->
+                                    Message.of(state.position(), state.current(), value.toString())
                             )
                         )
                     );
@@ -339,7 +335,7 @@ public abstract class Combinators {
      * parser
      */
     public static <S, A> Parser<S, A> choice(Parser<S, A>... ps) {
-        return choice(IList.list(ps));
+        return choice(IList.of(ps));
     }
 
     /**
@@ -381,14 +377,14 @@ public abstract class Combinators {
      * A parser for a list of zero or more values of the same type.
      */
     public static <S, A> Parser<S, IList<A>> many(Parser<S, A> p) {
-        return manyAcc(p, IList.empty());
+        return manyAcc(p, IList.of());
     }
 
     /**
      * A parser for a list of one or more values of the same type.
      */
     public static <S, A> Parser<S, IList<A>> many1(Parser<S, A> p) {
-        return bind(p, x -> manyAcc(p, IList.list(x)));
+        return bind(p, x -> manyAcc(p, IList.of(x)));
     }
 
     private static <S, A> Parser<S, IList<A>> manyAcc(Parser<S, A> p, IList<A> acc) {
@@ -416,7 +412,7 @@ public abstract class Combinators {
     public static <S, A, SEP> Parser<S, IList<A>> sepBy(
             Parser<S, A> p,
             Parser<S, SEP> sep) {
-        return or(sepBy1(p, sep), retn(IList.empty()));
+        return or(sepBy1(p, sep), retn(IList.of()));
     }
 
     /**
@@ -443,7 +439,7 @@ public abstract class Combinators {
     public static <S, A, SEP> Parser<S, IList<A>> sepEndBy(
             Parser<S, A> p,
             Parser<S, SEP> sep) {
-        return or(sepEndBy1(p, sep), retn(IList.empty()));
+        return or(sepEndBy1(p, sep), retn(IList.of()));
     }
 
     /**
@@ -464,7 +460,7 @@ public abstract class Combinators {
                         xs -> retn(xs.add(x))
                     )
                 ),
-                retn(IList.list(x))
+                retn(IList.of(x))
             )
         );
     }
@@ -497,7 +493,7 @@ public abstract class Combinators {
     public static <S, A> Parser<S, IList<A>> count(
             Parser<S, A> p,
             int n) {
-        return countAcc(p, n, IList.empty());
+        return countAcc(p, n, IList.of());
     }
 
     private static <S, A> Parser<S, IList<A>> countAcc(

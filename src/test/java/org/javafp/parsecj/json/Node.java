@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
  * A model for JSON nodes.
  */
 public interface Node {
+
     public static Node nul() {
         return NullNode.instance;
     }
@@ -70,6 +71,50 @@ public interface Node {
     }
 
     public static final class TextNode implements Node {
+        private static String escape(String s) {
+            final StringBuilder sb = new StringBuilder(s.length());
+            final int len = s.length();
+            for (int i = 0; i < len; ++i) {
+                final char c = s.charAt(i);
+                switch(c) {
+                    case '\"':
+                        sb.append("\\\"");
+                        break;
+                    case '\\':
+                        sb.append("\\\\");
+                        break;
+                    case '/':
+                        sb.append("\\/");
+                        break;
+                    case '\b':
+                        sb.append("\\b");
+                        break;
+                    case '\f':
+                        sb.append("\\f");
+                        break;
+                    case '\n':
+                        sb.append("\\n");
+                        break;
+                    case '\r':
+                        sb.append("\\r");
+                        break;
+                    case '\t':
+                        sb.append("\\t");
+                        break;
+                    default:
+                        if ((c >= '\u0000' && c <= '\u001F') ||
+                            (c >= '\u007F' && c <= '\u009F') ||
+                            (c >= '\u2000' && c <= '\u20FF')) {
+                            sb.append("\\u" + Integer.toHexString(c | 0x10000).substring(1));
+                        } else {
+                            sb.append(c);
+                        }
+                }
+            }
+
+            return sb.toString();
+        }
+
         public final String value;
 
         public TextNode(String value) {
@@ -78,7 +123,7 @@ public interface Node {
 
         @Override
         public String toString() {
-            return "\"" + value + '"';
+            return "\"" + escape(value) + '"';
         }
     }
 

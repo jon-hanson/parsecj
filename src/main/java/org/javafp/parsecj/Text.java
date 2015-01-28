@@ -16,11 +16,11 @@ public abstract class Text {
         return consumed ?
             ConsumedT.consumed(() ->
                 Reply.error(
-                    Message.lazy(() -> Message.message(state.position(), state.current(), expected))
+                    Message.lazy(() -> Message.of(state.position(), state.current(), expected))
                 )
             ) : ConsumedT.empty(
                 Reply.error(
-                    Message.lazy(() -> Message.message(state.position(), state.current(), expected))
+                    Message.lazy(() -> Message.of(state.position(), state.current(), expected))
             )
         );
     }
@@ -120,7 +120,7 @@ public abstract class Text {
                 () -> Reply.ok(
                     res,
                     tail,
-                    Message.lazy(() -> Message.message(tail.position()))
+                    Message.lazy(() -> Message.of(tail.position()))
                 )
             );
         };
@@ -155,7 +155,7 @@ public abstract class Text {
                         () -> Reply.ok(
                             value,
                             tail,
-                            Message.lazy(() -> Message.message(tail.position()))
+                            Message.lazy(() -> Message.of(tail.position()))
                         )
                     );
                 } else if (state.end()) {
@@ -182,7 +182,7 @@ public abstract class Text {
                 final State<Character> tail = state;
                 return ConsumedT.empty(
                     Reply.error(
-                        Message.lazy(() -> Message.message(tail.position(), tail.current(), "alphaNum"))
+                        Message.lazy(() -> Message.of(tail.position(), tail.current(), "alphaNum"))
                     )
                 );
             }
@@ -203,7 +203,7 @@ public abstract class Text {
                 () -> Reply.ok(
                     sb.toString(),
                     tail,
-                    Message.lazy(() -> Message.message(tail.position()))
+                    Message.lazy(() -> Message.of(tail.position()))
                 )
             );
         };
@@ -225,7 +225,7 @@ public abstract class Text {
             final Matcher matcher = pattern.matcher(cs);
 
             final Message<Character> msg = Message.lazy(
-                () -> Message.message(state.position(), state.current(), "Regex('" + regex + "')")
+                () -> Message.of(state.position(), state.current(), "Regex('" + regex + "')")
             );
 
             if (matcher.lookingAt()) {

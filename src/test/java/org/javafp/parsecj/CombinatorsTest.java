@@ -122,15 +122,15 @@ public class CombinatorsTest {
     @Test
     public void testMany() throws Exception {
         final Parser<Character, IList<Character>> p = digit.many();
-        assertParserSucceedsWithValue(p, "a", IList.empty());
-        assertParserSucceedsWithValue(p, "0123", IList.list('0', '1', '2', '3'));
+        assertParserSucceedsWithValue(p, "a", IList.of());
+        assertParserSucceedsWithValue(p, "0123", IList.of('0', '1', '2', '3'));
     }
 
     @Test
     public void testMany1() throws Exception {
         final Parser<Character, IList<Character>> p = digit.many1();
         assertParserFails(p, "a");
-        assertParserSucceedsWithValue(p, "0123", IList.list('0', '1', '2', '3'));
+        assertParserSucceedsWithValue(p, "0123", IList.of('0', '1', '2', '3'));
     }
 
     @Test
@@ -153,7 +153,7 @@ public class CombinatorsTest {
     public void testSepBy() throws Exception {
         final Parser<Character, IList<Character>> p = digit.sepBy(chr(','));
         assertParserSucceeds(p, "a");
-        assertParserSucceedsWithValue(p, "0,1,2,3", IList.list('0', '1', '2', '3'));
+        assertParserSucceedsWithValue(p, "0,1,2,3", IList.of('0', '1', '2', '3'));
     }
 
     @Test
@@ -161,16 +161,16 @@ public class CombinatorsTest {
         final Parser<Character, IList<Character>> p = digit.sepBy1(chr(','));
         assertParserFails(p, "a");
         assertParserFails(p, ",1");
-        assertParserSucceedsWithValue(p, "0,1,2,3", IList.list('0', '1', '2', '3'));
+        assertParserSucceedsWithValue(p, "0,1,2,3", IList.of('0', '1', '2', '3'));
     }
 
     @Test
     public void testSepEndBy() throws Exception {
         final Parser<Character, IList<Character>> p = digit.sepEndBy(chr(';'));
         assertParserSucceeds(p, "a");
-        assertParserSucceedsWithValue(p, ";", IList.empty());
-        assertParserSucceedsWithValue(p, "0;1;2;3", IList.list('0', '1', '2', '3'));
-        assertParserSucceedsWithValue(p, "0;1;2;3;", IList.list('0', '1', '2', '3'));
+        assertParserSucceedsWithValue(p, ";", IList.of());
+        assertParserSucceedsWithValue(p, "0;1;2;3", IList.of('0', '1', '2', '3'));
+        assertParserSucceedsWithValue(p, "0;1;2;3;", IList.of('0', '1', '2', '3'));
     }
 
     @Test
@@ -178,17 +178,17 @@ public class CombinatorsTest {
         final Parser<Character, IList<Character>> p = digit.sepEndBy1(chr(';'));
         assertParserFails(p, "a");
         assertParserFails(p, ";");
-        assertParserSucceedsWithValue(p, "0;1;2;3", IList.list('0', '1', '2', '3'));
-        assertParserSucceedsWithValue(p, "0;1;2;3;", IList.list('0', '1', '2', '3'));
+        assertParserSucceedsWithValue(p, "0;1;2;3", IList.of('0', '1', '2', '3'));
+        assertParserSucceedsWithValue(p, "0;1;2;3;", IList.of('0', '1', '2', '3'));
     }
 
     @Test
     public void testEndBy() throws Exception {
         final Parser<Character, IList<Character>> p = digit.endBy(chr(';'));
         assertParserSucceeds(p, "a");
-        assertParserSucceedsWithValue(p, ";", IList.empty());
+        assertParserSucceedsWithValue(p, ";", IList.of());
         assertParserFails(p, "0;1;2;3");
-        assertParserSucceedsWithValue(p, "0;1;2;3;", IList.list('0', '1', '2', '3'));
+        assertParserSucceedsWithValue(p, "0;1;2;3;", IList.of('0', '1', '2', '3'));
     }
 
     @Test
@@ -197,7 +197,7 @@ public class CombinatorsTest {
         assertParserFails(p, "a");
         assertParserFails(p, ";");
         assertParserFails(p, "0;1;2;3");
-        assertParserSucceedsWithValue(p, "0;1;2;3;", IList.list('0', '1', '2', '3'));
+        assertParserSucceedsWithValue(p, "0;1;2;3;", IList.of('0', '1', '2', '3'));
     }
 
     @Test
@@ -206,7 +206,7 @@ public class CombinatorsTest {
         assertParserFails(p, "");
         assertParserFails(p, "0");
         assertParserFails(p, "01");
-        assertParserSucceedsWithValue(p, "012", IList.list('0', '1', '2'));
+        assertParserSucceedsWithValue(p, "012", IList.of('0', '1', '2'));
     }
 
     @Test

@@ -76,7 +76,7 @@ public interface Parser<S, A> {
                 .getReply()
                 .match(
                     // Strip off the message if the parse was successful.
-                    ok -> Reply.ok(ok.result, ok.rest, Message.message()),
+                    ok -> Reply.ok(ok.result, ok.rest, Message.of()),
                     error -> error
                 );
     }

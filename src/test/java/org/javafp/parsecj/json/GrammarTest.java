@@ -9,8 +9,9 @@ public class GrammarTest {
         final Reply<Character, Node> reply = Grammar.parse(
             "{\"array\":[1,2,3],\"boolean\":true,\"null\":null,\"number\":123,\"object\":{\"a\":\"b\",\"c\":\"d\",\"e\":\"f\"},\"string\":\"Hello\nWorld\"}"
         );
-        Node node = reply.getResult();
-        Assert.assertTrue(reply.getResult() != null);
+        final Node node = reply.getResult();
+        final String s = node.toString();
+        Assert.assertTrue(!s.isEmpty());
     }
 
     @Test
@@ -18,8 +19,9 @@ public class GrammarTest {
         final Reply<Character, Node> reply = Grammar.parse(
             " { \"array\" : [ 1 , 2 , 3 ] , \"boolean\" : true , \"null\" : null , \"number\" : 123 , \"object\" : { \"a\" : \"b\" , \"c\" : \"d\" , \"e\" : \"f\" } , \"string\" : \"Hello World\" } "
         );
-        Node node = reply.getResult();
-        Assert.assertTrue(reply.getResult() != null);
+        final Node node = reply.getResult();
+        final String s = node.toString();
+        Assert.assertTrue(!s.isEmpty());
     }
 
     @Test
@@ -39,10 +41,11 @@ public class GrammarTest {
                 "    \"c\": false,\n" +
                 "    \"e\": [6,7,8]\n" +
                 "  },\n" +
-                "  \"string\": \"Hello World\"\n" +
+                "  \"string\": \"Hello World\u1234\"\n" +
                 "}"
         );
-        Node node = reply.getResult();
-        Assert.assertTrue(reply.getResult() != null);
+        final Node node = reply.getResult();
+        final String s = node.toString();
+        Assert.assertTrue(!s.isEmpty());
     }
 }
