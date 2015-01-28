@@ -7,11 +7,11 @@ ParsecJ
 It is a port of the Haskell [Parsec library](https://hackage.haskell.org/package/parsec).
 The implementation is, where possible, a direct Java port of the Haskell code outlined in the original [Parsec paper](http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf).
 
-The parser features include:
+Some notable features of the parser include:
 * Composable parser combinators, which provide a DSL for implementing parsers from grammars.
 * Informative error messages in the event of parse failures.
 * Thread-safe due to immutable parsers and input states.
-* A combinator approach that mirrors that of Parsec, its Haskell counterpart, allowing grammars written for Parsec to be translated into equivalent grammars for ParsecJ.
+* A combinator approach that mirrors that of Parsec, its Haskell counterpart, allowing grammars written for Parsec to be translated into equivalent ParsecJ grammars.
 
 ## Parser Combinators
 
@@ -60,12 +60,13 @@ This can be translated into the following ParsecJ parser:
 ```java
 Parser<Character, Integer> sum =
     intr.bind(x ->                  // parse an integer and bind the result to the variable x.
-        satisfy('+').then(          // parse a '+' sign, and throw away the result.
+        chr('+').then(              // parse a '+' sign, and throw away the result.
             intr.bind(y ->          // parse an integer and bind the result to the variable y.
                 retn(x+y))));       // return the sum of a and y.
 ```
 
-The parser is constructed by taking the `intr` parser for integers, the `satisfy` parser for single symbols,
+The parser is constructed by taking the `intr` parser for integers,
+the `satisfy` parser for single symbols,
 and combining them using the `bind`, `then` and `retn` combinators.
 
 The parser can be used as follows:
@@ -93,9 +94,9 @@ The typical approach to using the library to implement a parser for a language i
 
 1. Define a model for language, i.e. a set of classes that represent the language elements.
 2. Define a grammar for the language - a set of production rules.
-3. Translate the production rules into parsers using the library combinators.
+3. Translate the production rules into parsers using the library combinators. The parsers will typically construct values from the model.
 4. Book-end the parser for the top-level element with the `eof` combinator.
-5. Invoke the parser by passing it a `State` object, usually constructed from a `String`.
+5. Invoke the parser by passing a `State` object, usually constructed from a `String`, to the `parse` method.
 6. The resultant `Reply` result holds either the successfully parsed value or an error message.
 
 ## Types
@@ -190,16 +191,16 @@ using the combinators provided by the library.
 
 The `org.javafp.parsecj.Combinators` package provides the following core combinator parsers:
 
-Name | Description | Returns
+Name | Parser Description | Returns
 -----|-------------|--------
-`retn(value)` | A parser that always succeeds | The supplied value.
-`bind(p, f)` | A parser that first applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser that is then applied. | Result of `q` .
-`fail()` | A parser that always fails. | An error.
+`retn(value)` | Always succeeds | The supplied value.
+`bind(p, f)` | First applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser that is then applied. | Result of `q` .
+`fail()` | Always fails. | An error.
 `satisfy(test)` | Applies a test to the next input symbol. | The symbol.
-`satisfy(value)` | A parser that succeeds if the next input symbol equals `value`. | The symbol.
-`eof()` | A parser that succeeds if the end of the input is reached. | UNIT.
-`then(p, q)` | A parser that first applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
-`or(p, q)` | A parser that first applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
+`satisfy(value)` | Succeeds if the next input symbol equals `value`. | The symbol.
+`eof()` | Succeeds if the end of the input is reached. | UNIT.
+`then(p, q)` | First applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
+`or(p, q)` | First applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
 (see class def for full list)... |
 
 Combinators that take a `Parser` as a first parameter, such as `bind` and `or`,
@@ -211,15 +212,15 @@ E.g. `p.bind(f)` is equivalent to `bind(p, f)`.
 The `org.javafp.parsecj.Text` package provides in addition to the parsers in `Combinators`,
 the following parsers specialised for parsing text input:
 
-Name | Description | Returns
+Name | Parser Description | Returns
 -----|-------------|--------
-`alpha` | A parser that succeeds if the next character is alphabetic. | The character.
-`digit` | A parser that succeeds if the next character is a digit. | The character.
-`intr` | A parser that parses an integer. | The integer.
-`dble` | A parser that parses an double. | The double.
-`string(s)` | A parser that parses the supplied string. | The string.
-`alphaNum` | A parser that parses an alphanumeric string. | The string.
-`regex(regex)` | A parser that parses a string matching the supplied regex. | The string matching the regex.
+`alpha` | Succeeds if the next character is alphabetic. | The character.
+`digit` | Succeeds if the next character is a digit. | The character.
+`intr` | Parses an integer. | The integer.
+`dble` | Parses a double. | The double.
+`string(s)` | Parses the supplied string. | The string.
+`alphaNum` | Parses an alphanumeric string. | The string.
+`regex(regex)` | Parses a string matching the supplied regex. | The string matching the regex.
 
 Typically parsers are defined by composing the predefined combinators provided by the library.
 In rare cases a parser combinator may need to be implemented by operating directly on the input state.
