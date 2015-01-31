@@ -7,12 +7,31 @@
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>parsecj</name>
+    <name>${project.groupId}:${project.artifactId}</name>
     <description>ParsecJ is a Java port of the Haskell Parsec parser framework</description>
+    <url>https://github.com/jon-hanson/parsecj</url>
 
     <scm>
-        <connection>scm:git:git://github.com/jon-hanson/parsecj.git</connection>
+        <connection>scm:git:git@github.com:jon-hanson/parsecj.git</connection>
+        <developerConnection>scm:git:git@github.com:jon-hanson/parsecj.git</developerConnection>
+        <url>git@github.com:jon-hanson/parsecj.git</url>
     </scm>
+
+    <developers>
+        <developer>
+            <id>jonhanson</id>
+            <name>Jon Hanson</name>
+            <email>jon.h@nson.io</email>
+            <url>https://github.com/jon-hanson</url>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>The New BSD License</name>
+            <url>http://opensource.org/licenses/BSD-3-Clause</url>
+        </license>
+    </licenses>
 
     <properties>
         <jdk.version>1.8</jdk.version>
@@ -91,6 +110,23 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.10.1</version>
+            </plugin>
+            <plugin>
+                <groupId>com.github.github</groupId>
+                <artifactId>site-maven-plugin</artifactId>
+                <version>0.11</version>
+                <configuration>
+                    <message>Creating site for ${project.version}</message>
+                    <branch>gh-pages</branch>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>site</goal>
+                        </goals>
+                        <phase>site</phase>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
