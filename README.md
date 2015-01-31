@@ -12,6 +12,7 @@ Some notable features include:
 * Informative error messages in the event of parse failures.
 * Thread-safe due to immutable parsers and input states.
 * A combinator approach that mirrors that of Parsec, its Haskell counterpart, allowing grammars written for Parsec to be translated into equivalent ParsecJ grammars.
+* Zero-dependencies (aside from JUnit and JMH for the unit tests).
 
 ## Parser Combinators
 
