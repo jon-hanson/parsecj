@@ -4,12 +4,12 @@
 
     <groupId>com.parsecj</groupId>
     <artifactId>parsecj</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>parsecj</name>
     <description>ParsecJ is a Java port of the Haskell Parsec parser framework</description>
-    
+
     <scm>
         <connection>scm:git:git://github.com/jon-hanson/parsecj.git</connection>
     </scm>
