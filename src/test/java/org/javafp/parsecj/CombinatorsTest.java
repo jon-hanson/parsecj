@@ -1,6 +1,6 @@
 package org.javafp.parsecj;
 
-import org.javafp.data.IList;
+import org.javafp.data.*;
 import org.junit.*;
 
 import java.util.Optional;
@@ -106,7 +106,7 @@ public class CombinatorsTest {
 
     @Test
     public void testOptional() throws Exception {
-        final Parser<Character, Void> p = string("ab").optional();
+        final Parser<Character, Unit> p = string("ab").optional();
         assertParserSucceeds(p, "ab");
         assertParserSucceeds(p, "cd");
     }

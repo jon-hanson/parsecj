@@ -6,6 +6,8 @@ import java.util.stream.*;
 
 /**
  * Simple recursive, immutable linked list.
+ * This list type allows tails to be shared between lists.
+ * @param <T>   element type
  */
 public abstract class IList<T> implements Iterable<T> {
 

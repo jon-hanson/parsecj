@@ -4,8 +4,8 @@ import java.util.function.Function;
 
 /**
  * A Parser result, essentially a discriminated union between a Success and an Error.
- * @param <S> Input stream symbol type.
- * @param <A> Parse result type
+ * @param <S>       input stream symbol type
+ * @param <A>       the parser value type
  */
 public abstract class Reply<S, A> {
 
@@ -40,6 +40,8 @@ public abstract class Reply<S, A> {
 
     /**
      * A successful parse result.
+     * @param <S>       input stream symbol type
+     * @param <A>       the parser value type
      */
     public static final class Ok<S, A> extends Reply<S, A> {
 
@@ -112,8 +114,8 @@ public abstract class Reply<S, A> {
 
     /**
      * An unsuccessful parse result.
-     * @param <S> Input stream symbol type.
-     * @param <A> Parse result type
+     * @param <S>       input stream symbol type
+     * @param <A>       the parser value type
      */
     public static final class Error<S, A> extends Reply<S, A> {
 

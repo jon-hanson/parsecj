@@ -1,5 +1,7 @@
 package org.javafp.parsecj;
 
+import org.javafp.data.Unit;
+
 import java.util.regex.*;
 
 import static org.javafp.parsecj.Combinators.*;
@@ -58,7 +60,7 @@ public abstract class Text {
     /**
      * A parser which skips whitespace.
      */
-    public static final Parser<Character, Void> wspaces = skipMany(wspace);
+    public static final Parser<Character, Unit> wspaces = skipMany(wspace);
 
     /**
      * A parser which parses the specified char.

@@ -1,6 +1,6 @@
 package org.javafp.parsecj;
 
-import org.javafp.data.IList;
+import org.javafp.data.*;
 
 import java.util.Optional;
 import java.util.function.*;
@@ -9,19 +9,18 @@ import static org.javafp.parsecj.ConsumedT.*;
 import static org.javafp.parsecj.Merge.*;
 
 /**
- * A set of parser combinator functions.
- * The Parser type along with retn &amp; bind constitute a monad.
+ * A collection of parser combinator functions.
+ * The {@link Parser} type along with <code>retn</code> &amp; <code>bind</code> constitute a monad.
  */
 public abstract class Combinators {
 
-    public static final Void UNIT = null;
-
-    public static <S> S unit() {
-        return null;
-    }
-
     /**
-     * Construct an Error Reply indicating the end of the input has been reached.
+     * Construct an {@link Error} {@link Reply} indicating the end of the input has been reached.
+     * @param state     the current input state
+     * @param expected  the expected rule
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the Error object
      */
     public static <S, A> Reply<S, A> endOfInput(State<S> state, String expected) {
         return Reply.<S, A>error(
@@ -30,8 +29,11 @@ public abstract class Combinators {
     }
 
     /**
-     * Monadic return function.
-     * @return a parser which returns the supplied value.
+     * Monadic return function, i.e. a parser which returns the supplied value.
+     * @param x         the value for the parser to return
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> retn(A x) {
         return state ->
@@ -47,12 +49,15 @@ public abstract class Combinators {
     /**
      * Monadic bind function.
      * Bind chains two parsers by creating a parser which calls the first,
-     * and if that succeeds the resultant value is passed to the
+     * and if that parser succeeds the resultant value is passed to the
      * function argument to obtain a second parser, which is then invoked.
-     * @param p a parser which is called first
-     * @param f a function which is passed the result of the first parser if successful,
-     *          and which returns a second parser
-     * @return the combined parser
+     * @param p         a parser which is called first
+     * @param f         a function which is passed the result of the first parser if successful,
+     *                  and which returns a second parser
+     * @param <S>       the input symbol type
+     * @param <A>       the first parser value type
+     * @param <B>       the second parser value type
+     * @return          the parser
      */
     public static <S, A, B> Parser<S, B> bind(
             Parser<S, ? extends A> p,
@@ -61,13 +66,13 @@ public abstract class Combinators {
             final ConsumedT<S, ? extends A> cons1 = p.apply(state);
             if (cons1.isConsumed()) {
                 return consumed(() ->
-                        cons1.getReply().<Reply<S, B>>match(
-                            ok1 -> {
-                                final ConsumedT<S, B> cons2 = f.apply(ok1.result).apply(ok1.rest);
-                                return cons2.getReply();
-                            },
-                            error -> error.cast()
-                        )
+                    cons1.getReply().<Reply<S, B>>match(
+                        ok1 -> {
+                            final ConsumedT<S, B> cons2 = f.apply(ok1.result).apply(ok1.rest);
+                            return cons2.getReply();
+                        },
+                        error -> error.cast()
+                    )
                 );
             } else {
                 return cons1.getReply().<ConsumedT<S, B>>match(
@@ -90,7 +95,14 @@ public abstract class Combinators {
 
     /**
      * Apply the first parser, then apply the second parser and return the result.
-     * Optimisation for bind(p, x -&gt; q) - i.e. discard x, the result of the first parser, p.
+     * This is an optimisation for <code>bind(p, x -&gt; q)</code> - i.e. a parser which discards <code>x</code>,
+     * the result of the first parser <code>p</code>.
+     * @param p         the first parser
+     * @param q         the second parser
+     * @param <S>       the input symbol type
+     * @param <A>       the first parser value type
+     * @param <B>       the second parser value type
+     * @return          the parser
      */
     public static <S, A, B> Parser<S, B> then(Parser<S, ? extends A> p, Parser<S, B> q) {
         return state -> {
@@ -126,6 +138,9 @@ public abstract class Combinators {
 
     /**
      * A parser which always fails
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> fail() {
         return state ->
@@ -136,8 +151,12 @@ public abstract class Combinators {
             );
     }
 
+    private static final String eofName = "EOF";
+
     /**
      * A parser which succeeds if the end of the input is reached.
+     * @param <S>       the input symbol type
+     * @return          the parser
      */
     public static <S> Parser<S, Void> eof() {
         return state -> {
@@ -145,21 +164,27 @@ public abstract class Combinators {
                 return empty(
                     Reply.ok(
                         state,
-                        Message.lazy(() -> Message.of(state.position(), unit(), "EOF"))
+                        Message.lazy(() -> Message.of(state.position(), eofName))
                     )
                 );
             } else {
                 return empty(
                     Reply.<S, Void>error(
-                        Message.lazy(() -> Message.of(state.position(), unit(), "EOF"))
+                        Message.lazy(() -> Message.of(state.position(), eofName))
                     )
                 );
             }
         };
     }
 
+    private static final String testName = "<test>";
+
     /**
-     * A parser which succeeds if the next symbol passes the predicate.
+     * A parser which succeeds if the next symbol passes the predicate <code>test</code>.
+     * The parser returns the symbol.
+     * @param test      predicate to be applied to the next symbol
+     * @param <S>       the input symbol type
+     * @return          the parser
      */
     public static <S> Parser<S, S> satisfy(Predicate<S> test) {
         return state -> {
@@ -176,78 +201,48 @@ public abstract class Combinators {
                 } else {
                     return empty(
                         Reply.error(
-                            Message.lazy(() -> Message.of(state.position(), state.current(), "<test>"))
+                            Message.lazy(() -> Message.of(state.position(), state.current(), testName))
                         )
                     );
                 }
             } else {
-                return empty(endOfInput(state, "<test>"));
+                return empty(endOfInput(state, testName));
             }
         };
     }
 
     /**
      * A parser which succeeds if the next input symbol equals the supplied value.
+     * The parser returns the symbol.
+     * @param value     the value to be compared against
+     * @param <S>       the input symbol type
+     * @return          the parser
      */
     public static <S> Parser<S, S> satisfy(S value) {
-        return state -> {
-            if (!state.end()) {
-                if (state.current().equals(value)) {
-                    final State<S> newState = state.next();
-                    return consumed(() ->
-                        Reply.ok(
-                            state.current(),
-                            newState,
-                            Message.lazy(() -> Message.of(state.position()))
-                        )
-                    );
-                } else {
-                    return empty(
-                        Reply.error(
-                            Message.lazy(() -> Message.of(state.position(), state.current(), value.toString()))
-                        )
-                    );
-                }
-            } else {
-                return empty(endOfInput(state, value.toString()));
-            }
-        };
+        return label(satisfy(v -> value.equals(v)), value.toString());
     }
 
     /**
      * A parser which succeeds if the next input symbol equals the supplied value.
-     * The parser replies with the second argument, result.
-     * Equivalent to satisfy(value).then(retn(result))
+     * @param value     the value to be compared against
+     * @param result    the value the parser returns if it succeeds
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> satisfy(S value, A result) {
-        return state -> {
-            if (!state.end()) {
-                if (state.current().equals(value)) {
-                    final State<S> newState = state.next();
-                    return consumed(() ->
-                        Reply.ok(
-                            result,
-                            newState,
-                            Message.lazy(() -> Message.of(state.position()))
-                        )
-                    );
-                } else {
-                    return empty(
-                        Reply.error(
-                            Message.lazy(() ->
-                                    Message.of(state.position(), state.current(), value.toString())
-                            )
-                        )
-                    );
-                }
-            } else {
-                return empty(endOfInput(state, value.toString()));
-            }
-        };
+        return satisfy(value).then(retn(result));
     }
 
     /**
-     * A parser which succeeds if either the first or second of the parser args succeeds.
+     * A parser first tries parser <code>p</code>.
+     * If it succeeds or consumes input then its result is returned.
+     * Otherwise return the result of applying parser <code>q</code>.
+     * @param p         first parser to try with
+     * @param q         second parser to try with
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> or(Parser<S, A> p, Parser<S, A> q) {
         return state -> {
@@ -282,6 +277,11 @@ public abstract class Combinators {
 
     /**
      * Label a parser with a readable name for more meaningful error messages.
+     * @param p         the parser to be labelled
+     * @param name      the label (this will appear in the list of expected rules in the event of a failure)
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> label(Parser<S, A> p, String name) {
         return state -> {
@@ -301,6 +301,10 @@ public abstract class Combinators {
      * A combinator which turns a parser which consumes input
      * into one which doesn't consume input if it fails.
      * This allows the implementation of LL(∞) grammars.
+     * @param p         the parser
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> attempt(Parser<S, A> p) {
         return state -> {
@@ -317,9 +321,13 @@ public abstract class Combinators {
     }
 
     /**
-     * choice tries to apply the parsers in the list ps in order,
+     * choice tries to apply the parsers in the list <code>ps</code> in order,
      * until one of them succeeds. Returns the value of the succeeding
      * parser
+     * @param ps        the list of parsers
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> choice(IList<Parser<S, A>> ps) {
         if (ps.tail().isEmpty()) {
@@ -330,16 +338,25 @@ public abstract class Combinators {
     }
 
     /**
-     * choice tries to apply the parsers in the list ps in order,
+     * choice tries to apply the parsers in the list <code>ps</code> in order,
      * until one of them succeeds. It returns the value of the succeeding
      * parser
+     * @param ps        the list of parsers
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> choice(Parser<S, A>... ps) {
         return choice(IList.of(ps));
     }
 
     /**
-     * A parser which attempts parser p first and if it fails then return x.
+     * A parser which attempts parser <code>p</code> first and if it fails then return <code>x</code>.
+     * @param p         the parser
+     * @param x         value to be returned if <code>p</code> fails
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> option(Parser<S, A> p, A x) {
         return or(p, retn(x));
@@ -347,6 +364,12 @@ public abstract class Combinators {
 
     /**
      * A parser for optional values.
+     * Applies parser <code>p</code> and if it succeeds returns the result in in {@link Optional},
+     * otherwise return <code>Optional.empty()</code>.
+     * @param p         the parser
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, Optional<A>> optionalOpt(Parser<S, A> p) {
         return option(
@@ -357,14 +380,25 @@ public abstract class Combinators {
 
     /**
      * A parser for optional values, which throws the result away.
+     * @param p         the parser
+     * @param <S>       the input symbol type
+     * @return          the parser
      */
-    public static <S, A> Parser<S, Void> optional(Parser<S, A> p) {
-        return or(bind(p, x -> retn(UNIT)), retn(UNIT));
+    public static <S, A> Parser<S, Unit> optional(Parser<S, A> p) {
+        return or(bind(p, x -> retn(Unit.unit)), retn(Unit.unit));
     }
 
     /**
-     * A parser which parses an OPEN symbol, then applies parser p, then parses a CLOSE symbol,
-     * and returns the result of p.
+     * A parser which parses an opening symbol, then applies parser <code>p</code>, then parses a closing symbol,
+     * and returns the result of <code>p</code>.
+     * @param open      parser for the open symbol
+     * @param close     parser for the closing symbol
+     * @param p         the parser for the content
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @param <OPEN>    the open parser value type
+     * @param <CLOSE>   the close parser value type
+     * @return          the parser
      */
     public static <S, A, OPEN, CLOSE> Parser<S, A> between(
             Parser<S, OPEN> open,
@@ -375,6 +409,10 @@ public abstract class Combinators {
 
     /**
      * A parser for a list of zero or more values of the same type.
+     * @param p         the parser
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, IList<A>> many(Parser<S, A> p) {
         return manyAcc(p, IList.of());
@@ -382,6 +420,10 @@ public abstract class Combinators {
 
     /**
      * A parser for a list of one or more values of the same type.
+     * @param p         the parser
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, IList<A>> many1(Parser<S, A> p) {
         return bind(p, x -> manyAcc(p, IList.of(x)));
@@ -392,22 +434,34 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser which applies the parser p zero or more times, throwing away the result.
+     * A parser which applies the parser <code>p</code> zero or more times, throwing away the result.
+     * @param p         the parser
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
-    public static <S, A> Parser<S, Void> skipMany(Parser<S, A> p) {
-        return or(bind(p, x -> skipMany(p)), retn(UNIT));
+    public static <S, A> Parser<S, Unit> skipMany(Parser<S, A> p) {
+        return or(bind(p, x -> skipMany(p)), retn(Unit.unit));
     }
 
     /**
-     * A parser which applies the parser p one or more times, throwing away the result.
+     * A parser which applies the parser <code>p</code> one or more times, throwing away the result.
+     * @param p         the parser
+     * @param <S>       the input symbol type
+     * @return          the parser
      */
-    public static <S, A> Parser<S, Void> skipMany1(Parser<S, A> p) {
+    public static <S, A> Parser<S, Unit> skipMany1(Parser<S, A> p) {
         return then(p, skipMany(p));
     }
 
     /**
-     * A parser which parses zero or more occurrences of p, separated by sep,
-     * and returns a list of values returned by p.
+     * A parser which parses zero or more occurrences of <code>p</code>, separated by <code>sep</code>,
+     * and returns a list of values returned by <code>p</code>.
+     * @param p         parser
+     * @param sep       parser for the separator
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A, SEP> Parser<S, IList<A>> sepBy(
             Parser<S, A> p,
@@ -416,8 +470,13 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser which parses one or more occurrences of p, separated by sep,
-     * and returns a list of values returned by p.
+     * A parser which parses one or more occurrences of <code>p</code>, separated by <code>sep</code>,
+     * and returns a list of the values returned by <code>p</code>.
+     * @param p         parser
+     * @param sep       parser for the separator
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A, SEP> Parser<S, IList<A>> sepBy1(
             Parser<S, A> p,
@@ -432,9 +491,14 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser which parses zero or more occurrences of p, separated by sep,
+     * A parser which parses zero or more occurrences of <code>p</code>, separated by <code>sep</code>,
      * and optionally ended by sep,
-     * and returns a list of values returned by p.
+     * and returns a list of the values returned by <code>p</code>.
+     * @param p         parser
+     * @param sep       parser for the separator
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A, SEP> Parser<S, IList<A>> sepEndBy(
             Parser<S, A> p,
@@ -443,9 +507,14 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser which parses one or more occurrences of p, separated by sep,
+     * A parser which parses one or more occurrences of <code>p</code>, separated by <code>sep</code>,
      * and optionally ended by sep,
-     * and returns a list of values returned by p.
+     * and returns a list of the values returned by <code>p</code>.
+     * @param p         parser
+     * @param sep       parser for the separator
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A, SEP> Parser<S, IList<A>> sepEndBy1(
             Parser<S, A> p,
@@ -466,9 +535,14 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser which parses zero or more occurrences of p, separated and ended by sep,
+     * A parser which parses zero or more occurrences of <code>p</code>, separated and ended by <code>sep</code>,
      * and ended by sep,
-     * and returns a list of values returned by p.
+     * and returns a list of the values returned by <code>p</code>.
+     * @param p         parser
+     * @param sep       parser for the separator
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A, SEP> Parser<S, IList<A>> endBy(
             Parser<S, A> p,
@@ -477,9 +551,14 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser which parses one or more occurrences of p, separated by sep,
+     * A parser which parses one or more occurrences of <code>p</code>, separated by <code>sep</code>,
      * and ended by sep,
      * and returns a list of values returned by p.
+     * @param p         parser
+     * @param sep       parser for the separator
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A, SEP> Parser<S, IList<A>> endBy1(
             Parser<S, A> p,
@@ -488,7 +567,12 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser which applies parser p n times.
+     * A parser which applies parser <code>p</code> <code>n</code> times.
+     * @param p         parser
+     * @param n         number of times to apply <code>p</code>
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, IList<A>> count(
             Parser<S, A> p,
@@ -508,8 +592,15 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser for an operand followed by zero or more operands (p) separated by right-associative operators (op).
-     * If there are zero operands then x is returned.
+     * A parser for an operand followed by zero or more operands (<code>p</code>)
+     * separated by right-associative operators (<code>op</code>).
+     * If there are zero operands then <code>x</code> is returned.
+     * @param p         parser
+     * @param op        parser for the operand
+     * @param x         value to return if there are no operands
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> chainr(
             Parser<S, A> p,
@@ -519,8 +610,15 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser for an operand followed by zero or more operands (p) separated by left-associative operators (op).
-     * If there are zero operands then x is returned.
+     * A parser for an operand followed by zero or more operands (<code>p</code>)
+     * separated by left-associative operators (<code>op</code>).
+     * If there are zero operands then <code>x</code> is returned.
+     * @param p         parser
+     * @param op        parser for the operand
+     * @param x         value to return if there are no operands
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> chainl(
             Parser<S, A> p,
@@ -530,7 +628,13 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser for an operand followed by one or more operands (p) separated by right-associative operators (op).
+     * A parser for an operand followed by one or more operands (<code>p</code>)
+     * separated by right-associative operators (<code>op</code>).
+     * @param p         parser
+     * @param op        parser for the operand
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> chainr1(
             Parser<S, A> p,
@@ -561,8 +665,14 @@ public abstract class Combinators {
     }
 
     /**
-     * A parser for an operand followed by one or more operands (p) separated by operators (op).
+     * A parser for an operand followed by one or more operands (<code>p</code>)
+     * separated by operators (<code>op</code>).
      * This parser can for example be used to eliminate left recursion which typically occurs in expression grammars.
+     * @param p         parser
+     * @param op        parser for the operand
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
      */
     public static <S, A> Parser<S, A> chainl1(
             Parser<S, A> p,
