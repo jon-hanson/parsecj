@@ -3,7 +3,7 @@ package org.javafp.parsecj.json;
 import org.javafp.data.*;
 import org.javafp.parsecj.*;
 
-import java.util.LinkedHashMap;
+import java.util.*;
 
 import static org.javafp.parsecj.Combinators.*;
 import static org.javafp.parsecj.Text.*;
@@ -80,17 +80,17 @@ public class Grammar {
         ).bind(l -> retn(Node.array(IList.toList(l))))
             .label("array");
 
-    private static LinkedHashMap<String, Node> toMap(IList<Tuple2<String, Node>> fields) {
+    private static LinkedHashMap<String, Node> toMap(IList<Map.Entry<String, Node>> fields) {
         final LinkedHashMap<String, Node> map = new LinkedHashMap<String, Node>();
-        fields.forEach(field -> map.put(field.first, field.second));
+        fields.forEach(field -> map.put(field.getKey(), field.getValue()));
         return map;
     }
 
-    private static final Parser<Character, Tuple2<String, Node>> jfield =
+    private static final Parser<Character, Map.Entry<String, Node>> jfield =
         jstring.bind(
             name -> tok(chr(':'))
                 .then(jvalue)
-                .bind(value -> retn(Tuple2.of(name, value)))
+                .bind(value -> retn(new AbstractMap.SimpleEntry<>(name, value)))
         );
 
     private static final Parser<Character, Node> jobject =
