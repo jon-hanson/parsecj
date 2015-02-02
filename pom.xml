@@ -14,7 +14,7 @@
     <scm>
         <connection>scm:git:git@github.com:jon-hanson/parsecj.git</connection>
         <developerConnection>scm:git:git@github.com:jon-hanson/parsecj.git</developerConnection>
-        <url>git@github.com:jon-hanson/parsecj.git</url>
+        <url>http://github.com:jon-hanson/parsecj/tree/master</url>
     </scm>
 
     <issueManagement>
