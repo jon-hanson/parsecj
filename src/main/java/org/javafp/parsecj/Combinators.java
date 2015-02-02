@@ -16,15 +16,15 @@ public abstract class Combinators {
 
     /**
      * Construct an {@link Error} {@link Reply} indicating the end of the input has been reached.
-     * @param state     the current input state
+     * @param input     the current input state
      * @param expected  the expected rule
      * @param <S>       the input symbol type
      * @param <A>       the parser value type
      * @return          the Error object
      */
-    public static <S, A> Reply<S, A> endOfInput(State<S> state, String expected) {
+    public static <S, A> Reply<S, A> endOfInput(State<S> input, String expected) {
         return Reply.<S, A>error(
-            Message.lazy(() -> Message.endOfInput(state.position(), expected))
+            Message.lazy(() -> Message.endOfInput(input.position(), expected))
         );
     }
 
@@ -36,12 +36,12 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S, A> Parser<S, A> retn(A x) {
-        return state ->
+        return input ->
             empty(
                 Reply.ok(
                     x,
-                    state,
-                    Message.lazy(() -> Message.of(state.position()))
+                    input,
+                    Message.lazy(() -> Message.of(input.position()))
                 )
             );
     }
@@ -62,8 +62,8 @@ public abstract class Combinators {
     public static <S, A, B> Parser<S, B> bind(
             Parser<S, ? extends A> p,
             Function<A, Parser<S, B>> f) {
-        return state -> {
-            final ConsumedT<S, ? extends A> cons1 = p.apply(state);
+        return input -> {
+            final ConsumedT<S, ? extends A> cons1 = p.apply(input);
             if (cons1.isConsumed()) {
                 return consumed(() ->
                     cons1.getReply().<Reply<S, B>>match(
@@ -105,8 +105,8 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S, A, B> Parser<S, B> then(Parser<S, ? extends A> p, Parser<S, B> q) {
-        return state -> {
-            final ConsumedT<S, ? extends A> cons1 = p.apply(state);
+        return input -> {
+            final ConsumedT<S, ? extends A> cons1 = p.apply(input);
             if (cons1.isConsumed()) {
                 return consumed(() ->
                         cons1.getReply().<Reply<S, B>>match(
@@ -143,10 +143,10 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S, A> Parser<S, A> fail() {
-        return state ->
+        return input ->
             empty(
                 Reply.error(
-                    Message.lazy(() -> Message.of(state.position()))
+                    Message.lazy(() -> Message.of(input.position()))
                 )
             );
     }
@@ -159,18 +159,18 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S> Parser<S, Void> eof() {
-        return state -> {
-            if (state.end()) {
+        return input -> {
+            if (input.end()) {
                 return empty(
                     Reply.ok(
-                        state,
-                        Message.lazy(() -> Message.of(state.position(), eofName))
+                        input,
+                        Message.lazy(() -> Message.of(input.position(), eofName))
                     )
                 );
             } else {
                 return empty(
                     Reply.<S, Void>error(
-                        Message.lazy(() -> Message.of(state.position(), eofName))
+                        Message.lazy(() -> Message.of(input.position(), eofName))
                     )
                 );
             }
@@ -187,26 +187,26 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S> Parser<S, S> satisfy(Predicate<S> test) {
-        return state -> {
-            if (!state.end()) {
-                final S s = state.current();
+        return input -> {
+            if (!input.end()) {
+                final S s = input.current();
                 if (test.test(s)) {
-                    final State<S> newState = state.next();
+                    final State<S> newState = input.next();
                     return consumed(() -> Reply.ok(
                             s,
                             newState,
-                            Message.lazy(() -> Message.of(state.position()))
+                            Message.lazy(() -> Message.of(input.position()))
                         )
                     );
                 } else {
                     return empty(
                         Reply.error(
-                            Message.lazy(() -> Message.of(state.position(), state.current(), testName))
+                            Message.lazy(() -> Message.of(input.position(), input.current(), testName))
                         )
                     );
                 }
             } else {
-                return empty(endOfInput(state, testName));
+                return empty(endOfInput(input, testName));
             }
         };
     }
@@ -245,14 +245,14 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S, A> Parser<S, A> or(Parser<S, A> p, Parser<S, A> q) {
-        return state -> {
-            final ConsumedT<S, A> cons1 = p.apply(state);
+        return input -> {
+            final ConsumedT<S, A> cons1 = p.apply(input);
             if (cons1.isConsumed()) {
                 return cons1;
             } else {
                 return cons1.getReply().match(
                     ok1 -> {
-                        final ConsumedT<S, A> cons2 = q.apply(state);
+                        final ConsumedT<S, A> cons2 = q.apply(input);
                         if (cons2.isConsumed()) {
                             return cons2;
                         } else {
@@ -260,7 +260,7 @@ public abstract class Combinators {
                         }
                     },
                     error1 -> {
-                        final ConsumedT<S, A> cons2 = q.apply(state);
+                        final ConsumedT<S, A> cons2 = q.apply(input);
                         if (cons2.isConsumed()) {
                             return cons2;
                         } else {
@@ -284,8 +284,8 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S, A> Parser<S, A> label(Parser<S, A> p, String name) {
-        return state -> {
-            final ConsumedT<S, A> cons = p.apply(state);
+        return input -> {
+            final ConsumedT<S, A> cons = p.apply(input);
             if (cons.isConsumed()) {
                 return cons;
             } else {
@@ -307,8 +307,8 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S, A> Parser<S, A> attempt(Parser<S, A> p) {
-        return state -> {
-            final ConsumedT<S, A> cons = p.apply(state);
+        return input -> {
+            final ConsumedT<S, A> cons = p.apply(input);
             if (cons.isConsumed()) {
                 return cons.getReply().match(
                     ok -> cons,

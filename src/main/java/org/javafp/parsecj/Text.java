@@ -2,9 +2,11 @@ package org.javafp.parsecj;
 
 import org.javafp.data.Unit;
 
+import java.util.function.*;
 import java.util.regex.*;
 
 import static org.javafp.parsecj.Combinators.*;
+import static org.javafp.parsecj.ConsumedT.empty;
 
 /**
  * Parser combinators to be used with Character streams.
@@ -62,20 +64,42 @@ public abstract class Text {
     }
 
     /**
-     * A parser which parses a signed integer.
+     * A parser which parses a signed {@link Integer}.
      */
     public static final Parser<Character, Integer> intr =
-        regex("-?\\d+")
-            .label("integer")
-            .bind(s -> retn(Integer.valueOf(s)));
+        bind(
+            regex("-?\\d+"),
+            s -> safeRetn(Integer::valueOf, s, "integer")
+        );
 
     /**
-     * A parser which parses a signed double.
+     * A parser which parses a signed {@link Double}.
      */
     public static final Parser<Character, Double> dble =
-        regex("-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?")
-            .label("double")
-            .bind(s -> retn(Double.valueOf(s)));
+        bind(
+            regex("-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?"),
+            s -> safeRetn(Double::valueOf, s, "double")
+        );
+
+    // Variant of retn which translates exceptions into ConsumedT errors.
+    private static <A> Parser<Character, A> safeRetn(Function<String, A> f, String s, String expected) {
+        return input -> {
+            try {
+                final A val = f.apply(s);
+                return empty(
+                    Reply.ok(
+                        val,
+                        input,
+                        Message.lazy(() -> Message.of(input.position()))
+                    )
+                );
+            } catch (Exception ex) {
+                return ConsumedT.empty(
+                    Reply.error(Message.lazy(() -> Message.of(input.position(), input.current(), expected)))
+                );
+            }
+        };
+    }
 
     /**
      * A parser which only accepts the specified string.
