@@ -90,8 +90,8 @@ public abstract class IList<T> implements Iterable<T> {
 
     public abstract <U> IList<U> map(Function<T, U> f);
 
-    public abstract T foldr(BinaryOperator<T> f, T z);
-    public abstract T foldl(BinaryOperator<T> f, T z);
+    public abstract <U> U foldr(BiFunction<T, U, U> f, U z);
+    public abstract <U> U foldl(BiFunction<U, T, U> f, U z);
 
     public abstract T foldr1(BinaryOperator<T> f);
     public abstract T foldl1(BinaryOperator<T> f);
@@ -170,12 +170,12 @@ public abstract class IList<T> implements Iterable<T> {
         }
 
         @Override
-        public T foldr(BinaryOperator<T> f, T z) {
+        public <U> U foldr(BiFunction<T, U, U> f, U z) {
             return z;
         }
 
         @Override
-        public T foldl(BinaryOperator<T> f, T z) {
+        public <U> U foldl(BiFunction<U, T, U> f, U z) {
             return z;
         }
 
@@ -311,12 +311,12 @@ public abstract class IList<T> implements Iterable<T> {
         }
 
         @Override
-        public T foldr(BinaryOperator<T> f, T z) {
+        public <U> U foldr(BiFunction<T, U, U> f, U z) {
             return f.apply(head, tail.foldr(f, z));
         }
 
         @Override
-        public T foldl(BinaryOperator<T> f, T z) {
+        public <U> U foldl(BiFunction<U, T, U> f, U z) {
             return tail.foldl(f, f.apply(z, head));
         }
 

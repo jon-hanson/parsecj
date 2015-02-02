@@ -14,23 +14,13 @@ public abstract class Text {
     /**
      * Helper method to create a ConsumedT response.
      */
-    public static <S, A> ConsumedT<S, A> createConsError(boolean consumed, State<S> state, String expected) {
-        return consumed ?
-            ConsumedT.consumed(() ->
-                Reply.error(
-                    Message.lazy(() -> Message.of(state.position(), state.current(), expected))
-                )
-            ) : ConsumedT.empty(
-                Reply.error(
-                    Message.lazy(() -> Message.of(state.position(), state.current(), expected))
-            )
-        );
+    private static <S, A> ConsumedT<S, A> consError(boolean consumed, State<S> state, String expected) {
+        final Message<S> msg = Message.lazy(() -> Message.of(state.position(), state.current(), expected));
+        return ConsumedT.of(consumed, () -> Reply.error(msg));
     }
 
-    private static <S, A> ConsumedT<S, A> endOfInputError(boolean consumed, State<S> state, String expected) {
-        return consumed ?
-            ConsumedT.consumed(() -> endOfInput(state, expected)) :
-            ConsumedT.empty(endOfInput(state, expected));
+    private static <S, A> ConsumedT<S, A> eofError(boolean consumed, State<S> state, String expected) {
+        return ConsumedT.of(consumed, () -> endOfInput(state, expected));
     }
 
     /**
@@ -63,7 +53,9 @@ public abstract class Text {
     public static final Parser<Character, Unit> wspaces = skipMany(wspace);
 
     /**
-     * A parser which parses the specified char.
+     * A parser which accepts only the specified char.
+     * @param c     the character
+     * @return      the parser
      */
     public static Parser<Character, Character> chr(char c) {
         return satisfy(c);
@@ -73,59 +65,9 @@ public abstract class Text {
      * A parser which parses a signed integer.
      */
     public static final Parser<Character, Integer> intr =
-        state -> {
-            if (state.end()) {
-                return ConsumedT.empty(endOfInput(state, "integer"));
-            }
-
-            boolean consumed = false;
-
-            boolean signPos = true;
-            char c = state.current();
-            switch (c) {
-                case '-':
-                    signPos = false;
-                    state = state.next();
-                    consumed = true;
-                    break;
-                case '+':
-                    state = state.next();
-                    consumed = true;
-                    break;
-            }
-
-            if (state.end()) {
-                return endOfInputError(consumed, state, "integer");
-            }
-
-            int acc = 0;
-            c = state.current();
-            if (!Character.isDigit(c)) {
-                return createConsError(consumed, state, "integer");
-            }
-
-            consumed = true;
-
-            do {
-                acc = acc * 10 + (c - '0');
-                state = state.next();
-                if (state.end()) {
-                    break;
-                }
-                c = state.current();
-
-            } while (Character.isDigit(c));
-
-            final int res = signPos ? acc : -acc;
-            final State<Character> tail = state;
-            return ConsumedT.consumed(
-                () -> Reply.ok(
-                    res,
-                    tail,
-                    Message.lazy(() -> Message.of(tail.position()))
-                )
-            );
-        };
+        regex("-?\\d+")
+            .label("integer")
+            .bind(s -> retn(Integer.valueOf(s)));
 
     /**
      * A parser which parses a signed double.
@@ -133,10 +75,12 @@ public abstract class Text {
     public static final Parser<Character, Double> dble =
         regex("-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?")
             .label("double")
-            .bind(dblStr -> retn(Double.valueOf(dblStr)));
+            .bind(s -> retn(Double.valueOf(s)));
 
     /**
-     * A parser which parses the specified string.
+     * A parser which only accepts the specified string.
+     * @param value the string
+     * @return      the parser
      */
     public static Parser<Character, String> string(String value) {
         return state -> {
@@ -161,12 +105,12 @@ public abstract class Text {
                         )
                     );
                 } else if (state.end()) {
-                    return endOfInputError(consumed, state, value);
+                    return eofError(consumed, state, value);
                 }
                 c = state.current();
             }
 
-            return createConsError(consumed, state, "\"" + value + '"');
+            return consError(consumed, state, "\"" + value + '"');
         };
     }
 
@@ -211,7 +155,9 @@ public abstract class Text {
         };
 
     /**
-     * A parser which parses a string which matches the supplied regex.
+     * A parser which accepts a string which matches the supplied regex.
+     * @param regex the regular expression
+     * @return      the parser
      */
     public static Parser<Character, String> regex(String regex) {
         final Pattern pattern = Pattern.compile(regex);

@@ -103,6 +103,13 @@ public class TextTest {
         assertParserFails(p, "+0+");
         assertParserFails(p, "1 0");
         assertParserFails(p, "0 1");
+        assertParserFails(p, "1e");
+        assertParserFails(p, "e1");
+        assertParserFails(p, "1.0");
+        assertParserFails(p, "0.1");
+        assertParserFails(p, "1234.5678");
+        assertParserFails(p, "1234e10");
+        assertParserFails(p, "e1");
 
         assertParserSucceedsWithValue(p, "0", 0);
         assertParserSucceedsWithValue(p, "1", 1);
@@ -126,6 +133,8 @@ public class TextTest {
         assertParserFails(p, "+0+");
         assertParserFails(p, "1 0");
         assertParserFails(p, "0 1");
+        assertParserFails(p, "1e");
+        assertParserFails(p, "e1");
 
         assertParserSucceedsWithValue(p, "0", 0.0);
         assertParserSucceedsWithValue(p, "0.", 0.0);

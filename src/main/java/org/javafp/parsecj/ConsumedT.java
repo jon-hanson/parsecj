@@ -19,6 +19,12 @@ public interface ConsumedT<S, A> {
         return new Empty<S, A>(reply);
     }
 
+    public static <S, A> ConsumedT<S, A> of(boolean consumed, Supplier<Reply<S, A>> supplier) {
+        return consumed ?
+            ConsumedT.consumed(supplier) :
+            ConsumedT.empty(supplier.get());
+    }
+
     public boolean isConsumed();
 
     public Reply<S, A> getReply();
