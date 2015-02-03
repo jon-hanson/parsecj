@@ -1,10 +1,32 @@
 ParsecJ
 ============
 
-**Contents**
 - [Introduction](#Introduction)
   - [Parser Combinators](#parser-combinators)
-
+- [Getting Started](#getting-sStarted)
+  - [Maven](#maven)
+  - [Javadocs](#javadocs)
+  - [Example](#example)
+  - [General Approach](#general-approach)
+  - [Types](#types)
+    - [Parser](#parser)
+    - [State](#state)
+    - [Reply](#reply)
+- [Defining Parsers](#defining-parsers)
+  - [Combinators](#combinators)
+  - [Text](#text)
+- [Expression Language Example](#expression-language-example)
+- [Translating Haskell into Java](#translating-haskell-into-java)
+  - [Section 3](#section-3)
+  - [Section 3.1 - Basic Combinators](#section-3.1---basic-combinators)
+    - [The satisfy Combinator](#the-satisfy-combinator)
+    - [The bind Combinator](#the-bind-combinator)
+- [Parser Monad](#parser-monad)
+  - [Proving the Laws](#proving-the-laws)
+    - [Left Identity](#left-identity)
+    - [Right Identity](#right-identity)
+    - [Associativity](#associativity)
+- [Related Work](#related-work)
 # Introduction
 
 **ParsecJ** is a Java monadic parser combinator framework for constructing [LL(1) parsers](http://en.wikipedia.org/wiki/LL_parser).
@@ -59,6 +81,10 @@ Add this dependency to your project pom.xml:
     <version>0.1</version>
 </dependency>
 ```
+
+## Javadocs
+
+[Latest Javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest/)
 
 ## Example
 
