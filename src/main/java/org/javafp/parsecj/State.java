@@ -9,15 +9,15 @@ import java.util.*;
  * @param <S> Input stream symbol type.
  */
 public interface State<S> {
-    static <S> State<S> state(S[] symbols) {
+    static <S> State<S> of(S[] symbols) {
         return new ArrayState<S>(symbols);
     }
 
-    static State<Character> state(Character[] symbols) {
+    static State<Character> of(Character[] symbols) {
         return new CharArrayState(symbols);
     }
 
-    static State<Character> state(String symbols) {
+    static State<Character> of(String symbols) {
         return new StringState(symbols);
     }
 

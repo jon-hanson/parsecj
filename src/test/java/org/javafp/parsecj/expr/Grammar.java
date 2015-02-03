@@ -48,7 +48,7 @@ public class Grammar {
     private static final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
 
     private static void evaluate(String s) throws Exception {
-        System.out.println(s + " = " + parser.parse(State.state(s)).getResult());
+        System.out.println(s + " = " + parser.parse(State.of(s)).getResult());
     }
 
     @Test

@@ -119,6 +119,6 @@ public abstract class Grammar {
     public static final Parser<Character, Expr> parser = parser();
 
     public static Reply<Character, Expr> parse(String s) {
-        return parser.parse(State.state(s));
+        return parser.parse(State.of(s));
     }
 }

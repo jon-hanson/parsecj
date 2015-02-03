@@ -12,7 +12,7 @@ public class TestUtils {
             String input) {
         Assert.assertTrue(
             "Parse of \"" + input + "\"",
-            p.parse(State.state(input)).isOk()
+            p.parse(State.of(input)).isOk()
         );
     }
 
@@ -22,7 +22,7 @@ public class TestUtils {
             Predicate<A> test) throws Exception {
         Assert.assertTrue(
             "Parse of \"" + input + "\"",
-            test.test(p.parse(State.state(input)).getResult())
+            test.test(p.parse(State.of(input)).getResult())
         );
     }
 
@@ -33,7 +33,7 @@ public class TestUtils {
         Assert.assertEquals(
             "Parse of \"" + input + "\"",
             expected,
-            p.parse(State.state(input)).getResult()
+            p.parse(State.of(input)).getResult()
         );
     }
 
@@ -50,7 +50,7 @@ public class TestUtils {
         Assert.assertEquals(
             "Parse of \"" + input + "\"",
             expected,
-            p.parse(State.state(input)).getResult(),
+            p.parse(State.of(input)).getResult(),
             THRESHOLD
         );
     }
@@ -60,7 +60,7 @@ public class TestUtils {
             String input) {
         Assert.assertTrue(
             "Parse of \"" + input + "\"",
-            p.parse(State.state(input)).isError()
+            p.parse(State.of(input)).isError()
         );
     }
 }
