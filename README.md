@@ -102,7 +102,7 @@ import static org.javafp.parsecj.Combinators.*;
 import static org.javafp.parsecj.Text.*;
 
 class Test {
-   public static void main(String[] args) {
+   public static void main(String[] args) throws Exception {
         Parser<Character, Integer> sum =
             intr.bind(x ->                  // parse an integer and bind the result to the variable x.
                 chr('+').then(              // parse a '+' sign, and throw away the result.
@@ -180,19 +180,19 @@ the `parse` method is also provided to apply the parser and extract the `Reply` 
 ### State<S>
 
 The `State<S>` interface is an abstraction representing an immutable input state.
-It provides several static `state` methods for constructing `State` instances from sequences of symbols:
+It provides several static `of` methods for constructing `State` instances from sequences of symbols:
 
 ```java
 public interface State<S> {
-    static <S> State<S> state(S[] symbols) {
+    static <S> State<S> of(S[] symbols) {
         return new ArrayState<S>(symbols);
     }
 
-    static State<Character> state(Character[] symbols) {
+    static State<Character> of(Character[] symbols) {
         return new CharArrayState(symbols);
     }
 
-    static State<Character> state(String symbols) {
+    static State<Character> of(String symbols) {
         return new StringState(symbols);
     }
 
@@ -364,7 +364,7 @@ final Parser<Character, Void> eof = eof();
 final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
 
 final String s = "((1.2*3.4)+5.6)";
-System.out.println(s + " = " + parser.parse(State.state(s)).getResult());
+System.out.println(s + " = " + parser.parse(State.of(s)).getResult());
 ```
 
 The correspondence between the production rules of the simple expression language and the above set of parsers should be apparent.
@@ -584,7 +584,7 @@ public static <A> Parser<A> retn(A x) {
 The `satisfy` combinator applies a predicate `test` to the next symbol on the input:
 
 ```haskell
-satisfy :: (Char → Bool) → Parser Char
+satisfy :: (Char → Bool) -> Parser Char
 satisfy test
   = \input -> case (input) of
       [] -> Empty Error
@@ -617,7 +617,7 @@ public static Parser<Character> satisfy(Predicate<Character> test) {
 The bind combinator in Haskell is implemented as the `>>=` operator:
 
 ```haskell
-(>>=) :: Parser a → (a → Parser b) → Parser b
+(>>=) :: Parser a -> (a -> Parser b) -> Parser b
 p >>= f
   = \input -> case (p input) of
       Empty reply1
