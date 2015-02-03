@@ -12,6 +12,7 @@ Some notable features include:
 * Informative error messages in the event of parse failures.
 * Thread-safe due to immutable parsers and input states.
 * A combinator approach that mirrors that of Parsec, its Haskell counterpart, allowing grammars written for Parsec to be translated into equivalent ParsecJ grammars.
+* Lightweight and zero dependencies (aside from JUnit and JMH for the tests).
 
 ## Parser Combinators
 
@@ -30,16 +31,30 @@ The advantage here is that the rules are expressed in the host programming langu
 obviating the need for a separate grammar language and the consequent code-generation phase.
 A limitation of this approach
 is that the extra plumbing required to implement error-handling and backtracking
-obscures the correspondence between the parsing functions and the language rules.
+obscures the relationship between the parsing functions and the language rules
 
 [Monadic parser combinators](http://www.cs.nott.ac.uk/~gmh/bib.html#pearl)
 are an extension of recursive descent parsing,
 which use a monad to encapsulate the plumbing.
 The framework provides the basic building blocks -
 parsers for constituent language elements such as characters, words and numbers.
-It also provides combinators that construct more complex parsers by composing existing parsers.
+It also provides combinators that allow more complex parsers to be constructed by composing existing parsers.
 The framework effectively provides a Domain Specific Language for expressing language grammars,
 whereby each grammar instance implements an executable parser.
+
+# Getting Started
+
+## Maven
+
+Add this dependency to your project pom.xml:
+
+```xml
+<dependency>
+    <groupId>org.javafp</groupId>
+    <artifactId>parsecj</artifactId>
+    <version>0.1</version>
+</dependency>
+```
 
 ## Example
 
@@ -49,7 +64,7 @@ consider the following example.
 We wish to parse and evaluate simple addition expressions,
 of the form form *x+y*, where *x* and *y* are integers.
 
-The grammar consists of a single production rule:
+The grammar for the expression language consists of a single production rule:
 
 ```
 sum ::= integer '+' integer
@@ -58,28 +73,36 @@ sum ::= integer '+' integer
 This can be translated into the following ParsecJ parser:
 
 ```java
-Parser<Character, Integer> sum =
-    intr.bind(x ->                  // parse an integer and bind the result to the variable x.
-        chr('+').then(              // parse a '+' sign, and throw away the result.
-            intr.bind(y ->          // parse an integer and bind the result to the variable y.
-                retn(x+y))));       // return the sum of a and y.
+import org.javafp.parsecj.*;
+import static org.javafp.parsecj.Combinators.*;
+import static org.javafp.parsecj.Text.*;
+
+class Test {
+   public static void main(String[] args) {
+        Parser<Character, Integer> sum =
+            intr.bind(x ->                  // parse an integer and bind the result to the variable x.
+                chr('+').then(              // parse a '+' sign, and throw away the result.
+                    intr.bind(y ->          // parse an integer and bind the result to the variable y.
+                        retn(x+y))));       // return the sum of a and y.
+    }
+}
 ```
 
 The parser is constructed by taking the `intr` parser for integers,
-the `satisfy` parser for single symbols,
+the `chr` parser for single characters,
 and combining them using the `bind`, `then` and `retn` combinators.
 
 The parser can be used as follows:
 
 ```java
-int i = sum.parse(State.of("1+2")).getResult();
-assert i == 3;
+        int i = sum.parse(State.of("1+2")).getResult();
+        assert i == 3;
 ```
 
 Meanwhile, if we give it invalid input:
 
 ```java
-int i = sum.parse(State.of("1+z")).getResult();
+        int i2 = sum.parse(State.of("1+z")).getResult();
 ```
 
 then it throws an exception with an error message that pinpoints the problem:
@@ -88,9 +111,9 @@ then it throws an exception with an error message that pinpoints the problem:
 Exception in thread "main" java.lang.Exception: Message{position=2, sym=<z>, expected=[integer]}
 ```
 
-# Usage
+## General Approach
 
-The typical approach to using the library to implement a parser for a language is as follows:
+A typical approach to using the library to implement a parser for a language is as follows:
 
 1. Define a model for language, i.e. a set of classes that represent the language elements.
 2. Define a grammar for the language - a set of production rules.
@@ -224,12 +247,11 @@ Name | Parser Description | Returns
 `eof()` | Succeeds if the end of the input is reached. | UNIT.
 `then(p, q)` | First applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
 `or(p, q)` | First applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
-(see class def for full list)... |
+(see the [Combinators javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html) for full list)... |
 
 Combinators that take a `Parser` as a first parameter, such as `bind` and `or`,
 also exist as methods on the `Parser` interface, to allow parsers to be constructed in a fluent style.
 E.g. `p.bind(f)` is equivalent to `bind(p, f)`.
-
 
 ### Text
 
