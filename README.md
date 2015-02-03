@@ -1,6 +1,10 @@
 ParsecJ
 ============
 
+**Contents**
+- [Introduction](#Introduction)
+  - [Parser Combinators](#parser-combinators)
+
 # Introduction
 
 **ParsecJ** is a Java monadic parser combinator framework for constructing [LL(1) parsers](http://en.wikipedia.org/wiki/LL_parser).
@@ -12,7 +16,7 @@ Some notable features include:
 * Informative error messages in the event of parse failures.
 * Thread-safe due to immutable parsers and input states.
 * A combinator approach that mirrors that of Parsec, its Haskell counterpart, allowing grammars written for Parsec to be translated into equivalent ParsecJ grammars.
-* Lightweight and zero dependencies (aside from JUnit and JMH for the tests).
+* Lightweight library with zero dependencies (aside from JUnit and JMH for the tests).
 
 ## Parser Combinators
 
@@ -228,12 +232,12 @@ Parser<Character, MyResult> p = ...
 MyResult res = parser.parse(input).getResult();
 ```
 
-## Defining Parsers
+# Defining Parsers
 
 A parser for a language is defined by translating the production rules comprising the language grammar into parsers,
 using the combinators provided by the library.
 
-### Combinators
+## Combinators
 
 The `org.javafp.parsecj.Combinators` package provides the following core combinator parsers:
 
@@ -253,7 +257,7 @@ Combinators that take a `Parser` as a first parameter, such as `bind` and `or`,
 also exist as methods on the `Parser` interface, to allow parsers to be constructed in a fluent style.
 E.g. `p.bind(f)` is equivalent to `bind(p, f)`.
 
-### Text
+## Text
 
 The `org.javafp.parsecj.Text` package provides in addition to the parsers in `Combinators`,
 the following parsers specialised for parsing text input:
@@ -272,7 +276,7 @@ Typically parsers are defined by composing the predefined combinators provided b
 In rare cases a parser combinator may need to be implemented by operating directly on the input state.
 The implementations of `bind`, `or` and `attempt` provide examples of the latter case.
 
-# Example
+# Expression Language Example
 
 The `test/org.javafp.parsecj.expr.Grammar` class provides a simple illustration of how this library can be used,
 by implementing a parser for simple mathematical expressions.
@@ -642,7 +646,7 @@ The key point is that they observe the three [monad laws](https://www.haskell.or
 
 where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
 
-or, using the standalone `bind` function instead of the fluent `Parser.bind` method:
+Or, using the standalone `bind` function instead of the fluent `Parser.bind` method:
 
 1. **Left Identity** : `bind(retn(a), f)` = `f.apply(a)`
 1. **Right Identity** : `bind(p, x -> retn(x))` = `p`
