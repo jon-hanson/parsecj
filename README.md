@@ -18,14 +18,15 @@ ParsecJ
 - [Expression Language Example](#expression-language-example)
 - [Translating Haskell into Java](#translating-haskell-into-java)
   - [Section 3](#section-3)
-  - [Section 3.1 - Basic Combinators](#section-3.1---basic-combinators)
+  - [Section 3.1 - Basic Combinators](#section-31---basic-combinators)
     - [The satisfy Combinator](#the-satisfy-combinator)
     - [The bind Combinator](#the-bind-combinator)
-- [Parser Monad](#parser-monad)
-  - [Proving the Laws](#proving-the-laws)
-    - [Left Identity](#left-identity)
-    - [Right Identity](#right-identity)
-    - [Associativity](#associativity)
+- [Notes on the Implementation](#notes-on-the-implementation)
+  - [Parser Monad](#parser-monad)
+    - [Proving the Laws](#proving-the-laws)
+      - [Left Identity](#left-identity)
+      - [Right Identity](#right-identity)
+      - [Associativity](#associativity)
 - [Related Work](#related-work)
 
 # Introduction
@@ -381,7 +382,9 @@ The correspondence between the production rules of the simple expression languag
 * The return type of each combinator function is `Parser<S, A>` and the compiler attempts to infer the types of `S` and `A` from the arguments. Certain combinators do not have parameters of both types - `retn` and `eof` for instance, which causes the type inference to fail resulting in a compilation error. If this happens the error can be avoid by either assigning the combinator to a variable or by explicitly specifying the generic types, e.g. `Combinators.<Character, BinaryOperator<Double>>retn`.
 * We add the `eof` parser, which succeeds if it encounters the end of the input, to bookend the `expr` parser. This ensures the parser does not inadvertently parse malformed inputs that begin with a valid expression, such as `(1+2)Z`.
 
-# Translating Haskell into Java
+# Notes on the Implementation
+
+## Translating Haskell into Java
 
 This section describes how the Haskell code from the [Parsec paper](http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf)
 paper has been translated into Java.
@@ -389,7 +392,7 @@ paper has been translated into Java.
 Note, the Java code described below does not exactly match the implementation code of ParsecJ -
 it has been simplified for expository purposes.
 
-## Section 3
+### Section 3
 
 Section 3 of the paper begins to describe the implementation of Parsec, starting with these three types:
 
@@ -563,11 +566,11 @@ Since `Parser` is a functional interface we can construct `Parser` instances usi
 Parser<Integer> p = s -> { ... };
 ```
 
-## Section 3.1 - Basic Combinators
+### Section 3.1 - Basic Combinators
 
 Section 3.1 of the paper outlines the implementation of the core combinators.
 
-### The return Combinator
+#### The return Combinator
 
 The `return` combinator:
 
@@ -584,7 +587,7 @@ public static <A> Parser<A> retn(A x) {
 }
 ```
 
-### The satisfy Combinator
+#### The satisfy Combinator
 
 The `satisfy` combinator applies a predicate `test` to the next symbol on the input:
 
@@ -617,7 +620,7 @@ public static Parser<Character> satisfy(Predicate<Character> test) {
 }
 ```
 
-### The bind Combinator
+#### The bind Combinator
 
 The bind combinator in Haskell is implemented as the `>>=` operator:
 
@@ -662,7 +665,7 @@ public static <A, B> Parser<B> bind(
 }
 ```
 
-# Parser Monad
+## Parser Monad
 
 The `retn` and `bind` combinators are slightly special as they are what make `Parser` a monad.
 The key point is that they observe the three [monad laws](https://www.haskell.org/haskellwiki/Monad_laws):
@@ -694,14 +697,14 @@ where *a+b+c* yields the same result regardless of whether we evaluate it as *(a
 Also of note is the `fail` parser, which is a monadic zero,
 since if combined with any other parser the result is always a parser that fails.
 
-## Proving the Laws
+### Proving the Laws
 
 Given the above definitions of `retn` and `bind` we can attempt to prove the monad laws.
 Note, that since the `retn` and `bind` combinators have been defined as pure functions,
 they are referentially transparent,
 meaning we can substitute the function body in place of calls to the function when reasoning about the combinators.
 
-### Left Identity
+#### Left Identity
 
 This law requires that `retn(a).bind(f)` = `f.apply(a)`.
 We prove this by reducing the LHS to the same form as the RhS through a series of steps.
@@ -776,7 +779,7 @@ f.apply(a);
 
 I.e. we have shown the LHS of the first law can be reduced to RHS, in other words we have proved to law to hold.
 
-### Right Identity
+#### Right Identity
 
 This law requires that `p.bind(x -> retn(x))` = `p`
 
@@ -893,7 +896,7 @@ p
 
 Again, we have reduced the LHS of the law to the same form as the RHS, proving the law holds.
 
-### Associativity
+#### Associativity
 
 Proving the associativity law is a little more involved than the other two laws, and is beyond the scope of this document.
 One approach would be to first note that the expression `p.parse(s)`,
