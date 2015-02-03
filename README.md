@@ -9,24 +9,16 @@ ParsecJ
   - [Example](#example)
   - [General Approach](#general-approach)
   - [Types](#types)
-    - [Parser](#parser)
-    - [State](#state)
-    - [Reply](#reply)
 - [Defining Parsers](#defining-parsers)
   - [Combinators](#combinators)
   - [Text](#text)
 - [Expression Language Example](#expression-language-example)
 - [Notes on the Implementation](#notes-on-the-implementation)
   - [Translating Haskell into Java](#translating-haskell-into-java)
-    - [Section 3](#section-3)
-    - [Section 3.1 - Basic Combinators](#section-31---basic-combinators)
-      - [The satisfy Combinator](#the-satisfy-combinator)
-      - [The bind Combinator](#the-bind-combinator)
+    - [Section 3](#restricting-lookahead)
+    - [Section 3.1 - Basic Combinators](#basic-combinators)
   - [Parser Monad](#parser-monad)
     - [Proving the Laws](#proving-the-laws)
-      - [Left Identity](#left-identity)
-      - [Right Identity](#right-identity)
-      - [Associativity](#associativity)
 - [Related Work](#related-work)
 
 # Introduction
@@ -392,7 +384,7 @@ paper has been translated into Java.
 Note, the Java code described below does not exactly match the implementation code of ParsecJ -
 it has been simplified for expository purposes.
 
-### Section 3
+### "Restricting lookahead"
 
 Section 3 of the paper begins to describe the implementation of Parsec, starting with these three types:
 
@@ -566,7 +558,7 @@ Since `Parser` is a functional interface we can construct `Parser` instances usi
 Parser<Integer> p = s -> { ... };
 ```
 
-### Section 3.1 - Basic Combinators
+### "Basic combinators"
 
 Section 3.1 of the paper outlines the implementation of the core combinators.
 
