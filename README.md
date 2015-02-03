@@ -1,7 +1,7 @@
 ParsecJ
 ============
 
-- [Introduction](#Introduction)
+- [Introduction](#introduction)
   - [Parser Combinators](#parser-combinators)
 - [Getting Started](#getting-sStarted)
   - [Maven](#maven)
