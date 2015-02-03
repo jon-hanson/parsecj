@@ -27,6 +27,7 @@ ParsecJ
     - [Right Identity](#right-identity)
     - [Associativity](#associativity)
 - [Related Work](#related-work)
+
 # Introduction
 
 **ParsecJ** is a Java monadic parser combinator framework for constructing [LL(1) parsers](http://en.wikipedia.org/wiki/LL_parser).
