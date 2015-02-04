@@ -12,7 +12,9 @@ ParsecJ
 - [Defining Parsers](#defining-parsers)
   - [Combinators](#combinators)
   - [Text](#text)
-- [Expression Language Example](#expression-language-example)
+- [Advanced Examples](#advanced-examples)
+  - [Expression Language Parser](#expression-language-parser)
+  - [JSON Parser](#json-parser)
 - [Notes on the Implementation](#notes-on-the-implementation)
   - [Translating Haskell into Java](#translating-haskell-into-java)
     - ["Restricting lookahead"](#restricting-lookahead)
@@ -294,7 +296,9 @@ Typically parsers are defined by composing the predefined combinators provided b
 In rare cases a parser combinator may need to be implemented by operating directly on the input state.
 The implementations of `bind`, `or` and `attempt` provide examples of the latter case.
 
-# Expression Language Example
+# Advanced Examples
+
+## Expression Language
 
 The `test/org.javafp.parsecj.expr.Grammar` class provides a simple illustration of how this library can be used,
 by implementing a parser for simple mathematical expressions.
@@ -366,6 +370,11 @@ System.out.println(s + " = " + parser.parse(State.of(s)).getResult());
 ```
 
 The correspondence between the production rules of the simple expression language and the above set of parsers should be apparent.
+
+## JSON Parser
+
+For a more "real world" example the test sub-directory contains a full implementation of JSON parser - see the [Grammar class](https://github.com/jon-hanson/parsecj/blob/master/src/test/java/org/javafp/parsecj/json/Grammar.java) for the parser.
+The entire grammar is encapsulated in a single class, which, including imports and blank lines, is only 124 lines of code.
 
 **Notes**
 * The expression language is recursive - `expr` refers to `binOpExpr`, which in turn refers to `expr`. Since Java doesn't allow us to define a mutually recursive set of variables, we have to break the circularity by making the `expr` parser a `Parser.Ref`, which gets declared at the beginning and initialised at the end. `Ref` implements the `Parser` interface, hence it can be used as a parser.
