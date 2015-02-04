@@ -300,7 +300,7 @@ The implementations of `bind`, `or` and `attempt` provide examples of the latter
 
 ## Expression Language parser
 
-The `test/org.javafp.parsecj.expr.Grammar` class provides a simple illustration of how this library can be used,
+The `test/org.javafp.parsecj.expr.Grammar` class provides a more detailed illustration of how this library can be used,
 by implementing a parser for simple mathematical expressions.
 
 The grammar for this language is as follows:
