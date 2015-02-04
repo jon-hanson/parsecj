@@ -298,7 +298,7 @@ The implementations of `bind`, `or` and `attempt` provide examples of the latter
 
 # Advanced Examples
 
-## Expression Language
+## Expression Language parser
 
 The `test/org.javafp.parsecj.expr.Grammar` class provides a simple illustration of how this library can be used,
 by implementing a parser for simple mathematical expressions.
@@ -371,15 +371,15 @@ System.out.println(s + " = " + parser.parse(State.of(s)).getResult());
 
 The correspondence between the production rules of the simple expression language and the above set of parsers should be apparent.
 
-## JSON Parser
-
-For a more "real world" example the test sub-directory contains a full implementation of JSON parser - see the [Grammar class](https://github.com/jon-hanson/parsecj/blob/master/src/test/java/org/javafp/parsecj/json/Grammar.java) for the parser.
-The entire grammar is encapsulated in a single class, which, including imports and blank lines, is only 124 lines of code.
-
 **Notes**
 * The expression language is recursive - `expr` refers to `binOpExpr`, which in turn refers to `expr`. Since Java doesn't allow us to define a mutually recursive set of variables, we have to break the circularity by making the `expr` parser a `Parser.Ref`, which gets declared at the beginning and initialised at the end. `Ref` implements the `Parser` interface, hence it can be used as a parser.
 * The return type of each combinator function is `Parser<S, A>` and the compiler attempts to infer the types of `S` and `A` from the arguments. Certain combinators do not have parameters of both types - `retn` and `eof` for instance, which causes the type inference to fail resulting in a compilation error. If this happens the error can be avoid by either assigning the combinator to a variable or by explicitly specifying the generic types, e.g. `Combinators.<Character, BinaryOperator<Double>>retn`.
 * We add the `eof` parser, which succeeds if it encounters the end of the input, to bookend the `expr` parser. This ensures the parser does not inadvertently parse malformed inputs that begin with a valid expression, such as `(1+2)Z`.
+
+## JSON Parser
+
+For a more "real world" example the test sub-directory contains a full implementation of JSON parser - see the [Grammar class](https://github.com/jon-hanson/parsecj/blob/master/src/test/java/org/javafp/parsecj/json/Grammar.java) for the parser.
+The entire grammar is encapsulated in a single class, which, including imports and blank lines, is only 124 lines of code.
 
 # Notes on the Implementation
 
