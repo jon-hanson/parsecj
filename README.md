@@ -256,7 +256,7 @@ using the combinators provided by the library.
 
 ## Combinators
 
-The [org.javafp.parsecj.Combinators]((http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html)) package provides the following core combinator parsers:
+The [org.javafp.parsecj.Combinators](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html)) package provides the following core combinator parsers:
 
 Name | Parser Description | Returns
 -----|-------------|--------
@@ -277,7 +277,7 @@ E.g. `p.bind(f)` is equivalent to `bind(p, f)`.
 
 ## Text
 
-The [org.javafp.parsecj.Text](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/text.html) package provides in addition to the parsers in `Combinators`,
+The [org.javafp.parsecj.Text](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Text.html) package provides in addition to the parsers in `Combinators`,
 the following parsers specialised for parsing text input:
 
 Name | Parser Description | Returns
