@@ -83,12 +83,9 @@ Add this dependency to your project pom.xml:
 ## Example
 
 As a quick illustration of how a simple parser looks when implemented using ParsecJ,
-consider the following example.
+consider a simple expression language for expressions of the form *x+y*, where *x* and *y* are integers.
 
-We wish to parse and evaluate simple addition expressions,
-of the form form *x+y*, where *x* and *y* are integers.
-
-The grammar for the expression language consists of a single production rule:
+The grammar for the language consists of a single production rule:
 
 ```
 sum ::= integer '+' integer
@@ -152,7 +149,7 @@ There are three principal types to be aware of.
 
 ### Parser<S, A>
 
-All parsers implement the `org.javafp.parsecj.Parser` (functional) interface,
+All parsers implement the [org.javafp.parsecj.Parser](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Parser.html) (functional) interface,
 which has an `apply` method:
 
 ```java
@@ -179,7 +176,7 @@ the `parse` method is also provided to apply the parser and extract the `Reply` 
 
 ### State<S>
 
-The `State<S>` interface is an abstraction representing an immutable input state.
+The [State<S>](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/State.html) interface is an abstraction representing an immutable input state.
 It provides several static `of` methods for constructing `State` instances from sequences of symbols:
 
 ```java
@@ -202,7 +199,7 @@ public interface State<S> {
 
 ### Reply<S, A>
 
-The `ConsumedT<S, A>` object returned by `Parser.apply` is an intermediate result wrapper,
+The [ConsumedT<S, A>](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/ConsumedT.html) object returned by `Parser.apply` is an intermediate result wrapper,
 typically only of interest to combinator implementations.
 The `ConsumedT.getReply` method returns the parser result wrapper,
 alternatively the `Parser.parse` method can be used to bypass `ConsumedT` entirely.
@@ -215,7 +212,7 @@ Reply<T> reply2 = p.parse(input);
 assert(reply.equals(reply2));
 ```
 
-A `Reply` can be either a successful parse result (represented by the `Ok` subtype)
+A [Reply](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Reply.html) can be either a successful parse result (represented by the `Ok` subtype)
 or an error (represented by the `Error` subtype).
 
 ```java
@@ -259,7 +256,7 @@ using the combinators provided by the library.
 
 ## Combinators
 
-The `org.javafp.parsecj.Combinators` package provides the following core combinator parsers:
+The [org.javafp.parsecj.Combinators]((http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html)) package provides the following core combinator parsers:
 
 Name | Parser Description | Returns
 -----|-------------|--------
@@ -271,7 +268,8 @@ Name | Parser Description | Returns
 `eof()` | Succeeds if the end of the input is reached. | UNIT.
 `then(p, q)` | First applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
 `or(p, q)` | First applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
-(see the [Combinators javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html) for full list)... |
+
+(see the [Combinators javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html) for full list)
 
 Combinators that take a `Parser` as a first parameter, such as `bind` and `or`,
 also exist as methods on the `Parser` interface, to allow parsers to be constructed in a fluent style.
@@ -279,7 +277,7 @@ E.g. `p.bind(f)` is equivalent to `bind(p, f)`.
 
 ## Text
 
-The `org.javafp.parsecj.Text` package provides in addition to the parsers in `Combinators`,
+The [org.javafp.parsecj.Text](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/text.html) package provides in addition to the parsers in `Combinators`,
 the following parsers specialised for parsing text input:
 
 Name | Parser Description | Returns
@@ -330,7 +328,7 @@ The above grammar then, can be translated into the following Java implementation
 // Forward declare expr to allow for circular references.
 final org.javafp.parsecj.Parser.Ref<Character, Double> expr = Parser.ref();
 
-// Inform the compiler of the type of retn.
+// Hint to the compiler for the type of retn.
 final Parser<Character, BinaryOperator<Double>> add = retn((l, r) -> l + r);
 final Parser<Character, BinaryOperator<Double>> subt = retn((l, r) -> l - r);
 final Parser<Character, BinaryOperator<Double>> times = retn((l, r) -> l * r);
@@ -584,7 +582,7 @@ public static <A> Parser<A> retn(A x) {
 The `satisfy` combinator applies a predicate `test` to the next symbol on the input:
 
 ```haskell
-satisfy :: (Char → Bool) -> Parser Char
+satisfy :: (Char -> Bool) -> Parser Char
 satisfy test
   = \input -> case (input) of
       [] -> Empty Error
