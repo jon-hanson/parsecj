@@ -1,6 +1,28 @@
 ParsecJ
 ============
 
+- [Introduction](#introduction)
+  - [Parser Combinators](#parser-combinators)
+- [Getting Started](#getting-started)
+  - [Maven](#maven)
+  - [Javadocs](#javadocs)
+  - [Example](#example)
+  - [General Approach](#general-approach)
+  - [Types](#types)
+- [Defining Parsers](#defining-parsers)
+  - [Combinators](#combinators)
+  - [Text](#text)
+- [Advanced Examples](#advanced-examples)
+  - [Expression Language Parser](#expression-language-parser)
+  - [JSON Parser](#json-parser)
+- [Notes on the Implementation](#notes-on-the-implementation)
+  - [Translating Haskell into Java](#translating-haskell-into-java)
+    - ["Restricting lookahead"](#restricting-lookahead)
+    - ["Basic combinators"](#basic-combinators)
+  - [Parser Monad](#parser-monad)
+    - [Proving the Laws](#proving-the-laws)
+- [Related Work](#related-work)
+
 # Introduction
 
 **ParsecJ** is a Java monadic parser combinator framework for constructing [LL(1) parsers](http://en.wikipedia.org/wiki/LL_parser).
@@ -12,6 +34,7 @@ Some notable features include:
 * Informative error messages in the event of parse failures.
 * Thread-safe due to immutable parsers and input states.
 * A combinator approach that mirrors that of Parsec, its Haskell counterpart, allowing grammars written for Parsec to be translated into equivalent ParsecJ grammars.
+* Lightweight library with zero dependencies (aside from JUnit and JMH for the tests).
 
 ## Parser Combinators
 
@@ -30,26 +53,41 @@ The advantage here is that the rules are expressed in the host programming langu
 obviating the need for a separate grammar language and the consequent code-generation phase.
 A limitation of this approach
 is that the extra plumbing required to implement error-handling and backtracking
-obscures the correspondence between the parsing functions and the language rules.
+obscures the relationship between the parsing functions and the language rules
 
 [Monadic parser combinators](http://www.cs.nott.ac.uk/~gmh/bib.html#pearl)
 are an extension of recursive descent parsing,
 which use a monad to encapsulate the plumbing.
 The framework provides the basic building blocks -
 parsers for constituent language elements such as characters, words and numbers.
-It also provides combinators that construct more complex parsers by composing existing parsers.
+It also provides combinators that allow more complex parsers to be constructed by composing existing parsers.
 The framework effectively provides a Domain Specific Language for expressing language grammars,
 whereby each grammar instance implements an executable parser.
+
+# Getting Started
+
+## Maven
+
+Add this dependency to your project pom.xml:
+
+```xml
+<dependency>
+    <groupId>org.javafp</groupId>
+    <artifactId>parsecj</artifactId>
+    <version>0.1</version>
+</dependency>
+```
+
+## Javadocs
+
+[Latest Javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest/)
 
 ## Example
 
 As a quick illustration of how a simple parser looks when implemented using ParsecJ,
-consider the following example.
+consider a simple expression language for expressions of the form *x+y*, where *x* and *y* are integers.
 
-We wish to parse and evaluate simple addition expressions,
-of the form form *x+y*, where *x* and *y* are integers.
-
-The grammar consists of a single production rule:
+The grammar for the language consists of a single production rule:
 
 ```
 sum ::= integer '+' integer
@@ -58,28 +96,36 @@ sum ::= integer '+' integer
 This can be translated into the following ParsecJ parser:
 
 ```java
-Parser<Character, Integer> sum =
-    intr.bind(x ->                  // parse an integer and bind the result to the variable x.
-        chr('+').then(              // parse a '+' sign, and throw away the result.
-            intr.bind(y ->          // parse an integer and bind the result to the variable y.
-                retn(x+y))));       // return the sum of a and y.
+import org.javafp.parsecj.*;
+import static org.javafp.parsecj.Combinators.*;
+import static org.javafp.parsecj.Text.*;
+
+class Test {
+   public static void main(String[] args) throws Exception {
+        Parser<Character, Integer> sum =
+            intr.bind(x ->                  // parse an integer and bind the result to the variable x.
+                chr('+').then(              // parse a '+' sign, and throw away the result.
+                    intr.bind(y ->          // parse an integer and bind the result to the variable y.
+                        retn(x+y))));       // return the sum of a and y.
+    }
+}
 ```
 
 The parser is constructed by taking the `intr` parser for integers,
-the `satisfy` parser for single symbols,
+the `chr` parser for single characters,
 and combining them using the `bind`, `then` and `retn` combinators.
 
 The parser can be used as follows:
 
 ```java
-int i = sum.parse(State.of("1+2")).getResult();
-assert i == 3;
+        int i = sum.parse(State.of("1+2")).getResult();
+        assert i == 3;
 ```
 
 Meanwhile, if we give it invalid input:
 
 ```java
-int i = sum.parse(State.of("1+z")).getResult();
+        int i2 = sum.parse(State.of("1+z")).getResult();
 ```
 
 then it throws an exception with an error message that pinpoints the problem:
@@ -88,9 +134,9 @@ then it throws an exception with an error message that pinpoints the problem:
 Exception in thread "main" java.lang.Exception: Message{position=2, sym=<z>, expected=[integer]}
 ```
 
-# Usage
+## General Approach
 
-The typical approach to using the library to implement a parser for a language is as follows:
+A typical approach to using the library to implement a parser for a language is as follows:
 
 1. Define a model for language, i.e. a set of classes that represent the language elements.
 2. Define a grammar for the language - a set of production rules.
@@ -105,7 +151,7 @@ There are three principal types to be aware of.
 
 ### Parser<S, A>
 
-All parsers implement the `org.javafp.parsecj.Parser` (functional) interface,
+All parsers implement the [org.javafp.parsecj.Parser](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Parser.html) (functional) interface,
 which has an `apply` method:
 
 ```java
@@ -132,20 +178,20 @@ the `parse` method is also provided to apply the parser and extract the `Reply` 
 
 ### State<S>
 
-The `State<S>` interface is an abstraction representing an immutable input state.
-It provides several static `state` methods for constructing `State` instances from sequences of symbols:
+The [State<S>](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/State.html) interface is an abstraction representing an immutable input state.
+It provides several static `of` methods for constructing `State` instances from sequences of symbols:
 
 ```java
 public interface State<S> {
-    static <S> State<S> state(S[] symbols) {
+    static <S> State<S> of(S[] symbols) {
         return new ArrayState<S>(symbols);
     }
 
-    static State<Character> state(Character[] symbols) {
+    static State<Character> of(Character[] symbols) {
         return new CharArrayState(symbols);
     }
 
-    static State<Character> state(String symbols) {
+    static State<Character> of(String symbols) {
         return new StringState(symbols);
     }
 
@@ -155,7 +201,7 @@ public interface State<S> {
 
 ### Reply<S, A>
 
-The `ConsumedT<S, A>` object returned by `Parser.apply` is an intermediate result wrapper,
+The [ConsumedT<S, A>](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/ConsumedT.html) object returned by `Parser.apply` is an intermediate result wrapper,
 typically only of interest to combinator implementations.
 The `ConsumedT.getReply` method returns the parser result wrapper,
 alternatively the `Parser.parse` method can be used to bypass `ConsumedT` entirely.
@@ -168,7 +214,7 @@ Reply<T> reply2 = p.parse(input);
 assert(reply.equals(reply2));
 ```
 
-A `Reply` can be either a successful parse result (represented by the `Ok` subtype)
+A [Reply](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Reply.html) can be either a successful parse result (represented by the `Ok` subtype)
 or an error (represented by the `Error` subtype).
 
 ```java
@@ -205,14 +251,14 @@ Parser<Character, MyResult> p = ...
 MyResult res = parser.parse(input).getResult();
 ```
 
-## Defining Parsers
+# Defining Parsers
 
 A parser for a language is defined by translating the production rules comprising the language grammar into parsers,
 using the combinators provided by the library.
 
-### Combinators
+## Combinators
 
-The `org.javafp.parsecj.Combinators` package provides the following core combinator parsers:
+The [org.javafp.parsecj.Combinators](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html)) package provides the following core combinator parsers:
 
 Name | Parser Description | Returns
 -----|-------------|--------
@@ -224,16 +270,16 @@ Name | Parser Description | Returns
 `eof()` | Succeeds if the end of the input is reached. | UNIT.
 `then(p, q)` | First applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
 `or(p, q)` | First applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
-(see class def for full list)... |
+
+(see the [Combinators javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html) for full list)
 
 Combinators that take a `Parser` as a first parameter, such as `bind` and `or`,
 also exist as methods on the `Parser` interface, to allow parsers to be constructed in a fluent style.
 E.g. `p.bind(f)` is equivalent to `bind(p, f)`.
 
+## Text
 
-### Text
-
-The `org.javafp.parsecj.Text` package provides in addition to the parsers in `Combinators`,
+The [org.javafp.parsecj.Text](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Text.html) package provides in addition to the parsers in `Combinators`,
 the following parsers specialised for parsing text input:
 
 Name | Parser Description | Returns
@@ -250,9 +296,11 @@ Typically parsers are defined by composing the predefined combinators provided b
 In rare cases a parser combinator may need to be implemented by operating directly on the input state.
 The implementations of `bind`, `or` and `attempt` provide examples of the latter case.
 
-# Example
+# Advanced Examples
 
-The `test/org.javafp.parsecj.expr.Grammar` class provides a simple illustration of how this library can be used,
+## Expression Language parser
+
+The `test/org.javafp.parsecj.expr.Grammar` class provides a more detailed illustration of how this library can be used,
 by implementing a parser for simple mathematical expressions.
 
 The grammar for this language is as follows:
@@ -284,7 +332,7 @@ The above grammar then, can be translated into the following Java implementation
 // Forward declare expr to allow for circular references.
 final org.javafp.parsecj.Parser.Ref<Character, Double> expr = Parser.ref();
 
-// Inform the compiler of the type of retn.
+// Hint to the compiler for the type of retn.
 final Parser<Character, BinaryOperator<Double>> add = retn((l, r) -> l + r);
 final Parser<Character, BinaryOperator<Double>> subt = retn((l, r) -> l - r);
 final Parser<Character, BinaryOperator<Double>> times = retn((l, r) -> l * r);
@@ -318,7 +366,7 @@ final Parser<Character, Void> eof = eof();
 final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
 
 final String s = "((1.2*3.4)+5.6)";
-System.out.println(s + " = " + parser.parse(State.state(s)).getResult());
+System.out.println(s + " = " + parser.parse(State.of(s)).getResult());
 ```
 
 The correspondence between the production rules of the simple expression language and the above set of parsers should be apparent.
@@ -328,7 +376,14 @@ The correspondence between the production rules of the simple expression languag
 * The return type of each combinator function is `Parser<S, A>` and the compiler attempts to infer the types of `S` and `A` from the arguments. Certain combinators do not have parameters of both types - `retn` and `eof` for instance, which causes the type inference to fail resulting in a compilation error. If this happens the error can be avoid by either assigning the combinator to a variable or by explicitly specifying the generic types, e.g. `Combinators.<Character, BinaryOperator<Double>>retn`.
 * We add the `eof` parser, which succeeds if it encounters the end of the input, to bookend the `expr` parser. This ensures the parser does not inadvertently parse malformed inputs that begin with a valid expression, such as `(1+2)Z`.
 
-# Translating Haskell into Java
+## JSON Parser
+
+For a more "real world" example the test sub-directory contains a full implementation of JSON parser - see the [Grammar class](https://github.com/jon-hanson/parsecj/blob/master/src/test/java/org/javafp/parsecj/json/Grammar.java) for the parser.
+The entire grammar is encapsulated in a single class, which, including imports and blank lines, is only 124 lines of code.
+
+# Notes on the Implementation
+
+## Translating Haskell into Java
 
 This section describes how the Haskell code from the [Parsec paper](http://research.microsoft.com/en-us/um/people/daan/download/papers/parsec-paper.pdf)
 paper has been translated into Java.
@@ -336,7 +391,7 @@ paper has been translated into Java.
 Note, the Java code described below does not exactly match the implementation code of ParsecJ -
 it has been simplified for expository purposes.
 
-## Section 3
+### "Restricting lookahead"
 
 Section 3 of the paper begins to describe the implementation of Parsec, starting with these three types:
 
@@ -510,11 +565,11 @@ Since `Parser` is a functional interface we can construct `Parser` instances usi
 Parser<Integer> p = s -> { ... };
 ```
 
-## Section 3.1 - Basic Combinators
+### "Basic combinators"
 
 Section 3.1 of the paper outlines the implementation of the core combinators.
 
-### The return Combinator
+#### The return Combinator
 
 The `return` combinator:
 
@@ -531,12 +586,12 @@ public static <A> Parser<A> retn(A x) {
 }
 ```
 
-### The satisfy Combinator
+#### The satisfy Combinator
 
 The `satisfy` combinator applies a predicate `test` to the next symbol on the input:
 
 ```haskell
-satisfy :: (Char → Bool) → Parser Char
+satisfy :: (Char -> Bool) -> Parser Char
 satisfy test
   = \input -> case (input) of
       [] -> Empty Error
@@ -564,12 +619,12 @@ public static Parser<Character> satisfy(Predicate<Character> test) {
 }
 ```
 
-### The bind Combinator
+#### The bind Combinator
 
 The bind combinator in Haskell is implemented as the `>>=` operator:
 
 ```haskell
-(>>=) :: Parser a → (a → Parser b) → Parser b
+(>>=) :: Parser a -> (a -> Parser b) -> Parser b
 p >>= f
   = \input -> case (p input) of
       Empty reply1
@@ -609,7 +664,7 @@ public static <A, B> Parser<B> bind(
 }
 ```
 
-# Parser Monad
+## Parser Monad
 
 The `retn` and `bind` combinators are slightly special as they are what make `Parser` a monad.
 The key point is that they observe the three [monad laws](https://www.haskell.org/haskellwiki/Monad_laws):
@@ -620,7 +675,7 @@ The key point is that they observe the three [monad laws](https://www.haskell.or
 
 where `p` and `q` are parsers, `a` is a parse result, and `f` a function from a parse result to a parser.
 
-or, using the standalone `bind` function instead of the fluent `Parser.bind` method:
+Or, using the standalone `bind` function instead of the fluent `Parser.bind` method:
 
 1. **Left Identity** : `bind(retn(a), f)` = `f.apply(a)`
 1. **Right Identity** : `bind(p, x -> retn(x))` = `p`
@@ -641,14 +696,14 @@ where *a+b+c* yields the same result regardless of whether we evaluate it as *(a
 Also of note is the `fail` parser, which is a monadic zero,
 since if combined with any other parser the result is always a parser that fails.
 
-## Proving the Laws
+### Proving the Laws
 
 Given the above definitions of `retn` and `bind` we can attempt to prove the monad laws.
 Note, that since the `retn` and `bind` combinators have been defined as pure functions,
 they are referentially transparent,
 meaning we can substitute the function body in place of calls to the function when reasoning about the combinators.
 
-### Left Identity
+#### Left Identity
 
 This law requires that `retn(a).bind(f)` = `f.apply(a)`.
 We prove this by reducing the LHS to the same form as the RhS through a series of steps.
@@ -723,7 +778,7 @@ f.apply(a);
 
 I.e. we have shown the LHS of the first law can be reduced to RHS, in other words we have proved to law to hold.
 
-### Right Identity
+#### Right Identity
 
 This law requires that `p.bind(x -> retn(x))` = `p`
 
@@ -840,7 +895,7 @@ p
 
 Again, we have reduced the LHS of the law to the same form as the RHS, proving the law holds.
 
-### Associativity
+#### Associativity
 
 Proving the associativity law is a little more involved than the other two laws, and is beyond the scope of this document.
 One approach would be to first note that the expression `p.parse(s)`,
