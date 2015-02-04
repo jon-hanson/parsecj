@@ -34,13 +34,13 @@ Some notable features include:
 * Informative error messages in the event of parse failures.
 * Thread-safe due to immutable parsers and input states.
 * A combinator approach that mirrors that of Parsec, its Haskell counterpart, allowing grammars written for Parsec to be translated into equivalent ParsecJ grammars.
-* Lightweight library with zero dependencies (aside from JUnit and JMH for the tests).
+* Lightweight library (the Jar file size is less than 50Kb) with zero dependencies (aside from JUnit and JMH for the tests).
 
 ## Parser Combinators
 
 A typical approach to implementing parsers for special-purpose languages
 is to use a parser generation tool,
-such as Yacc/Bison and ANTLR.
+such as Yacc/Bison or ANTLR.
 With these tools the language is expressed as a series of production rules,
 described using a grammar language specific to the tool.
 The parsing code for the language is then generated from the grammar definition.
