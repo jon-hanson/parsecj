@@ -84,7 +84,7 @@ Add this dependency to your project pom.xml:
 
 ## Example
 
-As a quick illustration of how a simple parser looks when implemented using ParsecJ,
+As a quick illustration of implementing a parser using ParsecJ,
 consider a simple expression language for expressions of the form *x+y*, where *x* and *y* are integers.
 
 The grammar for the language consists of a single production rule:
@@ -149,7 +149,7 @@ A typical approach to using the library to implement a parser for a language is 
 
 There are three principal types to be aware of.
 
-### Parser<S, A>
+### Parser
 
 All parsers implement the [org.javafp.parsecj.Parser](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Parser.html) (functional) interface,
 which has an `apply` method:
@@ -176,7 +176,7 @@ and combinators use this method to compose parsers.
 However, since the `ConsumedT` type returned by `apply` is an intermediate type,
 the `parse` method is also provided to apply the parser and extract the `Reply` parse result.
 
-### State<S>
+### State
 
 The [State<S>](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/State.html) interface is an abstraction representing an immutable input state.
 It provides several static `of` methods for constructing `State` instances from sequences of symbols:
@@ -199,9 +199,9 @@ public interface State<S> {
 }
 ```
 
-### Reply<S, A>
+### Reply
 
-The [ConsumedT<S, A>](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/ConsumedT.html) object returned by `Parser.apply` is an intermediate result wrapper,
+The [ConsumedT](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/ConsumedT.html) object returned by `Parser.apply` is an intermediate result wrapper,
 typically only of interest to combinator implementations.
 The `ConsumedT.getReply` method returns the parser result wrapper,
 alternatively the `Parser.parse` method can be used to bypass `ConsumedT` entirely.
@@ -277,6 +277,73 @@ Combinators that take a `Parser` as a first parameter, such as `bind` and `or`,
 also exist as methods on the `Parser` interface, to allow parsers to be constructed in a fluent style.
 E.g. `p.bind(f)` is equivalent to `bind(p, f)`.
 
+We'll cover a few of these in more detail.
+
+### The `retn` Combinator
+
+```Java
+<S, A> Parser<S, A> retn(A x)
+```
+
+The `retn` combinator creates a parser from a value.
+The parser simply returns the original value, without consuming any input.
+
+It is perhaps unclear why you would need such a simple parser - the motivation should become clear in the next two sections.
+
+### The `bind` Combinator
+
+```Java
+<S,A,B> Parser<S,B> bind(Parser<S,? extends A> p, Function<A, Parser<S, B>> f)
+```
+
+The bind combinator is the fundamental mechanism by which parsers are sequentially composed.
+It corresponds to production rules of the form:
+
+```
+r ::= p q
+
+```
+
+It first calls the first parser `p` on the input stream,
+and if it succeeds the result is passed to the function `f` to yield a second parser.
+This parser is then invoked on the input stream and the result is returned.
+Alternatively if `p` fails to parse then the result is returned immediately and `f` is never called.
+
+Using lamda expressions `f` can expressed quite succinctly as `x -> { ... }`,
+i.e. the bind expression typically looks something like `bind(p, x -> { ... })` (or `p.bind(x -> { ... })` using the fluent form).
+
+Note, the `then` combinator is just a variant of `bind` where the result of the first parser is thrown away.
+I.e. `then(p, q)` is equivalent to `bind(p, x -> q`).
+
+If we return to the `sum` example parser defined earlier:
+
+```java
+intr.bind(x ->                  // parse an integer and bind the result to the variable x.
+    chr('+').then(              // parse a '+' sign, and throw away the result.
+        intr.bind(y ->          // parse an integer and bind the result to the variable y.
+            retn(x+y))));       // return the sum of a and y.
+```
+
+then the meaning should be clear.
+
+### The `or` Combinator
+
+```java
+<S, A> Parser<S, A> or(Parser<S, A> p, Parser<S, A> q)
+```
+
+The `or` combinator provides a means to express a choice between one parser and another. it corresponds to production rules of the form:
+
+```
+r ::= p | q
+
+```
+
+The combinator will first invoke parser `p`.
+If it succeeds then the result is returned, otherwise the result of invoking parser `q` is returned.
+
+An example usage is `intr.or(retn(0))`, which means attempt to parse an integer, and if it fails then just return `0`.
+
 ## Text
 
 The [org.javafp.parsecj.Text](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Text.html) package provides in addition to the parsers in `Combinators`,
@@ -291,10 +358,6 @@ Name | Parser Description | Returns
 `string(s)` | Parses the supplied string. | The string.
 `alphaNum` | Parses an alphanumeric string. | The string.
 `regex(regex)` | Parses a string matching the supplied regex. | The string matching the regex.
-
-Typically parsers are defined by composing the predefined combinators provided by the library.
-In rare cases a parser combinator may need to be implemented by operating directly on the input state.
-The implementations of `bind`, `or` and `attempt` provide examples of the latter case.
 
 # Advanced Examples
 
