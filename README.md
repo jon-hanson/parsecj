@@ -349,7 +349,7 @@ Note that `chr` is just a version of `satisfy` specialised for the Character the
 <S, A> Parser<S, A> or(Parser<S, A> p, Parser<S, A> q)
 ```
 
-The `or` combinator provides a means to express a choice between one parser and another. it corresponds to production rules of the form:
+The `or` combinator provides the means to express a choice between one parser and another. It corresponds to production rules of the form:
 
 ```
 r ::= p | q
