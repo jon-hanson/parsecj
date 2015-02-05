@@ -258,7 +258,7 @@ using the combinators provided by the library.
 
 ## Combinators
 
-The [org.javafp.parsecj.Combinators](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html)) package provides the following core combinator parsers:
+The [org.javafp.parsecj.Combinators](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html) package provides the following core combinator parsers:
 
 Name | Parser Description | Returns
 -----|-------------|--------
