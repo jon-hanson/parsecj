@@ -149,7 +149,7 @@ A typical approach to using the library to implement a parser for a language is 
 
 There are three principal types to be aware of.
 
-### Parser
+### `Parser`
 
 All parsers implement the [org.javafp.parsecj.Parser](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Parser.html) (functional) interface,
 which has an `apply` method:
@@ -176,7 +176,7 @@ and combinators use this method to compose parsers.
 However, since the `ConsumedT` type returned by `apply` is an intermediate type,
 the `parse` method is also provided to apply the parser and extract the `Reply` parse result.
 
-### State
+### `State`
 
 The [State<S>](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/State.html) interface is an abstraction representing an immutable input state.
 It provides several static `of` methods for constructing `State` instances from sequences of symbols:
@@ -199,7 +199,7 @@ public interface State<S> {
 }
 ```
 
-### Reply
+### `Reply`
 
 The [ConsumedT](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/ConsumedT.html) object returned by `Parser.apply` is an intermediate result wrapper,
 typically only of interest to combinator implementations.
@@ -288,7 +288,23 @@ We'll cover a few of these in more detail.
 The `retn` combinator creates a parser from a value.
 The parser simply returns the original value, without consuming any input.
 
-It is perhaps unclear why you would need such a simple parser - the motivation should become clear in the next two sections.
+It is perhaps unclear why you would need such a simple parser - the motivation should become clear in the following sections.
+
+### The `satisfy` Combinator
+
+```java
+<S> Parser<S,S> satisfy(Predicate<S> test)
+<S> Parser<S,S> satisfy(S value)
+```
+
+This combinator accepts the next input symbol only if it saisfies the criteria.
+In the first variation the criteria is expressed by the `test` predicate,
+which gets applied to to the next symbol, and if is passes then the symbol is returned.
+The second variation is simply a shorthand for `satisfy(x -> x.equals(value))`,
+and it will successfully return the next input if it equals the supplied `value` argument.
+
+So, for example `satisfy(c -> Character.isDigit(c))` is a parser
+which will return the next character if it's a decimal digit.
 
 ### The `bind` Combinator
 
@@ -296,7 +312,7 @@ It is perhaps unclear why you would need such a simple parser - the motivation s
 <S,A,B> Parser<S,B> bind(Parser<S,? extends A> p, Function<A, Parser<S, B>> f)
 ```
 
-The bind combinator is the fundamental mechanism by which parsers are sequentially composed.
+The bind combinator is the mechanism by which parsers are sequentially composed.
 It corresponds to production rules of the form:
 
 ```
@@ -325,6 +341,7 @@ intr.bind(x ->                  // parse an integer and bind the result to the v
 ```
 
 then the meaning should be clear.
+Note that `chr` is just a version of `satisfy` specialised for the Character the type.
 
 ### The `or` Combinator
 
@@ -632,7 +649,7 @@ Parser<Integer> p = s -> { ... };
 
 Section 3.1 of the paper outlines the implementation of the core combinators.
 
-#### The return Combinator
+#### The `return` Combinator
 
 The `return` combinator:
 
@@ -649,7 +666,7 @@ public static <A> Parser<A> retn(A x) {
 }
 ```
 
-#### The satisfy Combinator
+#### The `satisfy` Combinator
 
 The `satisfy` combinator applies a predicate `test` to the next symbol on the input:
 
@@ -682,7 +699,7 @@ public static Parser<Character> satisfy(Predicate<Character> test) {
 }
 ```
 
-#### The bind Combinator
+#### The `bind` Combinator
 
 The bind combinator in Haskell is implemented as the `>>=` operator:
 
