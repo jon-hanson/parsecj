@@ -82,11 +82,7 @@ public abstract class IList<T> implements Iterable<T> {
 
     public abstract int length();
 
-    public IList<T> reverse() {
-        return reverse(of());
-    }
-
-    protected abstract IList<T> reverse(IList<T> acc);
+    public abstract IList<T> reverse();
 
     public abstract <U> IList<U> map(Function<T, U> f);
 
@@ -160,8 +156,8 @@ public abstract class IList<T> implements Iterable<T> {
         }
 
         @Override
-        protected IList<T> reverse(IList<T> acc) {
-            return acc;
+        public IList<T> reverse() {
+            return EMPTY;
         }
 
         @Override
@@ -301,8 +297,14 @@ public abstract class IList<T> implements Iterable<T> {
         }
 
         @Override
-        protected IList<T> reverse(IList<T> acc) {
-            return tail.reverse(acc.add(head));
+        public IList<T> reverse() {
+            IList<T> rev = IList.of();
+            IList<T> next = this;
+            while (!next.isEmpty()) {
+                rev = rev.add(next.head());
+                next = next.tail();
+            }
+            return rev;
         }
 
         @Override

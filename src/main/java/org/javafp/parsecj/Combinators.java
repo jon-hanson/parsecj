@@ -429,8 +429,47 @@ public abstract class Combinators {
         return bind(p, x -> manyAcc(p, IList.of(x)));
     }
 
+//    private static <S, A> Parser<S, IList<A>> manyAccOld(Parser<S, A> p, IList<A> acc) {
+//        return or(bind(p, x -> manyAccOld(p, acc.add(x))), retn(acc.reverse()));
+//    }
+
     private static <S, A> Parser<S, IList<A>> manyAcc(Parser<S, A> p, IList<A> acc) {
-        return or(bind(p, x -> manyAcc(p, acc.add(x))), retn(acc.reverse()));
+        return input -> {
+            boolean consumed = false;
+            IList<A> acc2 = acc;
+            while (true) {
+                final ConsumedT<S, A> cons = p.apply(input);
+                if (cons.isConsumed()) {
+                    consumed = true;
+                    final Reply<S, A> reply = cons.getReply();
+                    if (reply.isOk()) {
+                        final Reply.Ok<S, A> ok = (Reply.Ok<S, A>)reply;
+                        acc2 = acc2.add(ok.result);
+                        input = ok.rest;
+                    } else {
+                        return cons.cast();
+                    }
+                } else {
+                    final Reply<S, A> reply = cons.getReply();
+                    if (reply.isOk()) {
+                        final Reply.Ok<S, A> ok = (Reply.Ok<S, A>)reply;
+                        acc2 = acc2.add(ok.result);
+                        input = ok.rest;
+                    } else {
+                        final State<S> input2 = input;
+                        final IList<A> l = acc2;
+                        return ConsumedT.of(
+                            consumed,
+                            () -> Reply.ok(
+                                l.reverse(),
+                                input2,
+                                Message.lazy(() -> Message.of(input2.position()))
+                            )
+                        );
+                    }
+                }
+            }
+        };
     }
 
     /**
@@ -441,7 +480,38 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S, A> Parser<S, Unit> skipMany(Parser<S, A> p) {
-        return or(bind(p, x -> skipMany(p)), retn(Unit.unit));
+        return input -> {
+            boolean consumed = false;
+            while (true) {
+                final ConsumedT<S, A> cons = p.apply(input);
+                if (cons.isConsumed()) {
+                    consumed = true;
+                    final Reply<S, A> reply = cons.getReply();
+                    if (reply.isOk()) {
+                        final Reply.Ok<S, A> ok = (Reply.Ok<S, A>)reply;
+                        input = ok.rest;
+                    } else {
+                        return cons.cast();
+                    }
+                } else {
+                    final Reply<S, A> reply = cons.getReply();
+                    if (reply.isOk()) {
+                        final Reply.Ok<S, A> ok = (Reply.Ok<S, A>)reply;
+                        input = ok.rest;
+                    } else {
+                        final State<S> input2 = input;
+                        return ConsumedT.of(
+                            consumed,
+                            () -> Reply.ok(
+                                Unit.unit,
+                                input2,
+                                Message.lazy(() -> Message.of(input2.position()))
+                            )
+                        );
+                    }
+                }
+            }
+        };
     }
 
     /**

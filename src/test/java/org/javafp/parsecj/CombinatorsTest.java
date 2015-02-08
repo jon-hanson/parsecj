@@ -121,15 +121,27 @@ public class CombinatorsTest {
 
     @Test
     public void testMany() throws Exception {
-        final Parser<Character, IList<Character>> p = digit.many();
-        assertParserSucceedsWithValue(p, "a", IList.of());
-        assertParserSucceedsWithValue(p, "0123", IList.of('0', '1', '2', '3'));
+        final Parser<Character, IList<String>> p = chr('.').then(string("ab")).many();
+        assertParserSucceedsWithValue(p, "x", IList.of());
+        assertParserFails(p, ".a");
+        assertParserSucceedsWithValue(p, ".ab.ab.ab", IList.of("ab", "ab", "ab"));
+
+        final StringBuilder sb = new StringBuilder();
+        IList<String> exp = IList.of();
+        for (int i = 0; i < 10000; ++i) {
+            sb.append(".ab");
+            exp = exp.add("ab");
+        }
+        assertParserSucceedsWithValue(p, sb.toString(), exp);
+
+        assertParserSucceedsWithValue(digit.many(), "0123", IList.of('0', '1', '2', '3'));
     }
 
     @Test
     public void testMany1() throws Exception {
         final Parser<Character, IList<Character>> p = digit.many1();
         assertParserFails(p, "a");
+        assertParserSucceedsWithValue(p, "0", IList.of('0'));
         assertParserSucceedsWithValue(p, "0123", IList.of('0', '1', '2', '3'));
     }
 
