@@ -226,8 +226,8 @@ public class CombinatorsTest {
         final Parser<Character, BinaryOperator<Integer>> op =
             chr('>').then(Combinators.<Character, BinaryOperator<Integer>>retn((x, y) -> x - y));
         final Parser<Character, Integer> p = digit.bind(c -> retn(Character.getNumericValue(c))).chainr(op, 0);
-//        assertParserSucceedsWithValue(p, "", 0);
-//        assertParserSucceedsWithValue(p, "x", 0);
+        assertParserSucceedsWithValue(p, "", 0);
+        assertParserSucceedsWithValue(p, "x", 0);
         assertParserSucceedsWithValue(p, "3>2>1", 3 - (2 - 1));
     }
 

@@ -415,7 +415,7 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S, A> Parser<S, IList<A>> many(Parser<S, A> p) {
-        return manyAcc(p, IList.of());
+        return manyLoop(p, IList.of());
     }
 
     /**
@@ -426,18 +426,24 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S, A> Parser<S, IList<A>> many1(Parser<S, A> p) {
-        return bind(p, x -> manyAcc(p, IList.of(x)));
+        return bind(p, x -> manyLoop(p, IList.of(x)));
     }
 
 //    private static <S, A> Parser<S, IList<A>> manyAccOld(Parser<S, A> p, IList<A> acc) {
 //        return or(bind(p, x -> manyAccOld(p, acc.add(x))), retn(acc.reverse()));
 //    }
 
-    private static <S, A> Parser<S, IList<A>> manyAcc(Parser<S, A> p, IList<A> acc) {
+    private static <S, A> Parser<S, IList<A>> manyLoop(Parser<S, A> p, IList<A> acc) {
+        return manyLoop(p, acc, -1);
+    }
+
+    private static <S, A> Parser<S, IList<A>> manyLoop(Parser<S, A> p, final IList<A> acc, int count) {
         return input -> {
-            boolean consumed = false;
             IList<A> acc2 = acc;
-            while (true) {
+            boolean consumed = false;
+            boolean done = false;
+            int i = 0;
+            for (; !done && i != count; ++i) {
                 final ConsumedT<S, A> cons = p.apply(input);
                 if (cons.isConsumed()) {
                     consumed = true;
@@ -456,18 +462,29 @@ public abstract class Combinators {
                         acc2 = acc2.add(ok.result);
                         input = ok.rest;
                     } else {
-                        final State<S> input2 = input;
-                        final IList<A> l = acc2;
-                        return ConsumedT.of(
-                            consumed,
-                            () -> Reply.ok(
-                                l.reverse(),
-                                input2,
-                                Message.lazy(() -> Message.of(input2.position()))
-                            )
-                        );
+                        done = true;
+                        --i;
                     }
                 }
+            }
+            final IList<A> acc3 = acc2;
+            final State<S> input2 = input;
+            if (count == -1 || i == count) {
+                return ConsumedT.of(
+                    consumed,
+                    () -> Reply.ok(
+                        acc3.reverse(),
+                        input2,
+                        Message.lazy(() -> Message.of(input2.position()))
+                    )
+                );
+            } else {
+                return ConsumedT.of(
+                    consumed,
+                    () -> Reply.error(
+                        Message.lazy(() -> Message.of(input2.position()))
+                    )
+                );
             }
         };
     }
@@ -647,7 +664,7 @@ public abstract class Combinators {
     public static <S, A> Parser<S, IList<A>> count(
             Parser<S, A> p,
             int n) {
-        return countAcc(p, n, IList.of());
+        return manyLoop(p, IList.of(), n);
     }
 
     private static <S, A> Parser<S, IList<A>> countAcc(

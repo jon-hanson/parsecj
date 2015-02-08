@@ -2,6 +2,7 @@ package org.javafp.parsecj;
 
 import org.javafp.data.IList;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -117,7 +118,7 @@ final class MessageImpl<S> implements Message<S> {
     public MessageImpl(int pos, S sym, IList<String> expected) {
         this.pos = pos;
         this.sym = sym;
-        this.expected = expected;
+        this.expected = Objects.requireNonNull(expected);
     }
 
     @Override
