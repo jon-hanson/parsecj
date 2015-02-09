@@ -66,6 +66,10 @@ whereby each grammar instance implements an executable parser.
 
 # Getting Started
 
+## Requirements
+
+ParsecJ requires Java 1.8 (or higher).
+
 ## Maven
 
 Add this dependency to your project pom.xml:
@@ -78,9 +82,10 @@ Add this dependency to your project pom.xml:
 </dependency>
 ```
 
-## Javadocs
+## Resources
 
-[Latest Javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest/)
+* *Release builds* are available on the [Releases](http://github.com/jon-hanson/parsecj/releases) page.
+* *Javadocs* are for the latest build are on the [Javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest) page.
 
 ## Example
 
