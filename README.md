@@ -70,6 +70,12 @@ whereby each grammar instance implements an executable parser.
 
 ParsecJ requires Java 1.8 (or higher).
 
+## Resources
+
+* **Release builds** are available on the [Releases](http://github.com/jon-hanson/parsecj/releases) page.
+* **Maven Artifacts** are available on the [Sonatype Nexus repository](https://repository.sonatype.org/#nexus-search;quick~parsecj)
+* **Javadocs** are for the latest build are on the [Javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest) page.
+
 ## Maven
 
 Add this dependency to your project pom.xml:
@@ -81,11 +87,6 @@ Add this dependency to your project pom.xml:
     <version>0.2</version>
 </dependency>
 ```
-
-## Resources
-
-* **Release builds** are available on the [Releases](http://github.com/jon-hanson/parsecj/releases) page.
-* **Javadocs** are for the latest build are on the [Javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest) page.
 
 ## Example
 
