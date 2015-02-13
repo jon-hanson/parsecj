@@ -268,16 +268,16 @@ The [org.javafp.parsecj.Combinators](http://jon-hanson.github.io/parsecj/javadoc
 
 Name | Parser Description | Returns
 -----|-------------|--------
-`retn(value)` | Always succeeds | The supplied value.
-`bind(p, f)` | First applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser that is then applied. | Result of `q` .
-`fail()` | Always fails. | An error.
-`satisfy(test)` | Applies a test to the next input symbol. | The symbol.
-`satisfy(value)` | Succeeds if the next input symbol equals `value`. | The symbol.
-`eof()` | Succeeds if the end of the input is reached. | UNIT.
-`then(p, q)` | First applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`.
-`or(p, q)` | First applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser.
+`retn(value)` | Always succeeds. | The supplied value
+`bind(p, f)` | First applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser that is then applied. | Result of `q`
+`fail()` | Always fails. | An error
+`satisfy(test)` | Applies a test to the next input symbol. | The symbol
+`satisfy(value)` | Succeeds if the next input symbol equals `value`. | The symbol
+`eof()` | Succeeds if the end of the input is reached. | UNIT
+`then(p, q)` | First applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`
+`or(p, q)` | First applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser
 
-(see the [Combinators javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html) for full list)
+(see the [Combinators javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html) for the full list)
 
 Combinators that take a `Parser` as a first parameter, such as `bind` and `or`,
 also exist as methods on the `Parser` interface, to allow parsers to be constructed in a fluent style.
@@ -323,7 +323,6 @@ It corresponds to production rules of the form:
 
 ```
 r ::= p q
-
 ```
 
 It first calls the first parser `p` on the input stream,
@@ -374,13 +373,13 @@ the following parsers specialised for parsing text input:
 
 Name | Parser Description | Returns
 -----|-------------|--------
-`alpha` | Succeeds if the next character is alphabetic. | The character.
-`digit` | Succeeds if the next character is a digit. | The character.
-`intr` | Parses an integer. | The integer.
-`dble` | Parses a double. | The double.
-`string(s)` | Parses the supplied string. | The string.
-`alphaNum` | Parses an alphanumeric string. | The string.
-`regex(regex)` | Parses a string matching the supplied regex. | The string matching the regex.
+`alpha` | Succeeds if the next character is alphabetic. | The character
+`digit` | Succeeds if the next character is a digit. | The character
+`intr` | Parses an integer. | The integer
+`dble` | Parses a double. | The double
+`string(s)` | Parses the supplied string. | The string
+`alphaNum` | Parses an alphanumeric string. | The string
+`regex(regex)` | Parses a string matching the supplied regex. | The string matching the regex
 
 # Advanced Examples
 
