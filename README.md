@@ -184,7 +184,7 @@ the `parse` method is also provided to apply the parser and extract the `Reply` 
 
 ### `State`
 
-The [State<S>](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/State.html) interface is an abstraction representing an immutable input state.
+The [State](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/State.html) interface is an abstraction representing an immutable input state.
 It provides several static `of` methods for constructing `State` instances from sequences of symbols:
 
 ```java
