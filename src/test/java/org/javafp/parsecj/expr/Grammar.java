@@ -30,11 +30,11 @@ public class Grammar {
     // bin-expr ::= '(' expr bin-op expr ')'
     private static final Parser<Character, Double> binOpExpr =
         chr('(')
-            .then(expr.bind(
-                l -> binOp.bind(
-                    op -> expr.bind(
-                        r -> chr(')')
-                            .then(retn(op.apply(l, r)))))));
+            .then(expr.bind(l ->
+                binOp.bind(op ->
+                    expr.bind(r ->
+                        chr(')'
+                        ).then(retn(op.apply(l, r)))))));
 
     static {
         // expr ::= dble | binOpExpr

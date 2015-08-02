@@ -34,11 +34,11 @@ public class Grammar {
             .bind(c -> retn((byte) Character.digit(c, 16))).label("hex digit");
 
     private static final Parser<Character, Character> uni =
-        hexDigit.bind(
-            d0 -> hexDigit.bind(
-                d1 -> hexDigit.bind(
-                    d2 -> hexDigit.bind(
-                        d3 -> retn((d0<<0x3) & (d1<<0x2) & (d2<<0x1) & d0)))))
+        hexDigit.bind(d0 ->
+            hexDigit.bind(d1 ->
+                hexDigit.bind(d2 ->
+                    hexDigit.bind(d3 ->
+                        retn((d0<<0x3) & (d1<<0x2) & (d2<<0x1) & d0)))))
             .bind(i -> retn((char) i.intValue()));
 
     private static final Parser<Character, Character> esc =
@@ -55,8 +55,10 @@ public class Grammar {
             ).label("escape character");
 
     private static final Parser<Character, Character> stringChar =
-        (chr('\\').then(esc)
-        ).or(satisfy(c -> c != '"' && c != '\\')
+        (
+            chr('\\').then(esc)
+        ).or(
+            satisfy(c -> c != '"' && c != '\\')
         );
 
     private static final Parser<Character, String> jstring =
@@ -87,10 +89,12 @@ public class Grammar {
     }
 
     private static final Parser<Character, Map.Entry<String, Node>> jfield =
-        jstring.bind(
-            name -> tok(chr(':'))
+        jstring.bind(name -> 
+            tok(chr(':'))
                 .then(jvalue)
-                .bind(value -> retn(new AbstractMap.SimpleEntry<>(name, value)))
+                .bind(value ->
+                    retn(new AbstractMap.SimpleEntry<>(name, value))
+                )
         );
 
     private static final Parser<Character, Node> jobject =
