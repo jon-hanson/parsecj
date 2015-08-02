@@ -237,7 +237,8 @@ public abstract class Combinators {
                 final S s = input.current();
                 if (test.test(s)) {
                     final State<S> newState = input.next();
-                    return consumed(() -> Reply.ok(
+                    return consumed(
+                        () -> Reply.ok(
                             s,
                             newState,
                             Message.lazy(() -> Message.of(input.position()))
@@ -392,7 +393,9 @@ public abstract class Combinators {
      * @param <A>       the parser value type
      * @return          the parser
      */
-    public static <S, A> Parser<S, A> choice(Parser<S, ? extends A> p1, Parser<S, ? extends A> p2) {
+    public static <S, A> Parser<S, A> choice(
+            Parser<S, ? extends A> p1,
+            Parser<S, ? extends A> p2) {
         return or(p1, p2);
     }
 
@@ -402,6 +405,7 @@ public abstract class Combinators {
      * parser
      * @param p1        first parser
      * @param p2        second parser
+     * @param p3        third parser
      * @param <S>       the input symbol type
      * @param <A>       the parser value type
      * @return          the parser
@@ -419,6 +423,8 @@ public abstract class Combinators {
      * parser
      * @param p1        first parser
      * @param p2        second parser
+     * @param p3        third parser
+     * @param p4        fourth parser
      * @param <S>       the input symbol type
      * @param <A>       the parser value type
      * @return          the parser
@@ -437,6 +443,9 @@ public abstract class Combinators {
      * parser
      * @param p1        first parser
      * @param p2        second parser
+     * @param p3        third parser
+     * @param p4        fourth parser
+     * @param p5        fifth parser
      * @param <S>       the input symbol type
      * @param <A>       the parser value type
      * @return          the parser
@@ -454,6 +463,56 @@ public abstract class Combinators {
      * choice tries to apply the parsers in the list <code>ps</code> in order,
      * until one of them succeeds. It returns the value of the succeeding
      * parser
+     * @param p1        first parser
+     * @param p2        second parser
+     * @param p3        third parser
+     * @param p4        fourth parser
+     * @param p5        fifth parser
+     * @param p6        sixth parser
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
+     */
+    public static <S, A> Parser<S, A> choice(
+        Parser<S, ? extends A> p1,
+        Parser<S, ? extends A> p2,
+        Parser<S, ? extends A> p3,
+        Parser<S, ? extends A> p4,
+        Parser<S, ? extends A> p5,
+        Parser<S, ? extends A> p6) {
+        return or(p1, or(p2, or(p3, or(p4, or(p5, p6)))));
+    }
+
+    /**
+     * choice tries to apply the parsers in the list <code>ps</code> in order,
+     * until one of them succeeds. It returns the value of the succeeding
+     * parser
+     * @param p1        first parser
+     * @param p2        second parser
+     * @param p3        third parser
+     * @param p4        fourth parser
+     * @param p5        fifth parser
+     * @param p6        sixth parser
+     * @param p7        seventh parser
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
+     */
+    public static <S, A> Parser<S, A> choice(
+        Parser<S, ? extends A> p1,
+        Parser<S, ? extends A> p2,
+        Parser<S, ? extends A> p3,
+        Parser<S, ? extends A> p4,
+        Parser<S, ? extends A> p5,
+        Parser<S, ? extends A> p6,
+        Parser<S, ? extends A> p7) {
+        return or(p1, or(p2, or(p3, or(p4, or(p5, or(p6, p7))))));
+    }
+
+    /**
+     * choice tries to apply the parsers in the list <code>ps</code> in order,
+     * until one of them succeeds. It returns the value of the succeeding
+     * parser.
      * @param ps        the list of parsers
      * @param <S>       the input symbol type
      * @param <A>       the parser value type

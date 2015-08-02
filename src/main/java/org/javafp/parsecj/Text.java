@@ -70,7 +70,7 @@ public abstract class Text {
         bind(
             regex("-?\\d+"),
             s -> safeRetn(Integer::valueOf, s, "integer")
-        );
+        ).label("integer");
 
     /**
      * A parser which parses a signed {@link Double}.
@@ -79,7 +79,7 @@ public abstract class Text {
         bind(
             regex("-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?"),
             s -> safeRetn(Double::valueOf, s, "double")
-        );
+        ).label("double");
 
     // Variant of retn which translates exceptions into ConsumedT errors.
     private static <A> Parser<Character, A> safeRetn(Function<String, A> f, String s, String expected) {
@@ -107,7 +107,7 @@ public abstract class Text {
      * @return      the parser
      */
     public static Parser<Character, String> string(String value) {
-        return state -> {
+        Parser<Character, String> p = state -> {
             if (state.end()) {
                 return ConsumedT.empty(endOfInput(state, value));
             }
@@ -136,6 +136,8 @@ public abstract class Text {
 
             return consError(consumed, state, "\"" + value + '"');
         };
+
+        return p.label(value);
     }
 
     /**
