@@ -137,6 +137,51 @@ public abstract class Combinators {
     }
 
     /**
+     * Convert a parser which throws a Message.Exception into one
+     * which converts the exception into an Consumed error.
+     * @param p         the unsafe parser
+     * @param <S>
+     * @param <A>
+     * @return          safe parser
+     */
+    public static <S, A> Parser<S, A> safe(Parser<S, A> p) {
+        return input -> {
+            try {
+                return p.apply(input);
+            } catch (Message.Exception ex) {
+                return ConsumedT.empty(
+                    Reply.error(ex.message)
+                );
+            }
+        };
+    }
+
+    /**
+     * Monadic return function, i.e. a parser which returns the supplied value.
+     * @param supplier  the value for the parser to return
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
+     */
+    public static <S, A> Parser<S, A> safeRetn(Supplier<A> supplier, String expected) {
+        return input -> {
+            try {
+                return empty(
+                    Reply.ok(
+                        supplier.get(),
+                        input,
+                        Message.lazy(() -> Message.of(input.position()))
+                    )
+                );
+            } catch (Exception ex) {
+                return ConsumedT.empty(
+                    Reply.error(Message.of(input.position(), input.current(), expected))
+                );
+            }
+        };
+    }
+
+    /**
      * A parser which always fails
      * @param <S>       the input symbol type
      * @param <A>       the parser value type
@@ -170,7 +215,7 @@ public abstract class Combinators {
             } else {
                 return empty(
                     Reply.<S, Void>error(
-                        Message.lazy(() -> Message.of(input.position(), eofName))
+                        Message.lazy(() -> Message.of(input.position(), input.current(), eofName))
                     )
                 );
             }
@@ -244,30 +289,30 @@ public abstract class Combinators {
      * @param <A>       the parser value type
      * @return          the parser
      */
-    public static <S, A> Parser<S, A> or(Parser<S, A> p, Parser<S, A> q) {
+    public static <S, A> Parser<S, A> or(Parser<S, ? extends A> p, Parser<S, ? extends A> q) {
         return input -> {
-            final ConsumedT<S, A> cons1 = p.apply(input);
+            final ConsumedT<S, ? extends A> cons1 = p.apply(input);
             if (cons1.isConsumed()) {
-                return cons1;
+                return cons1.cast();
             } else {
                 return cons1.getReply().match(
                     ok1 -> {
-                        final ConsumedT<S, A> cons2 = q.apply(input);
+                        final ConsumedT<S, ? extends A> cons2 = q.apply(input);
                         if (cons2.isConsumed()) {
-                            return cons2;
+                            return cons2.cast();
                         } else {
-                            return mergeOk(ok1.result, ok1.rest, ok1.msg, cons2.getReply().msg);
+                            return mergeOk(ok1.result, ok1.rest, ok1.msg, cons2.getReply().msg).cast();
                         }
                     },
                     error1 -> {
-                        final ConsumedT<S, A> cons2 = q.apply(input);
+                        final ConsumedT<S, ? extends A> cons2 = q.apply(input);
                         if (cons2.isConsumed()) {
-                            return cons2;
+                            return cons2.cast();
                         } else {
                             return cons2.getReply().match(
                                 ok2 -> mergeOk(ok2.result, ok2.rest, error1.msg, ok2.msg),
                                 error2 -> Merge.<S, A>mergeError(error1.msg, error2.msg)
-                            );
+                            ).cast();
                         }
                     }
                 );
@@ -335,6 +380,74 @@ public abstract class Combinators {
         } else {
             return or(ps.head(), choice(ps.tail()));
         }
+    }
+
+    /**
+     * choice tries to apply the parsers in the list <code>ps</code> in order,
+     * until one of them succeeds. It returns the value of the succeeding
+     * parser
+     * @param p1        first parser
+     * @param p2        second parser
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
+     */
+    public static <S, A> Parser<S, A> choice(Parser<S, ? extends A> p1, Parser<S, ? extends A> p2) {
+        return or(p1, p2);
+    }
+
+    /**
+     * choice tries to apply the parsers in the list <code>ps</code> in order,
+     * until one of them succeeds. It returns the value of the succeeding
+     * parser
+     * @param p1        first parser
+     * @param p2        second parser
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
+     */
+    public static <S, A> Parser<S, A> choice(
+            Parser<S, ? extends A> p1,
+            Parser<S, ? extends A> p2,
+            Parser<S, ? extends A> p3) {
+        return or(p1, or(p2, p3));
+    }
+
+    /**
+     * choice tries to apply the parsers in the list <code>ps</code> in order,
+     * until one of them succeeds. It returns the value of the succeeding
+     * parser
+     * @param p1        first parser
+     * @param p2        second parser
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
+     */
+    public static <S, A> Parser<S, A> choice(
+            Parser<S, ? extends A> p1,
+            Parser<S, ? extends A> p2,
+            Parser<S, ? extends A> p3,
+            Parser<S, ? extends A> p4) {
+        return or(p1, or(p2, or(p3, p4)));
+    }
+
+    /**
+     * choice tries to apply the parsers in the list <code>ps</code> in order,
+     * until one of them succeeds. It returns the value of the succeeding
+     * parser
+     * @param p1        first parser
+     * @param p2        second parser
+     * @param <S>       the input symbol type
+     * @param <A>       the parser value type
+     * @return          the parser
+     */
+    public static <S, A> Parser<S, A> choice(
+            Parser<S, ? extends A> p1,
+            Parser<S, ? extends A> p2,
+            Parser<S, ? extends A> p3,
+            Parser<S, ? extends A> p4,
+            Parser<S, ? extends A> p5) {
+        return or(p1, or(p2, or(p3, or(p4, p5))));
     }
 
     /**
@@ -428,10 +541,6 @@ public abstract class Combinators {
     public static <S, A> Parser<S, IList<A>> many1(Parser<S, A> p) {
         return bind(p, x -> manyLoop(p, IList.of(x)));
     }
-
-//    private static <S, A> Parser<S, IList<A>> manyAccOld(Parser<S, A> p, IList<A> acc) {
-//        return or(bind(p, x -> manyAccOld(p, acc.add(x))), retn(acc.reverse()));
-//    }
 
     private static <S, A> Parser<S, IList<A>> manyLoop(Parser<S, A> p, IList<A> acc) {
         return manyLoop(p, acc, -1);

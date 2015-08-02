@@ -10,19 +10,21 @@ public class TestUtils {
     static <A> void assertParserSucceeds(
             Parser<Character, A> p,
             String input) {
+        final Reply<Character, A> reply = p.parse(State.of(input));
         Assert.assertTrue(
             "Parse of \"" + input + "\"",
-            p.parse(State.of(input)).isOk()
+            reply.isOk()
         );
     }
 
-    static <A> void assertParserSucceeds(
-            Parser<Character, A> p,
-            String input,
-            Predicate<A> test) throws Exception {
+    static <A> void assertParserSucceedsWithTest(
+        Parser<Character, A> p,
+        String input,
+        Predicate<A> test) throws Exception {
+        final Reply<Character, A> reply = p.parse(State.of(input));
         Assert.assertTrue(
             "Parse of \"" + input + "\"",
-            test.test(p.parse(State.of(input)).getResult())
+            test.test(reply.getResult())
         );
     }
 
@@ -30,10 +32,11 @@ public class TestUtils {
             Parser<Character, A> p,
             String input,
             A expected) throws Exception {
+        final Reply<Character, A> reply = p.parse(State.of(input));
         Assert.assertEquals(
             "Parse of \"" + input + "\"",
             expected,
-            p.parse(State.of(input)).getResult()
+            reply.getResult()
         );
     }
 
@@ -47,20 +50,22 @@ public class TestUtils {
             Parser<Character, Double> p,
             String input,
             Double expected) throws Exception {
+        final Reply<Character, Double> reply = p.parse(State.of(input));
         Assert.assertEquals(
             "Parse of \"" + input + "\"",
             expected,
-            p.parse(State.of(input)).getResult(),
+            reply.getResult(),
             THRESHOLD
         );
     }
 
     static <A> void assertParserFails(
             Parser<Character, A> p,
-            String input) {
+            String input) throws Exception {
+        final Reply<Character, A> reply = p.parse(State.of(input));
         Assert.assertTrue(
             "Parse of \"" + input + "\"",
-            p.parse(State.of(input)).isError()
+            reply.isError()
         );
     }
 }

@@ -80,7 +80,7 @@ public abstract class IList<T> implements Iterable<T> {
 
     public abstract IList<T> add(IList<T> l);
 
-    public abstract int length();
+    public abstract int size();
 
     public abstract IList<T> reverse();
 
@@ -151,7 +151,7 @@ public abstract class IList<T> implements Iterable<T> {
         }
 
         @Override
-        public int length() {
+        public int size() {
             return 0;
         }
 
@@ -285,7 +285,7 @@ public abstract class IList<T> implements Iterable<T> {
         }
 
         @Override
-        public int length() {
+        public int size() {
             IList<T> pos = this;
             int length = 0;
             while (!pos.isEmpty()) {
@@ -338,7 +338,7 @@ public abstract class IList<T> implements Iterable<T> {
 
         @Override
         public Spliterator<T> spliterator() {
-            return Spliterators.spliterator(this.iterator(), length(), Spliterator.IMMUTABLE + Spliterator.SIZED);
+            return Spliterators.spliterator(this.iterator(), size(), Spliterator.IMMUTABLE + Spliterator.SIZED);
         }
 
         @Override

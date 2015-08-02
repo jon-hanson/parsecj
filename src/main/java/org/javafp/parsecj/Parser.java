@@ -14,7 +14,7 @@ import java.util.function.*;
 @FunctionalInterface
 public interface Parser<S, A> {
 
-    public static <S, A> Parser<S, A> parser(Function<State<S>, ConsumedT<S, A>> parser) {
+    static <S, A> Parser<S, A> parser(Function<State<S>, ConsumedT<S, A>> parser) {
         return parser::apply;
     }
 
@@ -29,7 +29,7 @@ public interface Parser<S, A> {
     /**
      * A lazily initialised reference to a Parser.
      */
-    public static class Ref<S, A> implements Supplier<Parser<S, A>>, Parser<S, A> {
+    class Ref<S, A> implements Supplier<Parser<S, A>>, Parser<S, A> {
 
         private Parser<S, A> parser;
 

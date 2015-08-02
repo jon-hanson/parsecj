@@ -12,46 +12,54 @@ import java.util.function.Supplier;
  */
 public interface Message<S> {
 
-    public static <S> Message<S> of(int pos, S sym, String expected) {
+    final class Exception extends java.lang.RuntimeException {
+        public final Message message;
+
+        public Exception(Message<?> message) {
+            this.message = message;
+        }
+    }
+
+    static <S> Message<S> of(int pos, S sym, String expected) {
         return new MessageImpl<S>(pos, sym, IList.of(expected));
     }
 
-    public static <S> Message<S> of(int pos, String expected) {
+    static <S> Message<S> of(int pos, String expected) {
         return new MessageImpl<S>(pos, null, IList.of(expected));
     }
 
-    public static <S> Message<S> of(int pos) {
+    static <S> Message<S> of(int pos) {
         return new MessageImpl<S>(pos, null, IList.of());
     }
 
-    public static <S> Message<S> of() {
+    static <S> Message<S> of() {
         return EmptyMessage.instance();
     }
 
-    public static <S> Message<S> endOfInput(int pos, String expected) {
+    static <S> Message<S> endOfInput(int pos, String expected) {
         return new EndOfInput<S>(pos, IList.of(expected));
     }
 
-    public static <S> LazyMessage<S> lazy(Supplier<Message<S>> supplier) {
+    static <S> LazyMessage<S> lazy(Supplier<Message<S>> supplier) {
         return new LazyMessage(supplier);
     }
 
     // The position the error occurred at.
-    public int position();
+    int position();
 
     // The symbol that caused the error.
-    public S symbol();
+    S symbol();
 
     // The names of the productions that were expected.
-    public IList<String> expected();
+    IList<String> expected();
 
-    public default LazyMessage<S> expect(String name) {
+    default LazyMessage<S> expect(String name) {
         return Message.lazy(() ->
             Message.of(position(), symbol(), name)
         );
     }
 
-    public default Message<S> merge(Message<S> rhs) {
+    default Message<S> merge(Message<S> rhs) {
         return Message.lazy(() ->
             new MessageImpl<S>(
                 this.position(),
@@ -64,7 +72,7 @@ public interface Message<S> {
 
 final class EmptyMessage<S> implements Message<S> {
 
-    private static final EmptyMessage<?> instance = new EmptyMessage<Object>();
+    private static final EmptyMessage<?> instance = new EmptyMessage<>();
 
     static <S> EmptyMessage<S> instance() {
         return (EmptyMessage<S>) instance;
@@ -150,12 +158,24 @@ final class MessageImpl<S> implements Message<S> {
 
     @Override
     public String toString() {
-        final String expectedStr = expected.isEmpty() ? "" : expected.foldr1((x, y) -> x + ',' + y);
-        return
-            "Unexpected '" + sym +
-                "' at position " + (pos == -1 ? "EOF" : pos) +
-                ". Expecting one of [" +
-                expectedStr + ']';
+        switch (expected.size()) {
+            case 0:
+                return
+                    "Unexpected '" + sym +
+                        "' at position " + (pos == -1 ? "EOF" : pos) +
+                        ". Expecting nothing";
+            case 1:
+                return
+                    "Unexpected '" + sym +
+                        "' at position " + (pos == -1 ? "EOF" : pos) +
+                        ". Expecting [" + expected.head() + ']';
+            default:
+                final String expectedStr = expected.foldr1((x, y) -> x + ',' + y);
+                return
+                    "Unexpected '" + sym +
+                        "' at position " + (pos == -1 ? "EOF" : pos) +
+                        ". Expecting one of [" + expectedStr + ']';
+        }
     }
 
     @Override

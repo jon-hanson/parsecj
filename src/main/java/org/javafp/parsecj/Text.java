@@ -14,7 +14,7 @@ import static org.javafp.parsecj.ConsumedT.empty;
 public abstract class Text {
 
     /**
-     * Helper method to create a ConsumedT response.
+     * Helper methods to create a ConsumedT response.
      */
     private static <S, A> ConsumedT<S, A> consError(boolean consumed, State<S> state, String expected) {
         final Message<S> msg = Message.lazy(() -> Message.of(state.position(), state.current(), expected));
@@ -191,7 +191,7 @@ public abstract class Text {
                 final CharState charState = (CharState) state;
                 cs = charState.getCharSequence();
             } else {
-                throw new RuntimeException("regex only supported on CharState");
+                throw new RuntimeException("regex only supported on CharState inputs");
             }
 
             final Matcher matcher = pattern.matcher(cs);
@@ -209,4 +209,57 @@ public abstract class Text {
             }
         };
     }
+
+
+    /**
+     * A parser which parses a string between a pair of characters,
+     * each matched by the enclose parser.
+     */
+    public static Parser<Character, String> strBetween(
+            Parser<Character, Character> open,
+            Parser<Character, Character> close) {
+        return state -> {
+            if (state.end()) {
+                return ConsumedT.empty(endOfInput(state, "strBetween"));
+            }
+
+            // Parse the opening enclose char.
+            final ConsumedT<Character, Character> cons = open.apply(state);
+            if (cons.getReply().isError()) {
+                return cons.cast();
+            }
+
+            State<Character> state2 = ((Reply.Ok<Character, Character>)cons.getReply()).rest;
+
+            final StringBuilder sb = new StringBuilder();
+
+            do {
+                if (state2.end()) {
+                    final State<Character> state3 = state2;
+                    return ConsumedT.consumed(
+                        () -> endOfInput(state3, "<char>")
+                    );
+                }
+
+                // Attempt to parse the closing enclose char.
+                final ConsumedT<Character, Character> cons2 = close.apply(state2);
+                if (cons2.getReply().isOk()) {
+                    state2 = ((Reply.Ok<Character, Character>)cons2.getReply()).rest;
+                    break;
+                }
+
+                sb.append(state2.current());
+                state2 = state2.next();
+            } while (true);
+
+            final State<Character> tail = state2;
+            return ConsumedT.consumed(
+                () -> Reply.ok(
+                    sb.toString(),
+                    tail,
+                    Message.lazy(() -> Message.of(tail.position()))
+                )
+            );
+        };
+    };
 }

@@ -11,25 +11,25 @@ import java.util.function.Supplier;
  */
 public interface ConsumedT<S, A> {
 
-    public static <S, A> ConsumedT<S, A> consumed(Supplier<Reply<S, A>> supplier) {
+    static <S, A> ConsumedT<S, A> consumed(Supplier<Reply<S, A>> supplier) {
         return new Consumed<S, A>(supplier);
     }
 
-    public static <S, A> ConsumedT<S, A> empty(Reply<S, A> reply) {
+    static <S, A> ConsumedT<S, A> empty(Reply<S, A> reply) {
         return new Empty<S, A>(reply);
     }
 
-    public static <S, A> ConsumedT<S, A> of(boolean consumed, Supplier<Reply<S, A>> supplier) {
+    static <S, A> ConsumedT<S, A> of(boolean consumed, Supplier<Reply<S, A>> supplier) {
         return consumed ?
             ConsumedT.consumed(supplier) :
             ConsumedT.empty(supplier.get());
     }
 
-    public boolean isConsumed();
+    boolean isConsumed();
 
-    public Reply<S, A> getReply();
+    Reply<S, A> getReply();
 
-    public default <B> ConsumedT<S, B> cast() {
+    default <B> ConsumedT<S, B> cast() {
         return (ConsumedT<S, B>)this;
     }
 }

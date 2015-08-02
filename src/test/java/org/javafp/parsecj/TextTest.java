@@ -153,7 +153,25 @@ public class TextTest {
         assertParserSucceedsWithValue(p, "12345.6789e-12", 12345.6789e-12);
         assertParserSucceedsWithValue(p, "-12345.6789e-12", -12345.6789e-12);
 
-        assertParserSucceeds(p, "9e99999999", d -> Double.isInfinite(d));
-        assertParserSucceeds(p, "-9e99999999", d -> Double.isInfinite(d));
+        assertParserSucceedsWithTest(p, "9e99999999", d -> Double.isInfinite(d));
+        assertParserSucceedsWithTest(p, "-9e99999999", d -> Double.isInfinite(d));
+    }
+
+    @Test
+    public void testStrBetween() throws Exception {
+        final Parser<Character, String> p =
+            strBetween(chr('['), chr(']')).bind(s ->
+                eof.then(retn(s)));
+
+        assertParserFails(p, "");
+        assertParserFails(p, "[");
+        assertParserFails(p, "]");
+        assertParserFails(p, "abd");
+        assertParserFails(p, "abc]");
+        assertParserFails(p, "[abc");
+        assertParserFails(p, "[abc]def");
+
+        assertParserSucceedsWithValue(p, "[]", "");
+        assertParserSucceedsWithValue(p, "[abc]", "abc");
     }
 }

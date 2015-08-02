@@ -21,8 +21,8 @@ public class IListTest {
 
     @Test
     public void testLength() {
-        Assert.assertEquals("length for an empty list", 0, empty.length());
-        Assert.assertEquals("[1,2,3,4].length for a non-empty list", 4, l.length());
+        Assert.assertEquals("size for an empty list", 0, empty.size());
+        Assert.assertEquals("[1,2,3,4].size for a non-empty list", 4, l.size());
     }
 
     @Test
