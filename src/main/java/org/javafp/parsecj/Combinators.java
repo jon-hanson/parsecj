@@ -835,17 +835,6 @@ public abstract class Combinators {
         return manyLoop(p, IList.of(), n);
     }
 
-    private static <S, A> Parser<S, IList<A>> countAcc(
-            Parser<S, A> p,
-            int n,
-            IList<A> acc) {
-        if (n == 0) {
-            return retn(acc.reverse());
-        } else {
-            return bind(p, x -> countAcc(p, n - 1, acc.add(x)));
-        }
-    }
-
     /**
      * A parser for an operand followed by zero or more operands (<code>p</code>)
      * separated by right-associative operators (<code>op</code>).
