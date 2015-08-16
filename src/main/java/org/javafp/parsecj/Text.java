@@ -72,14 +72,27 @@ public abstract class Text {
             s -> safeRetn(Integer::valueOf, s, "integer")
         ).label("integer");
 
+    private static final String DOUBLE_REGEX = "-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?";
+    private static final Parser<Character, String> matchDouble = regex(DOUBLE_REGEX);
+
     /**
      * A parser which parses a signed {@link Double}.
      */
     public static final Parser<Character, Double> dble =
         bind(
-            regex("-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?"),
+            matchDouble,
             s -> safeRetn(Double::valueOf, s, "double")
         ).label("double");
+
+    public static final Parser<Character, Number> number =
+        bind(
+            matchDouble,
+            s -> safeRetn(
+                ds -> (ds.contains(".") ? (Number)Double.valueOf(ds) : (Number)Integer.valueOf(ds)),
+                s,
+                "number"
+            )
+        ).label("number");
 
     // Variant of retn which translates exceptions into ConsumedT errors.
     private static <A> Parser<Character, A> safeRetn(Function<String, A> f, String s, String expected) {
@@ -214,8 +227,7 @@ public abstract class Text {
 
 
     /**
-     * A parser which parses a string between a pair of characters,
-     * each matched by the enclose parser.
+     * A parser which parses a string between a pair of enclosing characters.
      */
     public static Parser<Character, String> strBetween(
             Parser<Character, Character> open,
