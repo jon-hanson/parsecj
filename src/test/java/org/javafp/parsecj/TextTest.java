@@ -1,5 +1,6 @@
 package org.javafp.parsecj;
 
+import org.javafp.data.Unit;
 import org.junit.*;
 
 import static org.javafp.parsecj.Combinators.*;
@@ -9,7 +10,7 @@ import static org.javafp.parsecj.TestUtils.*;
 
 public class TextTest {
 
-    private static final Parser<Character, Void> eof = eof();
+    private static final Parser<Character, Unit> eof = eof();
 
     @Test
     public void testAlpha() throws Exception {
@@ -67,7 +68,7 @@ public class TextTest {
 
     @Test
     public void testWSpaces() throws Exception {
-        final Parser<Character, Void> p = wspaces.then(eof);
+        final Parser<Character, Unit> p = wspaces.then(eof);
 
         assertParserFails(p, "A ");
         assertParserFails(p, " A");

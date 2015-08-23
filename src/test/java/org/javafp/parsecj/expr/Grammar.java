@@ -1,5 +1,6 @@
 package org.javafp.parsecj.expr;
 
+import org.javafp.data.Unit;
 import org.javafp.parsecj.*;
 import org.junit.Test;
 
@@ -42,7 +43,7 @@ public class Grammar {
     }
 
     // Inform the compiler of the type of eof.
-    private static final Parser<Character, Void> eof = eof();
+    private static final Parser<Character, Unit> eof = eof();
 
     // parser = expr end
     private static final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));

@@ -1,5 +1,6 @@
 package org.javafp.parsecj.expr2;
 
+import org.javafp.data.Unit;
 import org.javafp.parsecj.*;
 
 import java.util.function.BinaryOperator;
@@ -109,7 +110,7 @@ public abstract class Grammar {
     }
 
     // Use a variable to help the type inference.
-    private static final Parser<Character, Void> end = eof();
+    private static final Parser<Character, Unit> end = eof();
 
     // parser = expr eof
     private static Parser<Character, Expr> parser() {

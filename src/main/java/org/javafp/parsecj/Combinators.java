@@ -203,7 +203,7 @@ public abstract class Combinators {
      * @param <S>       the input symbol type
      * @return          the parser
      */
-    public static <S> Parser<S, Void> eof() {
+    public static <S> Parser<S, Unit> eof() {
         return input -> {
             if (input.end()) {
                 return empty(
@@ -214,7 +214,7 @@ public abstract class Combinators {
                 );
             } else {
                 return empty(
-                    Reply.<S, Void>error(
+                    Reply.<S, Unit>error(
                         Message.lazy(() -> Message.of(input.position(), input.current(), eofName))
                     )
                 );
