@@ -8,31 +8,31 @@ import java.util.stream.Collectors;
  */
 public interface Node {
 
-    public static Node nul() {
+    static Node nul() {
         return NullNode.instance;
     }
 
-    public static Node bool(boolean value) {
+    static Node bool(boolean value) {
         return new BooleanNode(value);
     }
 
-    public static Node number(double value) {
+    static Node number(double value) {
         return new NumberNode(value);
     }
 
-    public static Node text(String value) {
+    static Node text(String value) {
         return new TextNode(value);
     }
 
-    public static Node array(List<Node> value) {
+    static Node array(List<Node> value) {
         return new ArrayNode(value);
     }
 
-    public static Node object(LinkedHashMap<String, Node> value) {
+    static Node object(LinkedHashMap<String, Node> value) {
         return new ObjectNode(value);
     }
 
-    public static final class NullNode implements Node {
+    final class NullNode implements Node {
         public static final NullNode instance = new NullNode();
 
         private NullNode() {
@@ -44,7 +44,7 @@ public interface Node {
         }
     }
 
-    public static final class BooleanNode implements Node {
+    final class BooleanNode implements Node {
         public final boolean value;
 
         public BooleanNode(boolean value) {
@@ -57,7 +57,7 @@ public interface Node {
         }
     }
 
-    public static final class NumberNode implements Node {
+    final class NumberNode implements Node {
         public final double value;
 
         public NumberNode(double value) {
@@ -70,7 +70,7 @@ public interface Node {
         }
     }
 
-    public static final class TextNode implements Node {
+    final class TextNode implements Node {
         private static String escape(String s) {
             final StringBuilder sb = new StringBuilder(s.length());
             final int len = s.length();
@@ -127,7 +127,7 @@ public interface Node {
         }
     }
 
-    public static final class ArrayNode implements Node {
+    final class ArrayNode implements Node {
         public final List<Node> value;
 
         public ArrayNode(List<Node> value) {
@@ -143,7 +143,7 @@ public interface Node {
         }
     }
 
-    public static final class ObjectNode implements Node {
+    final class ObjectNode implements Node {
         public final LinkedHashMap<String, Node> value;
 
         public ObjectNode(LinkedHashMap<String, Node> value) {

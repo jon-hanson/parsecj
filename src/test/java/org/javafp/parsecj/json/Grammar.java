@@ -89,7 +89,7 @@ public class Grammar {
     }
 
     private static final Parser<Character, Map.Entry<String, Node>> jfield =
-        jstring.bind(name -> 
+        jstring.bind(name ->
             tok(chr(':'))
                 .then(jvalue)
                 .bind(value ->
