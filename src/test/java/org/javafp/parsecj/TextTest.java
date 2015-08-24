@@ -120,6 +120,84 @@ public class TextTest {
     }
 
     @Test
+    public void testLong() throws Exception {
+        final Parser<Character, Long> p = lng.bind(l -> eof.then(retn(l)));
+
+        assertParserFails(p, "");
+        assertParserFails(p, "+");
+        assertParserFails(p, "-");
+        assertParserFails(p, "1.1");
+        assertParserFails(p, "+-1");
+        assertParserFails(p, "0-0");
+        assertParserFails(p, "0+0");
+        assertParserFails(p, "+0+");
+        assertParserFails(p, "1 0");
+        assertParserFails(p, "0 1");
+        assertParserFails(p, "1e");
+        assertParserFails(p, "e1");
+        assertParserFails(p, "1.0");
+        assertParserFails(p, "0.1");
+        assertParserFails(p, "1234.5678");
+        assertParserFails(p, "1234e10");
+        assertParserFails(p, "e1");
+
+        assertParserSucceedsWithValue(p, "0", 0l);
+        assertParserSucceedsWithValue(p, "1", 1l);
+        assertParserSucceedsWithValue(p, "-1", -1l);
+        assertParserSucceedsWithValue(p, "123456789", 123456789l);
+        assertParserSucceedsWithValue(p, "-123456789", -123456789l);
+        assertParserSucceedsWithValue(p, "4294967294", 4294967294l);
+        assertParserSucceedsWithValue(p, "-4294967294", -4294967294l);
+    }
+
+    @Test
+    public void testNumber() throws Exception {
+        final Parser<Character, Number> p = number.bind(l -> eof.then(retn(l)));
+
+        assertParserFails(p, "");
+        assertParserFails(p, "+");
+        assertParserFails(p, "-");
+        assertParserFails(p, "1.1.");
+        assertParserFails(p, "+-1");
+        assertParserFails(p, "e");
+        assertParserFails(p, "0-0");
+        assertParserFails(p, "0+0");
+        assertParserFails(p, "+0+");
+        assertParserFails(p, "1 0");
+        assertParserFails(p, "0 1");
+        assertParserFails(p, "1e");
+        assertParserFails(p, "e1");
+
+        assertParserSucceedsWithValue(p, "0", 0l);
+        assertParserSucceedsWithValue(p, "1", 1l);
+        assertParserSucceedsWithValue(p, "-1", -1l);
+        assertParserSucceedsWithValue(p, "123456789", 123456789l);
+        assertParserSucceedsWithValue(p, "-123456789", -123456789l);
+        assertParserSucceedsWithValue(p, "4294967294", 4294967294l);
+        assertParserSucceedsWithValue(p, "-4294967294", -4294967294l);
+
+        assertParserSucceedsWithValue(p, "0", 0l);
+        assertParserSucceedsWithValue(p, "0.", 0l);
+        assertParserSucceedsWithValue(p, ".0", 0l);
+        assertParserSucceedsWithValue(p, "0.0", 0l);
+        assertParserSucceedsWithValue(p, ".1", 0.1);
+        assertParserSucceedsWithValue(p, "1", 1l);
+        assertParserSucceedsWithValue(p, "1.0", 1l);
+        assertParserSucceedsWithValue(p, "1.2", 1.2);
+        assertParserSucceedsWithValue(p, "-1.2", -1.2);
+        assertParserSucceedsWithValue(p, "123456789.123456789", 123456789.123456789);
+        assertParserSucceedsWithValue(p, "-123456789.123456789", -123456789.123456789);
+
+        assertParserSucceedsWithValue(p, "12345.6789e12", 12345678900000000l);
+        assertParserSucceedsWithValue(p, "-12345.6789e12", -12345678900000000l);
+        assertParserSucceedsWithValue(p, "12345.6789e-12", 12345.6789e-12);
+        assertParserSucceedsWithValue(p, "-12345.6789e-12", -12345.6789e-12);
+
+        assertParserSucceedsWithTest(p, "9e99999999", n -> Double.isInfinite((Double)n));
+        assertParserSucceedsWithTest(p, "-9e99999999", n -> Double.isInfinite((Double) n));
+    }
+
+    @Test
     public void testDouble() throws Exception {
         final Parser<Character, Double> p = dble.bind(d -> eof.then(retn(d)));
 

@@ -63,17 +63,27 @@ public abstract class Text {
         return satisfy(c);
     }
 
+    private static final String INTEGER_REGEX = "-?\\d+";
+    private static final String DOUBLE_REGEX = "-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?";
+    private static final Parser<Character, String> matchDouble = regex(DOUBLE_REGEX);
+
     /**
      * A parser which parses a signed {@link Integer}.
      */
     public static final Parser<Character, Integer> intr =
         bind(
-            regex("-?\\d+"),
+            regex(INTEGER_REGEX),
             s -> safeRetn(Integer::valueOf, s, "integer")
         ).label("integer");
 
-    private static final String DOUBLE_REGEX = "-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?";
-    private static final Parser<Character, String> matchDouble = regex(DOUBLE_REGEX);
+    /**
+     * A parser which parses a signed {@link Long}.
+     */
+    public static final Parser<Character, Long> lng =
+        bind(
+            regex(INTEGER_REGEX),
+            s -> safeRetn(Long::valueOf, s, "long")
+        ).label("long");
 
     /**
      * A parser which parses a signed {@link Double}.
@@ -84,11 +94,22 @@ public abstract class Text {
             s -> safeRetn(Double::valueOf, s, "double")
         ).label("double");
 
+    /**
+     * A parser which will parse a number into either a Double or a Long.
+     */
     public static final Parser<Character, Number> number =
         bind(
             matchDouble,
             s -> safeRetn(
-                ds -> (ds.contains(".") ? (Number)Double.valueOf(ds) : (Number)Integer.valueOf(ds)),
+                ds -> {
+                    final Double d = Double.valueOf(ds);
+                    final long l = d.longValue();
+                    if (((double)l) == d) {
+                        return (Number)Long.valueOf(l);
+                    } else {
+                        return (Number)d;
+                    }
+                },
                 s,
                 "number"
             )
