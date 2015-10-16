@@ -100,7 +100,7 @@ public interface Parser<S, A> {
     /**
      * @see Combinators#or
      */
-    default Parser<S, A> or(Parser<S, A> q) {
+    default Parser<S, A> or(Parser<S, ? extends A> q) {
         return Combinators.or(this, q);
     }
 

@@ -38,8 +38,11 @@ public class Grammar {
             hexDigit.bind(d1 ->
                 hexDigit.bind(d2 ->
                     hexDigit.bind(d3 ->
-                        retn((d0<<0x3) & (d1<<0x2) & (d2<<0x1) & d0)))))
-            .bind(i -> retn((char) i.intValue()));
+                        retn((d0<<0x3) & (d1<<0x2) & (d2<<0x1) & d0)
+                    )
+                )
+            )
+        ).bind(i -> retn((char) i.intValue()));
 
     private static final Parser<Character, Character> esc =
         choice(
@@ -66,10 +69,12 @@ public class Grammar {
             chr('"'),
             chr('"'),
             many(stringChar).bind(l -> retn(IList.listToString(l)))
-        ));
+        )).label("string");
 
     private static final Parser<Character, Node> jtext =
-        jstring.bind(s -> retn(Node.text(s))).label("text");
+        jstring.bind(s ->
+            retn(Node.text(s))
+        ).label("text");
 
     private static final Parser<Character, Node> jarray =
         between(
@@ -79,8 +84,9 @@ public class Grammar {
                 jvalue,
                 tok(chr(','))
             )
-        ).bind(l -> retn(Node.array(IList.toList(l))))
-            .label("array");
+        ).bind(l ->
+            retn(Node.array(IList.toList(l)))
+        ).label("array");
 
     private static LinkedHashMap<String, Node> toMap(IList<Map.Entry<String, Node>> fields) {
         final LinkedHashMap<String, Node> map = new LinkedHashMap<String, Node>();

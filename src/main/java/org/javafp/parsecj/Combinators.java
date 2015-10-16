@@ -474,12 +474,12 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S, A> Parser<S, A> choice(
-        Parser<S, ? extends A> p1,
-        Parser<S, ? extends A> p2,
-        Parser<S, ? extends A> p3,
-        Parser<S, ? extends A> p4,
-        Parser<S, ? extends A> p5,
-        Parser<S, ? extends A> p6) {
+            Parser<S, ? extends A> p1,
+            Parser<S, ? extends A> p2,
+            Parser<S, ? extends A> p3,
+            Parser<S, ? extends A> p4,
+            Parser<S, ? extends A> p5,
+            Parser<S, ? extends A> p6) {
         return or(p1, or(p2, or(p3, or(p4, or(p5, p6)))));
     }
 
@@ -499,13 +499,13 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <S, A> Parser<S, A> choice(
-        Parser<S, ? extends A> p1,
-        Parser<S, ? extends A> p2,
-        Parser<S, ? extends A> p3,
-        Parser<S, ? extends A> p4,
-        Parser<S, ? extends A> p5,
-        Parser<S, ? extends A> p6,
-        Parser<S, ? extends A> p7) {
+            Parser<S, ? extends A> p1,
+            Parser<S, ? extends A> p2,
+            Parser<S, ? extends A> p3,
+            Parser<S, ? extends A> p4,
+            Parser<S, ? extends A> p5,
+            Parser<S, ? extends A> p6,
+            Parser<S, ? extends A> p7) {
         return or(p1, or(p2, or(p3, or(p4, or(p5, or(p6, p7))))));
     }
 
