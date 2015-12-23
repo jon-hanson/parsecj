@@ -6,10 +6,12 @@ import java.util.stream.*;
 
 /**
  * Simple recursive, immutable linked list.
+ * This list type allows tails to be shared between lists.
+ * @param <T>   element type
  */
 public abstract class IList<T> implements Iterable<T> {
 
-    public static <T> IList<T> empty() {
+    public static <T> IList<T> of() {
         return Empty.EMPTY;
     }
 
@@ -29,7 +31,7 @@ public abstract class IList<T> implements Iterable<T> {
         return new Node<T>(head, tail);
     }
 
-    public static <T> List<T> toJList(IList<T> list) {
+    public static <T> List<T> toList(IList<T> list) {
         final List<T> result = new LinkedList<T>();
         for (; !list.isEmpty(); list = list.tail()) {
             result.add(list.head());
@@ -78,18 +80,14 @@ public abstract class IList<T> implements Iterable<T> {
 
     public abstract IList<T> add(IList<T> l);
 
-    public abstract int length();
+    public abstract int size();
 
-    public IList<T> reverse() {
-        return reverse(empty());
-    }
-
-    protected abstract IList<T> reverse(IList<T> acc);
+    public abstract IList<T> reverse();
 
     public abstract <U> IList<U> map(Function<T, U> f);
 
-    public abstract T foldr(BinaryOperator<T> f, T z);
-    public abstract T foldl(BinaryOperator<T> f, T z);
+    public abstract <U> U foldr(BiFunction<T, U, U> f, U z);
+    public abstract <U> U foldl(BiFunction<U, T, U> f, U z);
 
     public abstract T foldr1(BinaryOperator<T> f);
     public abstract T foldl1(BinaryOperator<T> f);
@@ -153,13 +151,13 @@ public abstract class IList<T> implements Iterable<T> {
         }
 
         @Override
-        public int length() {
+        public int size() {
             return 0;
         }
 
         @Override
-        protected IList<T> reverse(IList<T> acc) {
-            return acc;
+        public IList<T> reverse() {
+            return EMPTY;
         }
 
         @Override
@@ -168,12 +166,12 @@ public abstract class IList<T> implements Iterable<T> {
         }
 
         @Override
-        public T foldr(BinaryOperator<T> f, T z) {
+        public <U> U foldr(BiFunction<T, U, U> f, U z) {
             return z;
         }
 
         @Override
-        public T foldl(BinaryOperator<T> f, T z) {
+        public <U> U foldl(BiFunction<U, T, U> f, U z) {
             return z;
         }
 
@@ -287,7 +285,7 @@ public abstract class IList<T> implements Iterable<T> {
         }
 
         @Override
-        public int length() {
+        public int size() {
             IList<T> pos = this;
             int length = 0;
             while (!pos.isEmpty()) {
@@ -299,8 +297,14 @@ public abstract class IList<T> implements Iterable<T> {
         }
 
         @Override
-        protected IList<T> reverse(IList<T> acc) {
-            return tail.reverse(acc.add(head));
+        public IList<T> reverse() {
+            IList<T> rev = IList.of();
+            IList<T> next = this;
+            while (!next.isEmpty()) {
+                rev = rev.add(next.head());
+                next = next.tail();
+            }
+            return rev;
         }
 
         @Override
@@ -309,12 +313,12 @@ public abstract class IList<T> implements Iterable<T> {
         }
 
         @Override
-        public T foldr(BinaryOperator<T> f, T z) {
+        public <U> U foldr(BiFunction<T, U, U> f, U z) {
             return f.apply(head, tail.foldr(f, z));
         }
 
         @Override
-        public T foldl(BinaryOperator<T> f, T z) {
+        public <U> U foldl(BiFunction<U, T, U> f, U z) {
             return tail.foldl(f, f.apply(z, head));
         }
 
@@ -334,7 +338,7 @@ public abstract class IList<T> implements Iterable<T> {
 
         @Override
         public Spliterator<T> spliterator() {
-            return Spliterators.spliterator(this.iterator(), length(), Spliterator.IMMUTABLE + Spliterator.SIZED);
+            return Spliterators.spliterator(this.iterator(), size(), Spliterator.IMMUTABLE + Spliterator.SIZED);
         }
 
         @Override

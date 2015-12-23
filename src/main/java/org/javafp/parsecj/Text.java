@@ -1,10 +1,12 @@
 package org.javafp.parsecj;
 
-import org.javafp.data.IList;
+import org.javafp.data.Unit;
 
+import java.util.function.*;
 import java.util.regex.*;
 
 import static org.javafp.parsecj.Combinators.*;
+import static org.javafp.parsecj.ConsumedT.empty;
 
 /**
  * Parser combinators to be used with Character streams.
@@ -12,137 +14,136 @@ import static org.javafp.parsecj.Combinators.*;
 public abstract class Text {
 
     /**
-     * Helper method to create a ConsumedT response.
+     * Helper methods to create a ConsumedT response.
      */
-    public static <S, A> ConsumedT<S, A> createConsError(boolean consumed, State<S> state, String expected) {
-        final IList<String> expList = IList.of(expected);
-        return consumed ?
-            ConsumedT.consumed(() ->
-                Reply.error(
-                    Message.Ref.of(() -> Message.of(state, expList))
-                )
-            ) : ConsumedT.empty(
-                Reply.error(
-                    Message.Ref.of(() -> Message.of(state, expList))
-                )
-        );
+    private static <S, A> ConsumedT<S, A> consError(boolean consumed, State<S> state, String expected) {
+        final Message<S> msg = Message.lazy(() -> Message.of(state.position(), state.current(), expected));
+        return ConsumedT.of(consumed, () -> Reply.error(msg));
     }
 
-    private static <S, A> ConsumedT<S, A> endOfInputError(boolean consumed, State<S> state) {
-        return consumed ?
-            ConsumedT.consumed(() -> endOfInput(state)) :
-            ConsumedT.empty(endOfInput(state));
+    private static <S, A> ConsumedT<S, A> eofError(boolean consumed, State<S> state, String expected) {
+        return ConsumedT.of(consumed, () -> endOfInput(state, expected));
     }
 
     /**
      * A parser which parses an alphabetic character.
      */
-    public static Parser<Character, Character> alpha = satisfy((Character c) -> Character.isAlphabetic(c)).label("alpha");
+    public static final Parser<Character, Character> alpha =
+        satisfy((Character c) -> Character.isAlphabetic(c)).label("alpha");
 
     /**
      * A parser which parses a numeric character, i.e. a digit.
      */
-    public static Parser<Character, Character> digit = satisfy((Character c) -> Character.isDigit(c)).label("digit");
+    public static final Parser<Character, Character> digit =
+        satisfy((Character c) -> Character.isDigit(c)).label("digit");
 
     /**
      * A parser which parses space.
      */
-    public static Parser<Character, Character> space = satisfy((Character c) -> Character.isSpaceChar(c)).label("space");
+    public static final Parser<Character, Character> space =
+        satisfy((Character c) -> Character.isSpaceChar(c)).label("space");
 
     /**
      * A parser which parses whitespace.
      */
-    public static Parser<Character, Character> wspace = satisfy((Character c) -> Character.isWhitespace(c)).label("wspace");
+    public static final Parser<Character, Character> wspace =
+        satisfy((Character c) -> Character.isWhitespace(c)).label("wspace");
 
     /**
-     * A parser which parses whitespace.
+     * A parser which skips whitespace.
      */
-    public static Parser<Character, Void> wspaces = skipMany(
-        satisfy(
-            c -> Character.isWhitespace(c)
-        )
-    );
+    public static final Parser<Character, Unit> wspaces = skipMany(wspace);
 
     /**
-     * A parser which parses the specified char.
+     * A parser which accepts only the specified char.
+     * @param c     the character
+     * @return      the parser
      */
     public static Parser<Character, Character> chr(char c) {
         return satisfy(c);
     }
 
+    private static final String INTEGER_REGEX = "-?\\d+";
+    private static final String DOUBLE_REGEX = "-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?";
+    private static final Parser<Character, String> matchDouble = regex(DOUBLE_REGEX);
+
     /**
-     * A parser which parses a signed integer.
+     * A parser which parses a signed {@link Integer}.
      */
     public static final Parser<Character, Integer> intr =
-        state -> {
-            if (state.end()) {
-                return ConsumedT.empty(endOfInput(state));
-            }
-
-            boolean consumed = false;
-
-            boolean signPos = true;
-            char c = state.current();
-            switch (c) {
-                case '-':
-                    signPos = false;
-                    state = state.next();
-                    consumed = true;
-                    break;
-                case '+':
-                    state = state.next();
-                    consumed = true;
-                    break;
-            }
-
-            if (state.end()) {
-                return endOfInputError(consumed, state);
-            }
-
-            int acc = 0;
-            c = state.current();
-            if (!Character.isDigit(c)) {
-                return createConsError(consumed, state, "integer");
-            }
-
-            consumed = true;
-
-            do {
-                acc = acc * 10 + (c - '0');
-                state = state.next();
-                if (state.end()) {
-                    break;
-                }
-                c = state.current();
-
-            } while (Character.isDigit(c));
-
-            final int res = signPos ? acc : -acc;
-            final State<Character> tail = state;
-            return ConsumedT.consumed(
-                () -> Reply.ok(
-                    res,
-                    tail,
-                    Message.Ref.of(() -> Message.of(tail, IList.empty()))
-                )
-            );
-        };
+        bind(
+            regex(INTEGER_REGEX),
+            s -> safeRetn(Integer::valueOf, s, "integer")
+        ).label("integer");
 
     /**
-     * A parser which parses a signed double.
+     * A parser which parses a signed {@link Long}.
+     */
+    public static final Parser<Character, Long> lng =
+        bind(
+            regex(INTEGER_REGEX),
+            s -> safeRetn(Long::valueOf, s, "long")
+        ).label("long");
+
+    /**
+     * A parser which parses a signed {@link Double}.
      */
     public static final Parser<Character, Double> dble =
-        regex("-?(\\d+(\\.\\d*)?|\\d*\\.\\d+)([eE][+-]?\\d+)?[fFdD]?")
-            .label("double")
-            .bind(dblStr -> retn(Double.valueOf(dblStr)));
+        bind(
+            matchDouble,
+            s -> safeRetn(Double::valueOf, s, "double")
+        ).label("double");
 
     /**
-     * A parser which parses the specified string.
+     * A parser which will parse a number into either a Double or a Long.
+     */
+    public static final Parser<Character, Number> number =
+        bind(
+            matchDouble,
+            s -> safeRetn(
+                ds -> {
+                    final Double d = Double.valueOf(ds);
+                    final long l = d.longValue();
+                    if (((double)l) == d) {
+                        return (Number)Long.valueOf(l);
+                    } else {
+                        return (Number)d;
+                    }
+                },
+                s,
+                "number"
+            )
+        ).label("number");
+
+    // Variant of retn which translates exceptions into ConsumedT errors.
+    private static <A> Parser<Character, A> safeRetn(Function<String, A> f, String s, String expected) {
+        return input -> {
+            try {
+                final A val = f.apply(s);
+                return empty(
+                    Reply.ok(
+                        val,
+                        input,
+                        Message.lazy(() -> Message.of(input.position()))
+                    )
+                );
+            } catch (Exception ex) {
+                return ConsumedT.empty(
+                    Reply.error(Message.lazy(() -> Message.of(input.position(), input.current(), expected)))
+                );
+            }
+        };
+    }
+
+    /**
+     * A parser which only accepts the specified string.
+     * @param value the string
+     * @return      the parser
      */
     public static Parser<Character, String> string(String value) {
-        return state -> {
+        Parser<Character, String> p = state -> {
             if (state.end()) {
-                return ConsumedT.empty(endOfInput(state));
+                return ConsumedT.empty(endOfInput(state, value));
             }
 
             boolean consumed = false;
@@ -151,7 +152,6 @@ public abstract class Text {
             while (c == value.charAt(i)) {
                 consumed = true;
                 state = state.next();
-                c = state.current();
                 ++i;
                 if (i == value.length()) {
                     final State<Character> tail = state;
@@ -159,16 +159,19 @@ public abstract class Text {
                         () -> Reply.ok(
                             value,
                             tail,
-                            Message.Ref.of(() -> Message.of(tail, IList.empty()))
+                            Message.lazy(() -> Message.of(tail.position()))
                         )
                     );
                 } else if (state.end()) {
-                    return endOfInputError(consumed, state);
+                    return eofError(consumed, state, value);
                 }
+                c = state.current();
             }
 
-            return createConsError(consumed, state, "\"" + value + '"');
+            return consError(consumed, state, "\"" + value + '"');
         };
+
+        return p.label(value);
     }
 
     /**
@@ -177,7 +180,7 @@ public abstract class Text {
     public static final Parser<Character, String> alphaNum =
         state -> {
             if (state.end()) {
-                return ConsumedT.empty(endOfInput(state));
+                return ConsumedT.empty(endOfInput(state, "alphaNum"));
             }
 
             char c = state.current();
@@ -185,7 +188,7 @@ public abstract class Text {
                 final State<Character> tail = state;
                 return ConsumedT.empty(
                     Reply.error(
-                        Message.Ref.of(() -> Message.of(tail, IList.empty()))
+                        Message.lazy(() -> Message.of(tail.position(), tail.current(), "alphaNum"))
                     )
                 );
             }
@@ -206,13 +209,15 @@ public abstract class Text {
                 () -> Reply.ok(
                     sb.toString(),
                     tail,
-                    Message.Ref.of(() -> Message.of(tail, IList.empty()))
+                    Message.lazy(() -> Message.of(tail.position()))
                 )
             );
         };
 
     /**
-     * A parser which parses a string which matches the supplied regex.
+     * A parser which accepts a string which matches the supplied regex.
+     * @param regex the regular expression
+     * @return      the parser
      */
     public static Parser<Character, String> regex(String regex) {
         final Pattern pattern = Pattern.compile(regex);
@@ -222,13 +227,13 @@ public abstract class Text {
                 final CharState charState = (CharState) state;
                 cs = charState.getCharSequence();
             } else {
-                throw new RuntimeException("regex only supported on CharState");
+                throw new RuntimeException("regex only supported on CharState inputs");
             }
 
             final Matcher matcher = pattern.matcher(cs);
 
-            final Message.Ref<Character> msg = Message.Ref.of(
-                () -> Message.of(state, IList.of("Regex '" + regex + "'"))
+            final Message<Character> msg = Message.lazy(
+                () -> Message.of(state.position(), state.current(), "Regex('" + regex + "')")
             );
 
             if (matcher.lookingAt()) {
@@ -240,4 +245,56 @@ public abstract class Text {
             }
         };
     }
+
+
+    /**
+     * A parser which parses a string between a pair of enclosing characters.
+     */
+    public static Parser<Character, String> strBetween(
+            Parser<Character, Character> open,
+            Parser<Character, Character> close) {
+        return state -> {
+            if (state.end()) {
+                return ConsumedT.empty(endOfInput(state, "strBetween"));
+            }
+
+            // Parse the opening enclose char.
+            final ConsumedT<Character, Character> cons = open.apply(state);
+            if (cons.getReply().isError()) {
+                return cons.cast();
+            }
+
+            State<Character> state2 = ((Reply.Ok<Character, Character>)cons.getReply()).rest;
+
+            final StringBuilder sb = new StringBuilder();
+
+            do {
+                if (state2.end()) {
+                    final State<Character> state3 = state2;
+                    return ConsumedT.consumed(
+                        () -> endOfInput(state3, "<char>")
+                    );
+                }
+
+                // Attempt to parse the closing enclose char.
+                final ConsumedT<Character, Character> cons2 = close.apply(state2);
+                if (cons2.getReply().isOk()) {
+                    state2 = ((Reply.Ok<Character, Character>)cons2.getReply()).rest;
+                    break;
+                }
+
+                sb.append(state2.current());
+                state2 = state2.next();
+            } while (true);
+
+            final State<Character> tail = state2;
+            return ConsumedT.consumed(
+                () -> Reply.ok(
+                    sb.toString(),
+                    tail,
+                    Message.lazy(() -> Message.of(tail.position()))
+                )
+            );
+        };
+    };
 }

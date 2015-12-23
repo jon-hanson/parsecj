@@ -3,7 +3,7 @@ package org.javafp.parsecj;
 import java.util.function.Supplier;
 
 /**
- * Discriminated union between a Consumed type and an Empty type.
+ * ConsumedT is a discriminated union between a Consumed type and an Empty type.
  * Wraps a parse result (Reply) and indicates whether the parser consumed input
  * in the process of computing the parse result.
  * @param <S> Input stream symbol type.
@@ -11,25 +11,32 @@ import java.util.function.Supplier;
  */
 public interface ConsumedT<S, A> {
 
-    public static <S, A> ConsumedT<S, A> consumed(Supplier<Reply<S, A>> supplier) {
+    static <S, A> ConsumedT<S, A> consumed(Supplier<Reply<S, A>> supplier) {
         return new Consumed<S, A>(supplier);
     }
 
-    public static <S, A> ConsumedT<S, A> empty(Reply<S, A> reply) {
+    static <S, A> ConsumedT<S, A> empty(Reply<S, A> reply) {
         return new Empty<S, A>(reply);
     }
 
-    public boolean isConsumed();
+    static <S, A> ConsumedT<S, A> of(boolean consumed, Supplier<Reply<S, A>> supplier) {
+        return consumed ?
+            ConsumedT.consumed(supplier) :
+            ConsumedT.empty(supplier.get());
+    }
 
-    public Reply<S, A> getReply();
+    boolean isConsumed();
 
-    public default <B> ConsumedT<S, B> cast() {
+    Reply<S, A> getReply();
+
+    default <B> ConsumedT<S, B> cast() {
         return (ConsumedT<S, B>)this;
     }
 }
 
 /**
  * A parse result that indicates the parser did consume some input.
+ * Consumed is lazy with regards to the reply it wraps.
  */
 final class Consumed<S, A> implements ConsumedT<S, A> {
 

@@ -1,5 +1,6 @@
 package org.javafp.parsecj.expr2;
 
+import org.javafp.data.Unit;
 import org.javafp.parsecj.*;
 
 import java.util.function.BinaryOperator;
@@ -11,7 +12,7 @@ import static org.javafp.parsecj.expr2.Model.*;
 public abstract class Grammar {
 
     // To get around circular references.
-    private static final Parser.Ref<Character, Expr> expr = Parser.Ref.of();
+    private static final Parser.Ref<Character, Expr> expr = Parser.ref();
 
     private static final Parser<Character, Character> open = satisfy('(');
     private static final Parser<Character, Character> close = satisfy(')');
@@ -93,7 +94,7 @@ public abstract class Grammar {
 
     // term = num | brackExpr | funcN | signedExpr
     private static final Parser<Character, Expr> term =
-        choice(tryP(num), brackExpr, funcN, signedExpr);
+        choice(attempt(num), brackExpr, funcN, signedExpr);
 
     // prod = term chainl1 multDiv
     private static final Parser<Character, Expr> prod =
@@ -109,7 +110,7 @@ public abstract class Grammar {
     }
 
     // Use a variable to help the type inference.
-    private static final Parser<Character, Void> end = eof();
+    private static final Parser<Character, Unit> end = eof();
 
     // parser = expr eof
     private static Parser<Character, Expr> parser() {

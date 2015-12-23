@@ -9,7 +9,7 @@ import org.openjdk.jmh.runner.options.*;
 import java.io.IOException;
 
 public final class JmhTest {
-
+/* perf testing disabled.
     @org.openjdk.jmh.annotations.State(Scope.Benchmark)
     public static class ExprState {
         public String getGoodExpr() {
@@ -33,4 +33,5 @@ public final class JmhTest {
                 .build();
            new Runner(opt).run();
       }
+*/
 }

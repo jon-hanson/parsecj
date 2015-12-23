@@ -1,5 +1,6 @@
 package org.javafp.parsecj.expr;
 
+import org.javafp.data.Unit;
 import org.javafp.parsecj.*;
 import org.junit.Test;
 
@@ -10,33 +11,42 @@ import static org.javafp.parsecj.Text.*;
 
 public class Grammar {
     // Forward declare expr to allow for circular references.
-    private static final Parser.Ref<Character, Double> expr = Parser.Ref.of();
+    private static final Parser.Ref<Character, Double> expr = Parser.ref();
 
-    // binOp ::= '+' | '-' | '*' | '/'
+    // Inform the compiler of the type of retn.
+    private static final Parser<Character, BinaryOperator<Double>> add = retn((l, r) -> l + r);
+    private static final Parser<Character, BinaryOperator<Double>> subt = retn((l, r) -> l - r);
+    private static final Parser<Character, BinaryOperator<Double>> times = retn((l, r) -> l * r);
+    private static final Parser<Character, BinaryOperator<Double>> divide = retn((l, r) -> l / r);
+
+    // bin-op ::= '+' | '-' | '*' | '/'
     private static final Parser<Character, BinaryOperator<Double>> binOp =
         choice(
-            chr('+').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l + r)),
-            chr('-').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l - r)),
-            chr('*').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l * r)),
-            chr('/').then(Combinators.<Character, BinaryOperator<Double>>retn((l, r) -> l / r))
+            chr('+').then(add),
+            chr('-').then(subt),
+            chr('*').then(times),
+            chr('/').then(divide)
         );
 
-    // binOpExpr ::= '(' expr binOp expr ')'
+    // bin-expr ::= '(' expr bin-op expr ')'
     private static final Parser<Character, Double> binOpExpr =
         chr('(')
-            .then(expr.bind(
-                l -> binOp.bind(
-                    op -> expr.bind(
-                        r -> chr(')')
-                            .then(retn(op.apply(l, r)))))));
+            .then(expr.bind(l ->
+                binOp.bind(op ->
+                    expr.bind(r ->
+                        chr(')'
+                        ).then(retn(op.apply(l, r)))))));
 
     static {
         // expr ::= dble | binOpExpr
         expr.set(choice(dble, binOpExpr));
     }
 
-    private static final Parser<Character, Void> end = eof();
-    private static final Parser<Character, Double> parser = expr.bind(d -> end.then(retn(d)));
+    // Inform the compiler of the type of eof.
+    private static final Parser<Character, Unit> eof = eof();
+
+    // parser = expr end
+    private static final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
 
     private static void evaluate(String s) throws Exception {
         System.out.println(s + " = " + parser.parse(State.of(s)).getResult());

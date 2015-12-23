@@ -1,10 +1,6 @@
 package org.javafp.parsecj.expr2;
 
-import org.javafp.parsecj.*;
 import org.junit.*;
-import org.openjdk.jmh.annotations.*;
-
-import java.util.concurrent.TimeUnit;
 
 public class GrammarTest {
 
@@ -33,28 +29,6 @@ public class GrammarTest {
 
     @Test
     public void testFailure() throws Exception {
-        assertFailure("3*-max(4%+(5bp+),-2bp)-1", "Unexpected ')' at position 15. Expecting one of [num,brack-expr,+,-]");
-    }
-
-    @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
-    public Reply<Character, Model.Expr> benchmarkSuccess(JmhTest.ExprState state) {
-        try {
-            return Grammar.parse(state.getGoodExpr());
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MICROSECONDS)
-    public Reply<Character, Model.Expr> benchmarkFailure(JmhTest.ExprState state) {
-        try {
-            return Grammar.parse(state.getBadExpr());
-        } catch (Exception ex) {
-            return null;
-        }
+        assertFailure("3*-max(4%+(5bp+),-2bp)-1", "Unexpected ')' at position 15. Expecting one of [num,brack-expr,alphaNum,+,-]");
     }
 }

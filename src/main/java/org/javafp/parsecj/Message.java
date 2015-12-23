@@ -2,107 +2,150 @@ package org.javafp.parsecj;
 
 import org.javafp.data.IList;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * An error message which represents a parse failure.
+ * An message which represents a (potential) parse failure.
+ * Note, the construction of a Message doesn't necessarily indicate an failure,
+ * the message may be intended for use later on when a parse failure occurs.
  */
-public class Message<S> {
+public interface Message<S> {
 
-    public static <S> Message<S> of(State<S> state, IList<String> expected) {
-        return new Message<S>(state.position(), state.current(), expected);
+    final class Exception extends java.lang.RuntimeException {
+        public final Message message;
+
+        public Exception(Message<?> message) {
+            this.message = message;
+        }
     }
 
-    public static <S> Message<S> of(int pos, S sym, IList<String> expected) {
-        return new Message<S>(pos, sym, expected);
+    static <S> Message<S> of(int pos, S sym, String expected) {
+        return new MessageImpl<S>(pos, sym, IList.of(expected));
     }
 
-    public static <S> Message<S> of(int pos, IList<String> expected) {
-        return new Message<S>(pos, null, expected);
+    static <S> Message<S> of(int pos, String expected) {
+        return new MessageImpl<S>(pos, null, IList.of(expected));
     }
 
-    /**
-     * A lazily-constructed error message.
-     */
-    public static class Ref<S> implements Supplier<Message<S>> {
+    static <S> Message<S> of(int pos) {
+        return new MessageImpl<S>(pos, null, IList.of());
+    }
 
-        public static <S> Ref<S> of(Supplier<Message<S>> supplier) {
-            return new Ref(supplier);
-        }
+    static <S> Message<S> of() {
+        return EmptyMessage.instance();
+    }
 
-        private Supplier<Message<S>> supplier;
-        private Message<S> value;
+    static <S> Message<S> endOfInput(int pos, String expected) {
+        return new EndOfInput<S>(pos, IList.of(expected));
+    }
 
-        private Ref(Supplier<Message<S>> supplier) {
-            this.supplier = supplier;
-        }
-
-        @Override
-        public synchronized Message<S> get() {
-            if (supplier != null) {
-                value = supplier.get();
-                supplier = null;
-            }
-            return value;
-        }
-
-        public Ref<S> merge(Ref<S> rhs) {
-            return Ref.of(() ->
-                Message.of(
-                    this.get().pos,
-                    this.get().sym,
-                    this.get().expected.add(rhs.get().expected)
-                )
-            );
-        }
-
-        public Ref<S> expect(String name) {
-            return Ref.of(() ->
-                Message.of(this.get().pos, this.get().sym, IList.of(name))
-            );
-        }
-
-        @Override
-        public String toString() {
-            return "ref(" + get() + ")";
-        }
+    static <S> LazyMessage<S> lazy(Supplier<Message<S>> supplier) {
+        return new LazyMessage(supplier);
     }
 
     // The position the error occurred at.
-    public final int pos;
+    int position();
 
     // The symbol that caused the error.
+    S symbol();
+
+    // The names of the productions that were expected.
+    IList<String> expected();
+
+    default LazyMessage<S> expect(String name) {
+        return Message.lazy(() ->
+            Message.of(position(), symbol(), name)
+        );
+    }
+
+    default Message<S> merge(Message<S> rhs) {
+        return Message.lazy(() ->
+            new MessageImpl<S>(
+                this.position(),
+                this.symbol(),
+                this.expected().add(rhs.expected())
+            )
+        );
+    }
+}
+
+final class EmptyMessage<S> implements Message<S> {
+
+    private static final EmptyMessage<?> instance = new EmptyMessage<>();
+
+    static <S> EmptyMessage<S> instance() {
+        return (EmptyMessage<S>) instance;
+    }
+
+    private EmptyMessage() {
+    }
+
+    @Override
+    public int position() {
+        return 0;
+    }
+
+    @Override
+    public S symbol() {
+        return null;
+    }
+
+    @Override
+    public IList<String> expected() {
+        return IList.of();
+    }
+
+    @Override
+    public String toString() {
+        return "";
+    }
+
+    @Override
+    public boolean equals(Object rhs) {
+        return rhs == this;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
+}
+
+final class MessageImpl<S> implements Message<S> {
+
+    // The position the Error occurred at.
+    public final int pos;
+
+    // The symbol that caused the Error.
     public final S sym;
 
     // The names of the productions that were expected.
     public final IList<String> expected;
 
-    public Message(int pos, S sym, IList<String> expected) {
+    public MessageImpl(int pos, S sym, IList<String> expected) {
         this.pos = pos;
         this.sym = sym;
-        this.expected = expected;
-    }
-
-    public String msg() {
-        final String expectedStr = expected.isEmpty() ? "" : expected.foldr1((x, y) -> x + ',' + y);
-        return
-            "Unexpected '" + (sym == null ? "EOF" : sym) +
-                "' at position " + (pos == -1 ? "EOF" : pos) +
-                ". Expecting one of [" +
-                expectedStr + ']';
+        this.expected = Objects.requireNonNull(expected);
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(Object rhs) {
+        if (this == rhs) return true;
+        if (rhs == null) return false;
+        if (!(rhs instanceof Message)) {
+            return false;
+        }
 
-        Message message = (Message) o;
+        final Message message = (Message)rhs;
+        if (message instanceof EndOfInput || message instanceof EmptyMessage) {
+            return false;
+        }
 
-        if (pos != message.pos) return false;
-        if (!expected.equals(message.expected)) return false;
+        if (pos != message.position()) return false;
+        if (!expected.equals(message.expected())) return false;
 
-        return sym.equals(message.sym);
+        return sym.equals(message.symbol());
     }
 
     @Override
@@ -115,10 +158,164 @@ public class Message<S> {
 
     @Override
     public String toString() {
-        return "Message{" +
-            "position=" + pos +
-            ", sym=<" + sym +
-            ">, expected=" + expected +
-            '}';
+        switch (expected.size()) {
+            case 0:
+                return
+                    "Unexpected '" + sym +
+                        "' at position " + (pos == -1 ? "EOF" : pos) +
+                        ". Expecting nothing";
+            case 1:
+                return
+                    "Unexpected '" + sym +
+                        "' at position " + (pos == -1 ? "EOF" : pos) +
+                        ". Expecting [" + expected.head() + ']';
+            default:
+                final String expectedStr = expected.foldr1((x, y) -> x + ',' + y);
+                return
+                    "Unexpected '" + sym +
+                        "' at position " + (pos == -1 ? "EOF" : pos) +
+                        ". Expecting one of [" + expectedStr + ']';
+        }
+    }
+
+    @Override
+    public int position() {
+        return pos;
+    }
+
+    @Override
+    public S symbol() {
+        return sym;
+    }
+
+    @Override
+    public IList<String> expected() {
+        return expected;
     }
 }
+
+/**
+ * Message indicating the
+ */
+final class EndOfInput<S> implements Message<S> {
+
+    // The position the Error occurred at.
+    public final int pos;
+
+    // The names of the productions that were expected.
+    public final IList<String> expected;
+
+    EndOfInput(int pos, IList<String> expected) {
+        this.pos = pos;
+        this.expected = expected;
+    }
+
+    @Override
+    public int position() {
+        return pos;
+    }
+
+    @Override
+    public S symbol() {
+        return null;
+    }
+
+    @Override
+    public IList<String> expected() {
+        return expected;
+    }
+
+    @Override
+    public boolean equals(Object rhs) {
+        if (this == rhs) return true;
+        if (rhs == null) return false;
+        if (!(rhs instanceof EndOfInput)) {
+            return false;
+        }
+
+        final EndOfInput message = (EndOfInput)rhs;
+
+        if (pos != message.pos) return false;
+
+        return expected.equals(message.expected);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = pos;
+        result = 31 * result + expected.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        final String expectedStr = expected.isEmpty() ? "" : expected.foldr1((x, y) -> x + ',' + y);
+        return
+            "\"Unexpected EOF at position " + pos +
+                ". Expecting one of [" +
+                expectedStr + ']';
+    }
+}
+
+/**
+ * A lazily-constructed message.
+ */
+final class LazyMessage<S> implements Message<S> {
+
+    private Supplier<Message<S>> supplier;
+    private Message<S> value;
+
+    public LazyMessage(Supplier<Message<S>> supplier) {
+        this.supplier = supplier;
+    }
+
+    private synchronized Message<S> get() {
+        if (supplier != null) {
+            value = supplier.get();
+            supplier = null;
+        }
+        return value;
+    }
+
+    @Override
+    public boolean equals(Object rhs) {
+        if (this == rhs) return true;
+        if (rhs == null) return false;
+        if (!(rhs instanceof Message)) {
+            return false;
+        }
+
+        final Message message = (Message)rhs;
+
+        if (get().position() != message.position()) return false;
+        if (!get().expected().equals(message.expected())) return false;
+
+        return get().symbol().equals(message.symbol());
+    }
+
+    @Override
+    public int hashCode() {
+        return get().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return get().toString();
+    }
+
+    @Override
+    public int position() {
+        return get().position();
+    }
+
+    @Override
+    public S symbol() {
+        return get().symbol();
+    }
+
+    @Override
+    public IList<String> expected() {
+        return get().expected();
+    }
+}
+
