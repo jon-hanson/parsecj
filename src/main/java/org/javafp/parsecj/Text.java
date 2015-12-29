@@ -16,13 +16,13 @@ public abstract class Text {
     /**
      * Helper methods to create a ConsumedT response.
      */
-    private static <S, A> ConsumedT<S, A> consError(boolean consumed, State<S> state, String expected) {
-        final Message<S> msg = Message.lazy(() -> Message.of(state.position(), state.current(), expected));
+    private static <I, A> ConsumedT<I, A> consError(boolean consumed, Input<I> input, String expected) {
+        final Message<I> msg = Message.lazy(() -> Message.of(input.position(), input.current(), expected));
         return ConsumedT.of(consumed, () -> Reply.error(msg));
     }
 
-    private static <S, A> ConsumedT<S, A> eofError(boolean consumed, State<S> state, String expected) {
-        return ConsumedT.of(consumed, () -> endOfInput(state, expected));
+    private static <I, A> ConsumedT<I, A> eofError(boolean consumed, Input<I> input, String expected) {
+        return ConsumedT.of(consumed, () -> endOfInput(input, expected));
     }
 
     /**
@@ -105,7 +105,7 @@ public abstract class Text {
                     final Double d = Double.valueOf(ds);
                     final long l = d.longValue();
                     if (((double)l) == d) {
-                        return (Number)Long.valueOf(l);
+                        return (Number)l;
                     } else {
                         return (Number)d;
                     }
@@ -154,7 +154,7 @@ public abstract class Text {
                 state = state.next();
                 ++i;
                 if (i == value.length()) {
-                    final State<Character> tail = state;
+                    final Input<Character> tail = state;
                     return ConsumedT.consumed(
                         () -> Reply.ok(
                             value,
@@ -185,7 +185,7 @@ public abstract class Text {
 
             char c = state.current();
             if (!Character.isAlphabetic(c) && !Character.isDigit(c)) {
-                final State<Character> tail = state;
+                final Input<Character> tail = state;
                 return ConsumedT.empty(
                     Reply.error(
                         Message.lazy(() -> Message.of(tail.position(), tail.current(), "alphaNum"))
@@ -204,7 +204,7 @@ public abstract class Text {
 
             } while (Character.isAlphabetic(c) || Character.isDigit(c));
 
-            final State<Character> tail = state;
+            final Input<Character> tail = state;
             return ConsumedT.consumed(
                 () -> Reply.ok(
                     sb.toString(),
@@ -223,8 +223,8 @@ public abstract class Text {
         final Pattern pattern = Pattern.compile(regex);
         return state -> {
             final CharSequence cs;
-            if (state instanceof CharState) {
-                final CharState charState = (CharState) state;
+            if (state instanceof CharInput) {
+                final CharInput charState = (CharInput) state;
                 cs = charState.getCharSequence();
             } else {
                 throw new RuntimeException("regex only supported on CharState inputs");
@@ -246,7 +246,6 @@ public abstract class Text {
         };
     }
 
-
     /**
      * A parser which parses a string between a pair of enclosing characters.
      */
@@ -264,30 +263,30 @@ public abstract class Text {
                 return cons.cast();
             }
 
-            State<Character> state2 = ((Reply.Ok<Character, Character>)cons.getReply()).rest;
+            Input<Character> input2 = ((Reply.Ok<Character, Character>)cons.getReply()).rest;
 
             final StringBuilder sb = new StringBuilder();
 
             do {
-                if (state2.end()) {
-                    final State<Character> state3 = state2;
+                if (input2.end()) {
+                    final Input<Character> input3 = input2;
                     return ConsumedT.consumed(
-                        () -> endOfInput(state3, "<char>")
+                        () -> endOfInput(input3, "<char>")
                     );
                 }
 
                 // Attempt to parse the closing enclose char.
-                final ConsumedT<Character, Character> cons2 = close.apply(state2);
+                final ConsumedT<Character, Character> cons2 = close.apply(input2);
                 if (cons2.getReply().isOk()) {
-                    state2 = ((Reply.Ok<Character, Character>)cons2.getReply()).rest;
+                    input2 = ((Reply.Ok<Character, Character>)cons2.getReply()).rest;
                     break;
                 }
 
-                sb.append(state2.current());
-                state2 = state2.next();
+                sb.append(input2.current());
+                input2 = input2.next();
             } while (true);
 
-            final State<Character> tail = state2;
+            final Input<Character> tail = input2;
             return ConsumedT.consumed(
                 () -> Reply.ok(
                     sb.toString(),

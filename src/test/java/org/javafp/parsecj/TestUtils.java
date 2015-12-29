@@ -10,7 +10,7 @@ public class TestUtils {
     static <A> void assertParserSucceeds(
             Parser<Character, A> p,
             String input) {
-        final Reply<Character, A> reply = p.parse(State.of(input));
+        final Reply<Character, A> reply = p.parse(Input.of(input));
         Assert.assertTrue(
             "Parse of \"" + input + "\"",
             reply.isOk()
@@ -21,7 +21,7 @@ public class TestUtils {
         Parser<Character, A> p,
         String input,
         Predicate<A> test) throws Exception {
-        final Reply<Character, A> reply = p.parse(State.of(input));
+        final Reply<Character, A> reply = p.parse(Input.of(input));
         Assert.assertTrue(
             "Parse of \"" + input + "\"",
             test.test(reply.getResult())
@@ -32,7 +32,7 @@ public class TestUtils {
             Parser<Character, A> p,
             String input,
             A expected) throws Exception {
-        final Reply<Character, A> reply = p.parse(State.of(input));
+        final Reply<Character, A> reply = p.parse(Input.of(input));
         Assert.assertEquals(
             "Parse of \"" + input + "\"",
             expected,
@@ -50,7 +50,7 @@ public class TestUtils {
             Parser<Character, Double> p,
             String input,
             Double expected) throws Exception {
-        final Reply<Character, Double> reply = p.parse(State.of(input));
+        final Reply<Character, Double> reply = p.parse(Input.of(input));
         Assert.assertEquals(
             "Parse of \"" + input + "\"",
             expected,
@@ -62,7 +62,7 @@ public class TestUtils {
     static <A> void assertParserFails(
             Parser<Character, A> p,
             String input) throws Exception {
-        final Reply<Character, A> reply = p.parse(State.of(input));
+        final Reply<Character, A> reply = p.parse(Input.of(input));
         Assert.assertTrue(
             "Parse of \"" + input + "\"",
             reply.isError()

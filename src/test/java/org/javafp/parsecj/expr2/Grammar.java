@@ -120,6 +120,6 @@ public abstract class Grammar {
     public static final Parser<Character, Expr> parser = parser();
 
     public static Reply<Character, Expr> parse(String s) {
-        return parser.parse(State.of(s));
+        return parser.parse(Input.of(s));
     }
 }

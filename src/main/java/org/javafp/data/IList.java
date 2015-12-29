@@ -267,11 +267,20 @@ public abstract class IList<T> implements Iterable<T> {
 
         @Override
         public boolean equals(IList<T> rhs) {
-            if (rhs.isEmpty()) {
-                return false;
-            } else {
-                return head.equals(rhs.head()) && tail.equals(rhs.tail());
+            IList<T> lhs = this;
+            while (!lhs.isEmpty()) {
+                if (rhs.isEmpty()) {
+                    return false;
+                } else {
+                    if (!lhs.head().equals(rhs.head())) {
+                        return false;
+                    }
+                }
+                lhs = lhs.tail();
+                rhs = rhs.tail();
             }
+
+            return rhs.isEmpty();
         }
 
         @Override

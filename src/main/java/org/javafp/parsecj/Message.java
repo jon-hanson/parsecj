@@ -10,7 +10,7 @@ import java.util.function.Supplier;
  * Note, the construction of a Message doesn't necessarily indicate an failure,
  * the message may be intended for use later on when a parse failure occurs.
  */
-public interface Message<S> {
+public interface Message<I> {
 
     final class Exception extends java.lang.RuntimeException {
         public final Message message;
@@ -20,27 +20,27 @@ public interface Message<S> {
         }
     }
 
-    static <S> Message<S> of(int pos, S sym, String expected) {
-        return new MessageImpl<S>(pos, sym, IList.of(expected));
+    static <I> Message<I> of(int pos, I sym, String expected) {
+        return new MessageImpl<I>(pos, sym, IList.of(expected));
     }
 
-    static <S> Message<S> of(int pos, String expected) {
-        return new MessageImpl<S>(pos, null, IList.of(expected));
+    static <I> Message<I> of(int pos, String expected) {
+        return new MessageImpl<I>(pos, null, IList.of(expected));
     }
 
-    static <S> Message<S> of(int pos) {
-        return new MessageImpl<S>(pos, null, IList.of());
+    static <I> Message<I> of(int pos) {
+        return new MessageImpl<I>(pos, null, IList.of());
     }
 
-    static <S> Message<S> of() {
+    static <I> Message<I> of() {
         return EmptyMessage.instance();
     }
 
-    static <S> Message<S> endOfInput(int pos, String expected) {
-        return new EndOfInput<S>(pos, IList.of(expected));
+    static <I> Message<I> endOfInput(int pos, String expected) {
+        return new EndOfInput<I>(pos, IList.of(expected));
     }
 
-    static <S> LazyMessage<S> lazy(Supplier<Message<S>> supplier) {
+    static <I> LazyMessage<I> lazy(Supplier<Message<I>> supplier) {
         return new LazyMessage(supplier);
     }
 
@@ -48,20 +48,20 @@ public interface Message<S> {
     int position();
 
     // The symbol that caused the error.
-    S symbol();
+    I symbol();
 
     // The names of the productions that were expected.
     IList<String> expected();
 
-    default LazyMessage<S> expect(String name) {
+    default LazyMessage<I> expect(String name) {
         return Message.lazy(() ->
             Message.of(position(), symbol(), name)
         );
     }
 
-    default Message<S> merge(Message<S> rhs) {
+    default Message<I> merge(Message<I> rhs) {
         return Message.lazy(() ->
-            new MessageImpl<S>(
+            new MessageImpl<I>(
                 this.position(),
                 this.symbol(),
                 this.expected().add(rhs.expected())
@@ -70,12 +70,12 @@ public interface Message<S> {
     }
 }
 
-final class EmptyMessage<S> implements Message<S> {
+final class EmptyMessage<I> implements Message<I> {
 
     private static final EmptyMessage<?> instance = new EmptyMessage<>();
 
-    static <S> EmptyMessage<S> instance() {
-        return (EmptyMessage<S>) instance;
+    static <I> EmptyMessage<I> instance() {
+        return (EmptyMessage<I>) instance;
     }
 
     private EmptyMessage() {
@@ -87,7 +87,7 @@ final class EmptyMessage<S> implements Message<S> {
     }
 
     @Override
-    public S symbol() {
+    public I symbol() {
         return null;
     }
 
@@ -112,18 +112,18 @@ final class EmptyMessage<S> implements Message<S> {
     }
 }
 
-final class MessageImpl<S> implements Message<S> {
+final class MessageImpl<I> implements Message<I> {
 
     // The position the Error occurred at.
     public final int pos;
 
     // The symbol that caused the Error.
-    public final S sym;
+    public final I sym;
 
     // The names of the productions that were expected.
     public final IList<String> expected;
 
-    public MessageImpl(int pos, S sym, IList<String> expected) {
+    public MessageImpl(int pos, I sym, IList<String> expected) {
         this.pos = pos;
         this.sym = sym;
         this.expected = Objects.requireNonNull(expected);
@@ -184,7 +184,7 @@ final class MessageImpl<S> implements Message<S> {
     }
 
     @Override
-    public S symbol() {
+    public I symbol() {
         return sym;
     }
 
@@ -197,7 +197,7 @@ final class MessageImpl<S> implements Message<S> {
 /**
  * Message indicating the
  */
-final class EndOfInput<S> implements Message<S> {
+final class EndOfInput<I> implements Message<I> {
 
     // The position the Error occurred at.
     public final int pos;
@@ -216,7 +216,7 @@ final class EndOfInput<S> implements Message<S> {
     }
 
     @Override
-    public S symbol() {
+    public I symbol() {
         return null;
     }
 
@@ -260,16 +260,16 @@ final class EndOfInput<S> implements Message<S> {
 /**
  * A lazily-constructed message.
  */
-final class LazyMessage<S> implements Message<S> {
+final class LazyMessage<I> implements Message<I> {
 
-    private Supplier<Message<S>> supplier;
-    private Message<S> value;
+    private Supplier<Message<I>> supplier;
+    private Message<I> value;
 
-    public LazyMessage(Supplier<Message<S>> supplier) {
+    public LazyMessage(Supplier<Message<I>> supplier) {
         this.supplier = supplier;
     }
 
-    private synchronized Message<S> get() {
+    private synchronized Message<I> get() {
         if (supplier != null) {
             value = supplier.get();
             supplier = null;
@@ -309,7 +309,7 @@ final class LazyMessage<S> implements Message<S> {
     }
 
     @Override
-    public S symbol() {
+    public I symbol() {
         return get().symbol();
     }
 

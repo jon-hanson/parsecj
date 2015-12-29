@@ -129,6 +129,6 @@ public class Grammar {
     public static final Parser<Character, Node> parser = wspaces.then(jvalue);
 
     public static Reply<Character, Node> parse(String str) {
-        return parser.parse(State.of(str));
+        return parser.parse(Input.of(str));
     }
 }

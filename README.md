@@ -162,18 +162,18 @@ which has an `apply` method:
 
 ```java
 @FunctionalInterface
-public interface Parser<S, A> {
-    ConsumedT<S, A> apply(State<S> state);
+public interface Parser<I, A> {
+    ConsumedT<I, A> apply(Input<I> input);
 
-    default Reply<S, A> parse(State<S> state) {
-        return apply(state).getReply();
+    default Reply<I, A> parse(Input<I> input) {
+        return apply(input).getReply();
     }
     // ...
 }
 ```
 
-I.e. a `Parser<S, A>` is essentially a function from a `State<S>` to a `ConsumedT<S, A>`,
-where `S` is the input stream symbol type (usually `Character`),
+I.e. a `Parser<I, A>` is essentially a function from a `Input<I>` to a `ConsumedT<I, A>`,
+where `I` is the input stream symbol type (usually `Character`),
 and `A` is the type of the value being parsed.
 For example, a parser that operates on character input and parses an integer would have type `Parser<Character, Integer>`.
 
@@ -188,17 +188,17 @@ The [State](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsec
 It provides several static `of` methods for constructing `State` instances from sequences of symbols:
 
 ```java
-public interface State<S> {
-    static <S> State<S> of(S[] symbols) {
-        return new ArrayState<S>(symbols);
+public interface Input<I> {
+    static <I> Input<I> of(I[] symbols) {
+        return new ArrayInput<I>(symbols);
     }
 
-    static State<Character> of(Character[] symbols) {
-        return new CharArrayState(symbols);
+    static Input<Character> of(Character[] symbols) {
+        return new CharArrayInput(symbols);
     }
 
-    static State<Character> of(String symbols) {
-        return new StringState(symbols);
+    static Input<Character> of(String symbols) {
+        return new StringInput(symbols);
     }
 
     // ...
@@ -224,8 +224,8 @@ A [Reply](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/
 or an error (represented by the `Error` subtype).
 
 ```java
-public abstract class Reply<S, A> {
-    public abstract <B> B match(Function<Ok<S, A>, B> ok, Function<Error<S, A>, B> error);
+public abstract class Reply<I, A> {
+    public abstract <B> B match(Function<Ok<I, A>, B> ok, Function<Error<I, A>, B> error);
 
     public abstract A getResult() throws Exception;
 
@@ -288,7 +288,7 @@ We'll cover a few of these in more detail.
 ### The `retn` Combinator
 
 ```Java
-<S, A> Parser<S, A> retn(A x)
+<I, A> Parser<I, A> retn(A x)
 ```
 
 The `retn` combinator creates a parser from a value.
@@ -299,8 +299,8 @@ It is perhaps unclear why you would need such a simple parser - the motivation s
 ### The `satisfy` Combinator
 
 ```java
-<S> Parser<S,S> satisfy(Predicate<S> test)
-<S> Parser<S,S> satisfy(S value)
+<S> Parser<I, I> satisfy(Predicate<I> test)
+<S> Parser<I, I> satisfy(I value)
 ```
 
 This combinator accepts the next input symbol only if it saisfies the criteria.
@@ -315,7 +315,7 @@ which will return the next character if it's a decimal digit.
 ### The `bind` Combinator
 
 ```Java
-<S,A,B> Parser<S,B> bind(Parser<S,? extends A> p, Function<A, Parser<S, B>> f)
+<I, A, B> Parser<I, B> bind(Parser<I, ? extends A> p, Function<A, Parser<I, B>> f)
 ```
 
 The bind combinator is the mechanism by which parsers are sequentially composed.
@@ -351,7 +351,7 @@ Note that `chr` is just a version of `satisfy` specialised for the Character the
 ### The `or` Combinator
 
 ```java
-<S, A> Parser<S, A> or(Parser<S, A> p, Parser<S, A> q)
+<I, A> Parser<I, A> or(Parser<I, A> p, Parser<I, A> q)
 ```
 
 The `or` combinator provides the means to express a choice between one parser and another. It corresponds to production rules of the form:

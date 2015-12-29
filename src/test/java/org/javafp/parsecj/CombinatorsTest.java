@@ -69,16 +69,16 @@ public class CombinatorsTest {
     public void testLabel() throws Exception {
         final String unlikelyName = "6b%gfb$nj";
         final Parser<Character, Character> p = satisfy('A').label(unlikelyName);
-        final String msg = p.parse(State.of("FAIL")).getMsg();
+        final String msg = p.parse(Input.of("FAIL")).getMsg();
         Assert.assertTrue("Parse error contains label", msg.contains(unlikelyName));
     }
 
     @Test
     public void testAttempt() throws Exception {
         final Parser<Character, String> p = string("abcde");
-        Assert.assertTrue("parse of 'abcde' should consume input", p.apply(State.of("abcde")).isConsumed());
-        Assert.assertTrue("parse of 'abcd' should consume input", p.apply(State.of("abcd")).isConsumed());
-        Assert.assertFalse("attempt parse of 'abcd' will not consume input", p.attempt().apply(State.of("abcd")).isConsumed());
+        Assert.assertTrue("parse of 'abcde' should consume input", p.apply(Input.of("abcde")).isConsumed());
+        Assert.assertTrue("parse of 'abcd' should consume input", p.apply(Input.of("abcd")).isConsumed());
+        Assert.assertFalse("attempt parse of 'abcd' will not consume input", p.attempt().apply(Input.of("abcd")).isConsumed());
     }
 
     @Test

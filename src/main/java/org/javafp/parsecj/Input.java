@@ -6,53 +6,53 @@ import java.util.*;
 
 /**
  * An interface for parseable, immutable symbol streams.
- * @param <S> Input stream symbol type.
+ * @param <I> Input stream symbol type.
  */
-public interface State<S> {
-    static <S> State<S> of(S[] symbols) {
-        return new ArrayState<S>(symbols);
+public interface Input<I> {
+    static <I> Input<I> of(I[] symbols) {
+        return new ArrayInput<I>(symbols);
     }
 
-    static State<Character> of(Character[] symbols) {
-        return new CharArrayState(symbols);
+    static Input<Character> of(Character[] symbols) {
+        return new CharArrayInput(symbols);
     }
 
-    static State<Character> of(String symbols) {
-        return new StringState(symbols);
+    static Input<Character> of(String symbols) {
+        return new StringInput(symbols);
     }
 
     int position();
 
     boolean end();
 
-    S current();
+    I current();
 
-    List<S> current(int n);
+    List<I> current(int n);
 
-    default State<S> next() {
+    default Input<I> next() {
         return next(1);
     }
 
-    State<S> next(int n);
+    Input<I> next(int n);
 }
 
-interface CharState extends State<Character> {
+interface CharInput extends Input<Character> {
     CharSequence getCharSequence();
     CharSequence getCharSequence(int length);
 }
 
-class StringState implements CharState {
+class StringInput implements CharInput {
 
     protected final String symbols;
 
     protected final int pos;
 
-    StringState(String symbols, int pos) {
+    StringInput(String symbols, int pos) {
         this.symbols = symbols;
         this.pos = pos;
     }
 
-    StringState(String symbols) {
+    StringInput(String symbols) {
         this(symbols, 0);
     }
 
@@ -81,13 +81,13 @@ class StringState implements CharState {
     }
 
     @Override
-    public StringState next() {
-        return new StringState(symbols, pos + 1);
+    public StringInput next() {
+        return new StringInput(symbols, pos + 1);
     }
 
     @Override
-    public StringState next(int n) {
-        return new StringState(symbols, pos + n);
+    public StringInput next(int n) {
+        return new StringInput(symbols, pos + n);
     }
 
     @Override
@@ -101,18 +101,18 @@ class StringState implements CharState {
     }
 }
 
-class ArrayState<S> implements State<S> {
+class ArrayInput<I> implements Input<I> {
 
-    protected final S[] symbols;
+    protected final I[] symbols;
 
     protected final int pos;
 
-    ArrayState(S[] symbols, int pos) {
+    ArrayInput(I[] symbols, int pos) {
         this.symbols = symbols;
         this.pos = pos;
     }
 
-    ArrayState(S[] symbols) {
+    ArrayInput(I[] symbols) {
         this(symbols, 0);
     }
 
@@ -127,33 +127,33 @@ class ArrayState<S> implements State<S> {
     }
 
     @Override
-    public S current() {
+    public I current() {
         return pos < symbols.length ? symbols[pos] : null;
     }
 
     @Override
-    public List<S> current(int n) {
+    public List<I> current(int n) {
         return Arrays.asList(symbols).subList(pos, pos + n);
     }
 
     @Override
-    public State<S> next() {
-        return new ArrayState<S>(symbols, pos + 1);
+    public Input<I> next() {
+        return new ArrayInput<I>(symbols, pos + 1);
     }
 
     @Override
-    public State<S> next(int n) {
-        return new ArrayState<S>(symbols, pos + n);
+    public Input<I> next(int n) {
+        return new ArrayInput<I>(symbols, pos + n);
     }
 }
 
-class CharArrayState extends ArrayState<Character> implements CharState {
+class CharArrayInput extends ArrayInput<Character> implements CharInput {
 
-    CharArrayState(Character[] symbols, int i) {
+    CharArrayInput(Character[] symbols, int i) {
         super(symbols, i);
     }
 
-    CharArrayState(Character[] symbols) {
+    CharArrayInput(Character[] symbols) {
         super(symbols);
     }
 

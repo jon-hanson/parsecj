@@ -6,20 +6,20 @@ import java.util.function.Supplier;
  * ConsumedT is a discriminated union between a Consumed type and an Empty type.
  * Wraps a parse result (Reply) and indicates whether the parser consumed input
  * in the process of computing the parse result.
- * @param <S> Input stream symbol type.
+ * @param <I> Input stream symbol type.
  * @param <A> Parse result type
  */
-public interface ConsumedT<S, A> {
+public interface ConsumedT<I, A> {
 
-    static <S, A> ConsumedT<S, A> consumed(Supplier<Reply<S, A>> supplier) {
-        return new Consumed<S, A>(supplier);
+    static <I, A> ConsumedT<I, A> consumed(Supplier<Reply<I, A>> supplier) {
+        return new Consumed<I, A>(supplier);
     }
 
-    static <S, A> ConsumedT<S, A> empty(Reply<S, A> reply) {
-        return new Empty<S, A>(reply);
+    static <I, A> ConsumedT<I, A> empty(Reply<I, A> reply) {
+        return new Empty<I, A>(reply);
     }
 
-    static <S, A> ConsumedT<S, A> of(boolean consumed, Supplier<Reply<S, A>> supplier) {
+    static <I, A> ConsumedT<I, A> of(boolean consumed, Supplier<Reply<I, A>> supplier) {
         return consumed ?
             ConsumedT.consumed(supplier) :
             ConsumedT.empty(supplier.get());
@@ -27,10 +27,10 @@ public interface ConsumedT<S, A> {
 
     boolean isConsumed();
 
-    Reply<S, A> getReply();
+    Reply<I, A> getReply();
 
-    default <B> ConsumedT<S, B> cast() {
-        return (ConsumedT<S, B>)this;
+    default <B> ConsumedT<I, B> cast() {
+        return (ConsumedT<I, B>)this;
     }
 }
 
@@ -38,15 +38,15 @@ public interface ConsumedT<S, A> {
  * A parse result that indicates the parser did consume some input.
  * Consumed is lazy with regards to the reply it wraps.
  */
-final class Consumed<S, A> implements ConsumedT<S, A> {
+final class Consumed<I, A> implements ConsumedT<I, A> {
 
     // Lazy Reply supplier.
-    private Supplier<Reply<S, A>> supplier;
+    private Supplier<Reply<I, A>> supplier;
 
     // Lazy-initialised Reply.
-    private Reply<S, A> reply;
+    private Reply<I, A> reply;
 
-    Consumed(Supplier<Reply<S, A>> supplier) {
+    Consumed(Supplier<Reply<I, A>> supplier) {
         this.supplier = supplier;
     }
 
@@ -56,7 +56,7 @@ final class Consumed<S, A> implements ConsumedT<S, A> {
     }
 
     @Override
-    public Reply<S, A> getReply() {
+    public Reply<I, A> getReply() {
         if (supplier != null) {
             reply = supplier.get();
             supplier = null;
@@ -69,11 +69,11 @@ final class Consumed<S, A> implements ConsumedT<S, A> {
 /**
  * A parse result that indicates the parser did not consume any input.
  */
-final class Empty<S, A> implements ConsumedT<S, A> {
+final class Empty<I, A> implements ConsumedT<I, A> {
 
-    private final Reply<S, A> reply;
+    private final Reply<I, A> reply;
 
-    Empty(Reply<S, A> reply) {
+    Empty(Reply<I, A> reply) {
         this.reply = reply;
     }
 
@@ -83,7 +83,7 @@ final class Empty<S, A> implements ConsumedT<S, A> {
     }
 
     @Override
-    public Reply<S, A> getReply() {
+    public Reply<I, A> getReply() {
         return reply;
     }
 }

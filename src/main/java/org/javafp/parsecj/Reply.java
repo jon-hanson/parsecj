@@ -6,30 +6,30 @@ import java.util.function.Function;
 
 /**
  * A Parser result, essentially a discriminated union between a Success and an Error.
- * @param <S>       input stream symbol type
+ * @param <I>       input stream symbol type
  * @param <A>       the parser value type
  */
-public abstract class Reply<S, A> {
+public abstract class Reply<I, A> {
 
-    public static <S, A> Ok<S, A> ok(A result, State<S> tail, Message<S> msg) {
-        return new Ok<S, A>(result, tail, msg);
+    public static <I, A> Ok<I, A> ok(A result, Input<I> tail, Message<I> msg) {
+        return new Ok<I, A>(result, tail, msg);
     }
 
-    public static <S> Ok<S, Unit> ok(State<S> tail, Message<S> msg) {
-        return new Ok<S, Unit>(null, tail, msg);
+    public static <I> Ok<I, Unit> ok(Input<I> tail, Message<I> msg) {
+        return new Ok<I, Unit>(null, tail, msg);
     }
 
-    public static <S, A> Error<S, A> error(Message<S> msg) {
-        return new Error<S, A>(msg);
+    public static <I, A> Error<I, A> error(Message<I> msg) {
+        return new Error<I, A>(msg);
     }
 
-    public final Message<S> msg;
+    public final Message<I> msg;
 
-    Reply(Message<S> msg) {
+    Reply(Message<I> msg) {
         this.msg = msg;
     }
 
-    public abstract <B> B match(Function<Ok<S, A>, B> ok, Function<Error<S, A>, B> error);
+    public abstract <B> B match(Function<Ok<I, A>, B> ok, Function<Error<I, A>, B> error);
 
     public abstract A getResult() throws Exception;
 
@@ -42,10 +42,10 @@ public abstract class Reply<S, A> {
 
     /**
      * A successful parse result.
-     * @param <S>       input stream symbol type
+     * @param <I>       input stream symbol type
      * @param <A>       the parser value type
      */
-    public static final class Ok<S, A> extends Reply<S, A> {
+    public static final class Ok<I, A> extends Reply<I, A> {
 
         /**
          * The parsed result.
@@ -55,16 +55,16 @@ public abstract class Reply<S, A> {
         /**
          * The remaining input stream state.
          */
-        public final State<S> rest;
+        public final Input<I> rest;
 
-        Ok(A result, State<S> rest, Message<S> msg) {
+        Ok(A result, Input<I> rest, Message<I> msg) {
             super(msg);
             this.result = result;
             this.rest = rest;
         }
 
         @Override
-        public <U> U match(Function<Ok<S, A>, U> ok, Function<Error<S, A>, U> error) {
+        public <U> U match(Function<Ok<I, A>, U> ok, Function<Error<I, A>, U> error) {
             return ok.apply(this);
         }
 
@@ -116,22 +116,22 @@ public abstract class Reply<S, A> {
 
     /**
      * An unsuccessful parse result.
-     * @param <S>       input stream symbol type
+     * @param <I>       input stream symbol type
      * @param <A>       the parser value type
      */
-    public static final class Error<S, A> extends Reply<S, A> {
+    public static final class Error<I, A> extends Reply<I, A> {
 
-        Error(Message<S> msg) {
+        Error(Message<I> msg) {
             super(msg);
         }
 
         @Override
-        public <B> B match(Function<Ok<S, A>, B> ok, Function<Error<S, A>, B> error) {
+        public <B> B match(Function<Ok<I, A>, B> ok, Function<Error<I, A>, B> error) {
             return error.apply(this);
         }
 
-        public <B> Reply<S, B> cast() {
-            return (Error<S, B>)this;
+        public <B> Reply<I, B> cast() {
+            return (Error<I, B>)this;
         }
 
         @Override
@@ -170,4 +170,3 @@ public abstract class Reply<S, A> {
         }
     }
 }
-
