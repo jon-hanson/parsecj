@@ -265,7 +265,7 @@ public abstract class Combinators {
      * @return          the parser
      */
     public static <I> Parser<I, I> satisfy(I value) {
-        return label(satisfy(v -> value.equals(v)), value.toString());
+        return label(satisfy(value::equals), value.toString());
     }
 
     /**

@@ -295,5 +295,5 @@ public abstract class Text {
                 )
             );
         };
-    };
+    }
 }
