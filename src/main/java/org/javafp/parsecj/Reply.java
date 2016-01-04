@@ -16,7 +16,7 @@ public abstract class Reply<I, A> {
     }
 
     public static <I> Ok<I, Unit> ok(Input<I> tail, Message<I> msg) {
-        return new Ok<I, Unit>(null, tail, msg);
+        return new Ok<  I, Unit>(null, tail, msg);
     }
 
     public static <I, A> Error<I, A> error(Message<I> msg) {
