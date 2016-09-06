@@ -196,6 +196,22 @@ public abstract class Combinators {
             );
     }
 
+    /**
+     * A parser which always fails
+     * @param <I>       the input symbol type
+     * @param <A>       the parser value type
+     * @param <A>       the parser value type
+     * @return          the parser
+     */
+    public static <I, A> Parser<I, A> fail(String msg) {
+        return input ->
+            empty(
+                Reply.error(
+                    Message.lazy(() -> Message.of(msg, input.position()))
+                )
+            );
+    }
+
     private static final String eofName = "EOF";
 
     /**

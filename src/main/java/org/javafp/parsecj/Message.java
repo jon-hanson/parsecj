@@ -32,6 +32,10 @@ public interface Message<I> {
         return new MessageImpl<I>(pos, null, IList.of());
     }
 
+    static <I> Message<I> of(String msg, int pos) {
+        return new ErrorMessage<I>(pos, msg);
+    }
+
     static <I> Message<I> of() {
         return EmptyMessage.instance();
     }
@@ -195,7 +199,43 @@ final class MessageImpl<I> implements Message<I> {
 }
 
 /**
- * Message indicating the
+ * Message containing an error.
+ */
+final class ErrorMessage<I> implements Message<I> {
+    // The position the Error occurred at.
+    public final int pos;
+
+    // The error message.
+    public final String error;
+
+    ErrorMessage(int pos, String error) {
+        this.pos = pos;
+        this.error = error;
+    }
+
+    @Override
+    public int position() {
+        return pos;
+    }
+
+    @Override
+    public I symbol() {
+        return null;
+    }
+
+    @Override
+    public IList<String> expected() {
+        return IList.of();
+    }
+
+    @Override
+    public String toString() {
+        return error + " at position " + pos;
+    }
+}
+
+/**
+ * Message indicating the end of the input has been reached
  */
 final class EndOfInput<I> implements Message<I> {
 
