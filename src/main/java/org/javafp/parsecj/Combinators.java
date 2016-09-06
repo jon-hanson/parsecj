@@ -198,8 +198,8 @@ public abstract class Combinators {
 
     /**
      * A parser which always fails
+     * @param msg       error message
      * @param <I>       the input symbol type
-     * @param <A>       the parser value type
      * @param <A>       the parser value type
      * @return          the parser
      */
