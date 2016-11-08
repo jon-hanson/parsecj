@@ -137,6 +137,19 @@ public abstract class Combinators {
     }
 
     /**
+     * Functor map operation.
+     * @param p         a parser
+     * @param f         a function map over the parser success value
+     * @param <I>
+     * @param <A>
+     * @param <B>
+     * @return          a parser which applies a function to the successful result.
+     */
+    public static <I, A, B> Parser<I, B> map(Parser<I, A> p, Function<A, B> f) {
+        return p.bind(f.andThen(Combinators::retn));
+    }
+
+    /**
      * Convert a parser which throws a Message.Exception into one
      * which converts the exception into an Consumed error.
      * @param p         the unsafe parser

@@ -37,6 +37,14 @@ public class CombinatorsTest {
     }
 
     @Test
+    public void testMap() throws Exception {
+        final Parser<Character, String> p =
+            satisfy('a').map(Object::toString);
+        assertParserFails(p, "b");
+        assertParserSucceedsWithValue(p, "a");
+    }
+
+    @Test
     public void testSatisfy_A() throws Exception {
         final Parser<Character, Character> p = satisfy('a');
         assertParserFails(p, "ba");

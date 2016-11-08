@@ -98,6 +98,13 @@ public interface Parser<I, A> {
     }
 
     /**
+     * @see Combinators#map
+     */
+    default <B> Parser<I, B> map(Function<A, B> f) {
+        return Combinators.map(this, f);
+    }
+
+    /**
      * @see Combinators#or
      */
     default Parser<I, A> or(Parser<I, ? extends A> q) {
