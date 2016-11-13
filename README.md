@@ -124,14 +124,14 @@ and combining them using the `bind`, `then` and `retn` combinators.
 The parser can be used as follows:
 
 ```java
-        int i = sum.parse(State.of("1+2")).getResult();
+        int i = sum.parse(Input.of("1+2")).getResult();
         assert i == 3;
 ```
 
 Meanwhile, if we give it invalid input:
 
 ```java
-        int i2 = sum.parse(State.of("1+z")).getResult();
+        int i2 = sum.parse(Input.of("1+z")).getResult();
 ```
 
 then it throws an exception with an error message that pinpoints the problem:
@@ -148,7 +148,7 @@ A typical approach to using the library to implement a parser for a language is 
 2. Define a grammar for the language - a set of production rules.
 3. Translate the production rules into parsers using the library combinators. The parsers will typically construct values from the model.
 4. Book-end the parser for the top-level element with the `eof` combinator.
-5. Invoke the parser by passing a `State` object, usually constructed from a `String`, to the `parse` method.
+5. Invoke the parser by passing a `Input` object, usually constructed from a `String`, to the `parse` method.
 6. The resultant `Reply` result holds either the successfully parsed value or an error message.
 
 ## Types
@@ -182,10 +182,10 @@ and combinators use this method to compose parsers.
 However, since the `ConsumedT` type returned by `apply` is an intermediate type,
 the `parse` method is also provided to apply the parser and extract the `Reply` parse result.
 
-### `State`
+### `Input`
 
-The [State](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/State.html) interface is an abstraction representing an immutable input state.
-It provides several static `of` methods for constructing `State` instances from sequences of symbols:
+The [Input](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Input.html) interface is an abstraction representing an immutable input state.
+It provides several static `of` methods for constructing `Input` instances from sequences of symbols:
 
 ```java
 public interface Input<I> {
@@ -264,18 +264,20 @@ using the combinators provided by the library.
 
 ## Combinators
 
+Combinators create new parsers by composing existing ones.
 The [org.javafp.parsecj.Combinators](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html) package provides the following core combinator parsers:
 
-Name | Parser Description | Returns
+Name | Parser Description
 -----|-------------|--------
 `retn(value)` | Always succeeds. | The supplied value
-`bind(p, f)` | First applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser that is then applied. | Result of `q`
-`fail()` | Always fails. | An error
-`satisfy(test)` | Applies a test to the next input symbol. | The symbol
-`satisfy(value)` | Succeeds if the next input symbol equals `value`. | The symbol
-`eof()` | Succeeds if the end of the input is reached. | UNIT
-`then(p, q)` | First applies the parser `p`. If it succeeds it then applies parser `q`. | Result of `q`
-`or(p, q)` | First applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`. | Result of succeeding parser
+`bind(p, f)` | First applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser that is then applied.
+`map(p, f)` | Functor map operation - map a function over the result of a successful parse.
+`fail()` | Always fails.
+`satisfy(test)` | Applies a test to the next input symbol.
+`satisfy(value)` | Succeeds if the next input symbol equals `value`.
+`eof()` | Succeeds if the end of the input is reached.
+`then(p, q)` | First applies the parser `p`. If it succeeds it then applies parser `q`.
+`or(p, q)` | First applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`.
 
 (see the [Combinators javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html) for the full list)
 
