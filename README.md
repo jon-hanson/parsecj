@@ -1,6 +1,8 @@
 ParsecJ
 ============
 
+![ParsecJ](https://github.com/jon-hanson/parsecj/blob/master/ParsecJ.png)
+
 - [Introduction](#introduction)
   - [Parser Combinators](#parser-combinators)
 - [Getting Started](#getting-started)
@@ -24,8 +26,6 @@ ParsecJ
 - [Related Work](#related-work)
 
 # Introduction
-
-![ParsecJ](https://github.com/jon-hanson/parsecj/blob/master/ParsecJ.png)
 
 **ParsecJ** is a Java monadic parser combinator framework for constructing [LL(1) parsers](http://en.wikipedia.org/wiki/LL_parser).
 It is a port of the Haskell [Parsec library](https://hackage.haskell.org/package/parsec).
