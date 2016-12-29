@@ -114,7 +114,7 @@ class Test {
             intr.bind(x ->                  // parse an integer and bind the result to the variable x.
                 chr('+').then(              // parse a '+' sign, and throw away the result.
                     intr.bind(y ->          // parse an integer and bind the result to the variable y.
-                        retn(x+y))));       // return the sum of a and y.
+                        retn(x+y))));       // return the sum of x and y.
     }
 }
 ```
