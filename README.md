@@ -455,7 +455,7 @@ final Parser<Character, Void> eof = eof();
 final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
 
 final String s = "((1.2*3.4)+5.6)";
-System.out.println(s + " = " + parser.parse(State.of(s)).getResult());
+System.out.println(s + " = " + parser.parse(Input.of(s)).getResult());
 ```
 
 The correspondence between the production rules of the simple expression language and the above set of parsers should be apparent.
