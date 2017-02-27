@@ -307,7 +307,7 @@ It is perhaps unclear why you would need such a simple parser - the motivation s
 <S> Parser<I, I> satisfy(I value)
 ```
 
-This combinator accepts the next input symbol only if it saisfies the criteria.
+This combinator accepts the next input symbol only if it satisfies the criteria.
 In the first variation the criteria is expressed by the `test` predicate,
 which gets applied to to the next symbol, and if is passes then the symbol is returned.
 The second variation is simply a shorthand for `satisfy(x -> x.equals(value))`,
