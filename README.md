@@ -269,9 +269,9 @@ using the combinators provided by the library.
 Combinators create new parsers by composing existing ones.
 The [org.javafp.parsecj.Combinators](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html) package provides the following core combinator parsers:
 
-Name | Parser Description
------|-------------|--------
-`retn(value)` | Always succeeds. | The supplied value
+| Name | Parser Description
+|-----|-------------
+`retn(value)` | Always succeeds.
 `bind(p, f)` | First applies the parser `p`. If it succeeds it then applies the function `f` to the result to yield another parser that is then applied.
 `map(p, f)` | Functor map operation - map a function over the result of a successful parse.
 `fail()` | Always fails.
