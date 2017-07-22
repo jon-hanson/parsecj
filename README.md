@@ -34,7 +34,7 @@ The implementation is, where possible, a direct Java port of the Haskell code ou
 Some notable features include:
 * Composable parser combinators, which provide a DSL for implementing parsers from grammars.
 * Informative error messages in the event of parse failures.
-* Thread-safe due to immutable parsers and input states.
+* Thread-safe due to immutable parsers and inputs.
 * A combinator approach that mirrors that of Parsec, its Haskell counterpart, allowing grammars written for Parsec to be translated into equivalent ParsecJ grammars.
 * Lightweight library (the Jar file size is less than 50Kb) with zero dependencies (aside from JUnit and JMH for the tests).
 
