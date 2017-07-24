@@ -2,6 +2,7 @@ package org.javafp.parsecj.json;
 
 import org.javafp.data.*;
 import org.javafp.parsecj.*;
+import org.javafp.parsecj.input.Input;
 
 import java.util.*;
 
@@ -85,7 +86,7 @@ public class Grammar {
                 tok(chr(','))
             )
         ).bind(l ->
-            retn(Node.array(IList.toList(l)))
+            retn(Node.array(l.toList()))
         ).label("array");
 
     private static LinkedHashMap<String, Node> toMap(IList<Map.Entry<String, Node>> fields) {
@@ -122,7 +123,7 @@ public class Grammar {
                 jtext,
                 jarray,
                 jobject
-            ).label("JSON value")
+            ).label("value")
         );
     }
 

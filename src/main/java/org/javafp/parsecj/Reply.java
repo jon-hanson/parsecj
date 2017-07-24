@@ -1,6 +1,7 @@
 package org.javafp.parsecj;
 
 import org.javafp.data.Unit;
+import org.javafp.parsecj.input.Input;
 
 import java.util.function.Function;
 

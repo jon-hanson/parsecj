@@ -1,8 +1,9 @@
 package org.javafp.parsecj;
 
 import org.javafp.data.IList;
+import org.javafp.parsecj.utils.*;
 
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -21,15 +22,15 @@ public interface Message<I> {
     }
 
     static <I> Message<I> of(int pos, I sym, String expected) {
-        return new MessageImpl<I>(pos, sym, IList.of(expected));
+        return new MessageImpl<I>(pos, sym, Sets.singleton(expected));
     }
 
     static <I> Message<I> of(int pos, String expected) {
-        return new MessageImpl<I>(pos, null, IList.of(expected));
+        return new MessageImpl<I>(pos, null, Sets.singleton(expected));
     }
 
     static <I> Message<I> of(int pos) {
-        return new MessageImpl<I>(pos, null, IList.of());
+        return new MessageImpl<I>(pos, null, Sets.empty());
     }
 
     static <I> Message<I> of(String msg, int pos) {
@@ -41,7 +42,7 @@ public interface Message<I> {
     }
 
     static <I> Message<I> endOfInput(int pos, String expected) {
-        return new EndOfInput<I>(pos, IList.of(expected));
+        return new EndOfInput<I>(pos, Sets.singleton(expected));
     }
 
     static <I> LazyMessage<I> lazy(Supplier<Message<I>> supplier) {
@@ -55,7 +56,7 @@ public interface Message<I> {
     I symbol();
 
     // The names of the productions that were expected.
-    IList<String> expected();
+    Set<String> expected();
 
     default LazyMessage<I> expect(String name) {
         return Message.lazy(() ->
@@ -68,7 +69,7 @@ public interface Message<I> {
             new MessageImpl<I>(
                 this.position(),
                 this.symbol(),
-                this.expected().add(rhs.expected())
+                Sets.union(this.expected(), (rhs.expected()))
             )
         );
     }
@@ -96,8 +97,8 @@ final class EmptyMessage<I> implements Message<I> {
     }
 
     @Override
-    public IList<String> expected() {
-        return IList.of();
+    public Set<String> expected() {
+        return Sets.empty();
     }
 
     @Override
@@ -125,9 +126,9 @@ final class MessageImpl<I> implements Message<I> {
     public final I sym;
 
     // The names of the productions that were expected.
-    public final IList<String> expected;
+    public final Set<String> expected;
 
-    public MessageImpl(int pos, I sym, IList<String> expected) {
+    public MessageImpl(int pos, I sym, Set<String> expected) {
         this.pos = pos;
         this.sym = sym;
         this.expected = Objects.requireNonNull(expected);
@@ -168,13 +169,8 @@ final class MessageImpl<I> implements Message<I> {
                     "Unexpected '" + sym +
                         "' at position " + (pos == -1 ? "EOF" : pos) +
                         ". Expecting nothing";
-            case 1:
-                return
-                    "Unexpected '" + sym +
-                        "' at position " + (pos == -1 ? "EOF" : pos) +
-                        ". Expecting [" + expected.head() + ']';
             default:
-                final String expectedStr = expected.foldr1((x, y) -> x + ',' + y);
+                final String expectedStr = Folds.foldRight1((x, y) -> x + ',' + y, expected);
                 return
                     "Unexpected '" + sym +
                         "' at position " + (pos == -1 ? "EOF" : pos) +
@@ -193,7 +189,7 @@ final class MessageImpl<I> implements Message<I> {
     }
 
     @Override
-    public IList<String> expected() {
+    public Set<String> expected() {
         return expected;
     }
 }
@@ -224,8 +220,8 @@ final class ErrorMessage<I> implements Message<I> {
     }
 
     @Override
-    public IList<String> expected() {
-        return IList.of();
+    public Set<String> expected() {
+        return Sets.empty();
     }
 
     @Override
@@ -243,9 +239,9 @@ final class EndOfInput<I> implements Message<I> {
     public final int pos;
 
     // The names of the productions that were expected.
-    public final IList<String> expected;
+    public final Set<String> expected;
 
-    EndOfInput(int pos, IList<String> expected) {
+    EndOfInput(int pos, Set<String> expected) {
         this.pos = pos;
         this.expected = expected;
     }
@@ -261,7 +257,7 @@ final class EndOfInput<I> implements Message<I> {
     }
 
     @Override
-    public IList<String> expected() {
+    public Set<String> expected() {
         return expected;
     }
 
@@ -289,7 +285,7 @@ final class EndOfInput<I> implements Message<I> {
 
     @Override
     public String toString() {
-        final String expectedStr = expected.isEmpty() ? "" : expected.foldr1((x, y) -> x + ',' + y);
+        final String expectedStr = expected.isEmpty() ? "" : Folds.foldRight1((x, y) -> x + ',' + y, expected);
         return
             "\"Unexpected EOF at position " + pos +
                 ". Expecting one of [" +
@@ -354,7 +350,7 @@ final class LazyMessage<I> implements Message<I> {
     }
 
     @Override
-    public IList<String> expected() {
+    public Set<String> expected() {
         return get().expected();
     }
 }

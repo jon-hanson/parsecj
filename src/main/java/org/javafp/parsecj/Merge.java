@@ -1,5 +1,7 @@
 package org.javafp.parsecj;
 
+import org.javafp.parsecj.input.Input;
+
 /**
  * Utility function for merging parse messages.
  */

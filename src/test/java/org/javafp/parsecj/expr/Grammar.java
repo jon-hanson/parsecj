@@ -2,6 +2,7 @@ package org.javafp.parsecj.expr;
 
 import org.javafp.data.Unit;
 import org.javafp.parsecj.*;
+import org.javafp.parsecj.input.Input;
 import org.junit.Test;
 
 import java.util.function.BinaryOperator;

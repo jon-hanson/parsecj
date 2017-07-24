@@ -29,6 +29,6 @@ public class GrammarTest {
 
     @Test
     public void testFailure() throws Exception {
-        assertFailure("3*-max(4%+(5bp+),-2bp)-1", "Unexpected ')' at position 15. Expecting one of [num,brack-expr,alphaNum,+,-]");
+        assertFailure("3*-max(4%+(5bp+),-2bp)-1", "Unexpected ')' at position 15. Expecting one of [alphaNum,brack-expr,+,-,num]");
     }
 }

@@ -1,5 +1,6 @@
 package org.javafp.parsecj;
 
+import org.javafp.parsecj.input.Input;
 import org.junit.Assert;
 
 import java.util.function.Predicate;
