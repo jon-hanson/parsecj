@@ -29,10 +29,22 @@ public abstract class Sets {
             }
             return union(lhsSS, rhsSS, ts);
         } else {
-            final HashSet<T> ts = new HashSet<T>(lhs.size() + rhs.size());
+            final HashSet<T> ts = new HashSet<T>(capacity(lhs.size() + rhs.size()));
             ts.addAll(lhs);
             ts.addAll(rhs);
             return ts;
+        }
+    }
+
+    private static final int MAX_POWER_OF_TWO = 1 << (Integer.SIZE - 2);
+
+    static int capacity(int expectedSize) {
+        if (expectedSize < 3) {
+            return expectedSize + 1;
+        } else if (expectedSize < MAX_POWER_OF_TWO) {
+            return (int) ((float) expectedSize / 0.75F + 1.0F);
+        } else {
+            return Integer.MAX_VALUE;
         }
     }
 }
