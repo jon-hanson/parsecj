@@ -41,8 +41,7 @@ Some notable features include:
 ## Parser Combinators
 
 A typical approach to implementing parsers for special-purpose languages
-is to use a parser generation tool,
-such as Yacc/Bison or ANTLR.
+is to use a parser generation tool, such as Yacc/Bison or ANTLR.
 With these tools the language is expressed as a series of production rules,
 described using a grammar language specific to the tool.
 The parsing code for the language is then generated from the grammar definition.
