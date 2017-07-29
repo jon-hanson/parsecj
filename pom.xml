@@ -3,7 +3,7 @@
 
     <groupId>org.javafp</groupId>
     <artifactId>parsecj</artifactId>
-    <version>0.4-SNAPSHOT</version>
+    <version>0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
@@ -14,7 +14,6 @@
         <connection>scm:git:git@github.com:jon-hanson/parsecj.git</connection>
         <developerConnection>scm:git:git@github.com:jon-hanson/parsecj.git</developerConnection>
         <url>http://github.com:jon-hanson/parsecj/tree/master</url>
-     <tag>HEAD</tag>
   </scm>
 
     <issueManagement>
