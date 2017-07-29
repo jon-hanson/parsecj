@@ -85,7 +85,7 @@ Add this dependency to your project pom.xml:
 <dependency>
     <groupId>org.javafp</groupId>
     <artifactId>parsecj</artifactId>
-    <version>0.4</version>
+    <version>0.5</version>
 </dependency>
 ```
 
