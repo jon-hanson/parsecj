@@ -75,7 +75,7 @@ ParsecJ requires Java 1.8 (or higher).
 
 * **Release builds** are available on the [Releases](http://github.com/jon-hanson/parsecj/releases) page.
 * **Maven Artifacts** are available on the [Sonatype Nexus repository](https://repository.sonatype.org/#nexus-search;quick~parsecj)
-* **Javadocs** are for the latest build are on the [Javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest) page.
+* **Javadocs** are for the latest build are on the [Javadocs](http://jon-hanson.github.io/parsecj/javadocs/) page.
 
 ## Maven
 
