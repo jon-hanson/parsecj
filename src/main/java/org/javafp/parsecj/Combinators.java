@@ -949,8 +949,8 @@ public abstract class Combinators {
      * A parser for an operand followed by one or more operands (<code>p</code>)
      * separated by operators (<code>op</code>).
      * This parser can for example be used to eliminate left recursion which typically occurs in expression grammars.
-     * @param p         parser
-     * @param op        parser for the operand
+     * @param p         parser for the operand
+     * @param op        parser for the operator
      * @param <I>       the input symbol type
      * @param <A>       the parser value type
      * @return          the parser
