@@ -39,7 +39,7 @@ public class Grammar {
             hexDigit.bind(d1 ->
                 hexDigit.bind(d2 ->
                     hexDigit.bind(d3 ->
-                        retn((d0<<0x3) & (d1<<0x2) & (d2<<0x1) & d0)
+                        retn((d0.intValue() << 12) | (d1.intValue() << 8) | (d2.intValue() << 4) | d3.intValue())
                     )
                 )
             )
