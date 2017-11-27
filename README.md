@@ -448,7 +448,7 @@ final Parser<Character, Double> binOpExpr =
 expr.set(choice(dble, binOpExpr));
 
 // Hint to the compiler for the type of eof.
-final Parser<Character, Void> eof = eof();
+final Parser<Character, Unit> eof = eof();
 
 // parser = expr end
 final Parser<Character, Double> parser = expr.bind(d -> eof.then(retn(d)));
