@@ -160,7 +160,7 @@ There are three principal types to be aware of.
 
 ### `Parser`
 
-All parsers implement the [org.javafp.parsecj.Parser](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Parser.html) (functional) interface,
+All parsers implement the `Parser` (functional) interface,
 which has an `apply` method:
 
 ```java
@@ -187,7 +187,7 @@ the `parse` method is also provided to apply the parser and extract the `Reply` 
 
 ### `Input`
 
-The [Input](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Input.html) interface is an abstraction representing an immutable input state.
+The `Input` interface is an abstraction representing an immutable input state.
 It provides several static `of` methods for constructing `Input` instances from sequences of symbols:
 
 ```java
@@ -210,7 +210,7 @@ public interface Input<I> {
 
 ### `Reply`
 
-The [ConsumedT](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/ConsumedT.html) object returned by `Parser.apply` is an intermediate result wrapper,
+The `ConsumedT` object returned by `Parser.apply` is an intermediate result wrapper,
 typically only of interest to combinator implementations.
 The `ConsumedT.getReply` method returns the parser result wrapper,
 alternatively the `Parser.parse` method can be used to bypass `ConsumedT` entirely.
@@ -223,7 +223,7 @@ Reply<T> reply2 = p.parse(input);
 assert(reply.equals(reply2));
 ```
 
-A [Reply](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Reply.html) can be either a successful parse result (represented by the `Ok` subtype)
+A `Reply` can be either a successful parse result (represented by the `Ok` subtype)
 or an error (represented by the `Error` subtype).
 
 ```java
@@ -268,7 +268,7 @@ using the combinators provided by the library.
 ## Combinators
 
 Combinators create new parsers by composing existing ones.
-The [org.javafp.parsecj.Combinators](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html) package provides the following core combinator parsers:
+The `Combinators` package provides the following core combinator parsers:
 
 | Name | Parser Description
 |-----|-------------
@@ -282,7 +282,7 @@ The [org.javafp.parsecj.Combinators](http://jon-hanson.github.io/parsecj/javadoc
 `then(p, q)` | First applies the parser `p`. If it succeeds it then applies parser `q`.
 `or(p, q)` | First applies the parser `p`. If it succeeds the result is returned otherwise it applies parser `q`.
 
-(see the [Combinators javadocs](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Combinators.html) for the full list)
+(see the Combinators javadocs for the full list)
 
 Combinators that take a `Parser` as a first parameter, such as `bind` and `or`,
 also exist as methods on the `Parser` interface, to allow parsers to be constructed in a fluent style.
@@ -373,7 +373,7 @@ An example usage is `intr.or(retn(0))`, which means attempt to parse an integer,
 
 ## Text
 
-The [org.javafp.parsecj.Text](http://jon-hanson.github.io/parsecj/javadoc/latest/org/javafp/parsecj/Text.html) package provides in addition to the parsers in `Combinators`,
+The `Text` package provides in addition to the parsers in `Combinators`,
 the following parsers specialised for parsing text input:
 
 Name | Parser Description | Returns
@@ -468,7 +468,7 @@ The correspondence between the production rules of the simple expression languag
 
 ## JSON Parser
 
-For a more "real world" example the test sub-directory contains a full implementation of JSON parser - see the [Grammar class](https://github.com/jon-hanson/parsecj/blob/master/src/test/java/org/javafp/parsecj/json/Grammar.java) for the parser.
+For a more "real world" example the test sub-directory contains a full implementation of JSON parser - see the `Grammar` for the parser.
 The entire grammar is encapsulated in a single class, which, including imports and blank lines, is only 124 lines of code.
 
 # Notes on the Implementation
