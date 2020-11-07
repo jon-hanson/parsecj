@@ -351,7 +351,7 @@ intr.bind(x ->                  // parse an integer and bind the result to the v
 ```
 
 then the meaning should be clear.
-Note that `chr` is just a version of `satisfy` specialised for the Character the type.
+Note that `chr` is just a version of `satisfy` specialised for the Character type.
 
 ### The `or` Combinator
 
