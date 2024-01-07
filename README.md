@@ -363,7 +363,6 @@ The `or` combinator provides the means to express a choice between one parser an
 
 ```
 r ::= p | q
-
 ```
 
 The combinator will first invoke parser `p`.
