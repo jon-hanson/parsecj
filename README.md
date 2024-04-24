@@ -127,14 +127,14 @@ and combining them using the `bind`, `then` and `retn` combinators.
 The parser can be used as follows:
 
 ```java
-        int i = sum.parse(Input.of("1+2")).getResult();
-        assert i == 3;
+int i = sum.parse(Input.of("1+2")).getResult();
+assert i == 3;
 ```
 
 Meanwhile, if we give it invalid input:
 
 ```java
-        int i2 = sum.parse(Input.of("1+z")).getResult();
+int i2 = sum.parse(Input.of("1+z")).getResult();
 ```
 
 then it throws an exception with an error message that pinpoints the problem:
